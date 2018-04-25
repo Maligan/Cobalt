@@ -88,7 +88,6 @@ LightmapSettings:
     m_PVRFilteringAtrousPositionSigmaDirect: 0.5
     m_PVRFilteringAtrousPositionSigmaIndirect: 2
     m_PVRFilteringAtrousPositionSigmaAO: 1
-    m_ShowResolutionOverlay: 1
   m_LightingDataAsset: {fileID: 0}
   m_UseShadowmask: 1
 --- !u!196 &4
@@ -144,6 +143,7 @@ MonoBehaviour:
   Wall: {fileID: 1386987325013674, guid: fc7776b2f225d1447bb7f7993a00ff58, type: 2}
   Unit: {fileID: 1677757156014306, guid: bc91796585d15fd4a86a320eadc4264e, type: 2}
   Bomb: {fileID: 1439820659281544, guid: f0cf7a72615b0e74a8926147ed19e3e3, type: 2}
+  P1: {fileID: 0}
 --- !u!20 &158018538
 Camera:
   m_ObjectHideFlags: 0
