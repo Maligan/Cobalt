@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Linq;
+using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
@@ -8,9 +9,11 @@ public class GameManager : MonoBehaviour
 	public GameObject Wall;
 	public GameObject Unit;
 	public GameObject Bomb;
+	public GameObject Door;
 	
 	// Active objects
 	public GameObject P1;
+	public GameObject Exit;
 	
 	private void Start()
 	{
@@ -34,6 +37,16 @@ public class GameManager : MonoBehaviour
 			bomb.name = Bomb.name;
 			bomb.GetComponent<Bomb>().Reset();
 		}
+
+		// Win
+		if (Vector2.Distance(P1.transform.position, Exit.transform.position) < 1)
+		{
+			FindObjectsOfType<Wall>().ToList().ForEach(x => Destroy(x.gameObject));
+			FindObjectsOfType<Bomb>().ToList().ForEach(x => Destroy(x.gameObject));
+			Destroy(P1);
+			Destroy(Exit);
+			gameObject.SetActive(false);
+		}
 	}
 
 	public void CreateLevel()
@@ -51,6 +64,11 @@ public class GameManager : MonoBehaviour
 				wall.GetComponent<Wall>().Reset(x%2==0 || y%2==0 ? WallType.Box : WallType.Block);
 			}
 		}
+
+		var hw = (int)width/2;
+		var hh = (int)width/2;
+		var random = new Vector3((int)Random.Range(0, hw), (int)Random.Range(0, hh), 0) * 2;
+		Exit = Instantiate(Door, random, Quaternion.identity); 
 	}
 
 	public void CreateUnit()
