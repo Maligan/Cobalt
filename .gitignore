@@ -1,4 +1,5 @@
-/Library
-/ProjectSettings
-/Temp
-/UnityPackageManager
+/*
+/Assets/Plugins*
+
+!/Assets
+!/.gitignore
