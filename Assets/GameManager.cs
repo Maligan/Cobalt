@@ -17,7 +17,7 @@ public class GameManager : MonoBehaviour
 	
 	private void Start()
 	{
-		Camera.main.transform.Translate(4.5f, 2.5f, -10);
+		Camera.main.transform.Translate(6f, 4f, -10);
 		Current = this;
 		CreateLevel();
 		CreateUnit();
@@ -39,7 +39,7 @@ public class GameManager : MonoBehaviour
 		}
 
 		// Win
-		if (Vector2.Distance(P1.transform.position, Exit.transform.position) < 1)
+		if (Vector2.Distance(P1.transform.position, Exit.transform.position) < 1/3f)
 		{
 			FindObjectsOfType<Wall>().ToList().ForEach(x => Destroy(x.gameObject));
 			FindObjectsOfType<Bomb>().ToList().ForEach(x => Destroy(x.gameObject));
@@ -51,30 +51,40 @@ public class GameManager : MonoBehaviour
 
 	public void CreateLevel()
 	{
-		var width = 11;
-		var height = 7;
+		var width = 12;
+		var height = 8;
 
-		for (int x = 0; x < width; x++)
+		for (int x = 0; x <= width; x++)
 		{
-			for (int y = 0; y < height; y++)
+			for (int y = 0; y <= height; y++)
 			{
+				if (x == 1 && y == 1) continue; // Char Position
+
 				var wall = Instantiate(Wall);
 				wall.name = string.Format("{0} ({1}; {2})", Wall.name, x, y);
 				wall.transform.Translate(x, y, 0);
-				wall.GetComponent<Wall>().Reset(x%2==0 || y%2==0 ? WallType.Box : WallType.Block);
+				
+				if (x == 0 || x == width || y == 0 || y == height)
+					wall.GetComponent<Wall>().Reset(WallType.Block);
+				else if (x == 1 || x == width-1 || y == 1 || y == height-1)
+					wall.GetComponent<Wall>().Reset(WallType.Box);
+				else
+					wall.GetComponent<Wall>().Reset(x%2==1 || y%2==1 ? WallType.Box : WallType.Block);
 			}
 		}
 
-		var hw = (int)width/2;
-		var hh = (int)width/2;
-		var random = new Vector3((int)Random.Range(0, hw), (int)Random.Range(0, hh), 0) * 2;
-		Exit = Instantiate(Door, random, Quaternion.identity); 
+		var boxes = FindObjectsOfType<Wall>()
+			.Where(x => x.Type == WallType.Box)
+			.Select(x => x.transform.position)
+			.ToList();
+
+		Exit = Instantiate(Door, boxes[Random.Range(0, boxes.Count)], Quaternion.identity); 
 	}
 
 	public void CreateUnit()
 	{
 		P1 = Instantiate(Unit);
 		P1.name = Unit.name;
-		P1.transform.Translate(-1, -1, 0);
+		P1.transform.Translate(1, 1, 0);
 	}
 }
