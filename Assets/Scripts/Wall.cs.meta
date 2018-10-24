@@ -1,13 +1,11 @@
 fileFormatVersion: 2
 guid: fa6110ff9b938c847a62d26f30837ada
-timeCreated: 1524690977
-licenseType: Free
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
   defaultReferences:
   - MaterialBox: {fileID: 2100000, guid: 645ea0e69be98af47aed4d72acbf4e0a, type: 2}
-  - MaterialBlock: {fileID: 2100000, guid: 507f61f41b5d69140b97bbf1fa0decc5, type: 2}
+  - MaterialBlock: {fileID: 2100000, guid: 645ea0e69be98af47aed4d72acbf4e0a, type: 2}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

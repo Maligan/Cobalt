@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using Unity.Entities;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
@@ -14,11 +15,15 @@ public class GameManager : MonoBehaviour
 	// Active objects
 	public GameObject P1;
 	public GameObject Exit;
-	
+
+	private void Awake()
+	{
+		Current = this;
+		Camera.main.transform.Translate(6f, 4f, -10);
+	}
+
 	private void Start()
 	{
-		Camera.main.transform.Translate(6f, 4f, -10);
-		Current = this;
 		CreateLevel();
 		CreateUnit();
 	}
@@ -45,7 +50,8 @@ public class GameManager : MonoBehaviour
 			FindObjectsOfType<Bomb>().ToList().ForEach(x => Destroy(x.gameObject));
 			Destroy(P1);
 			Destroy(Exit);
-			gameObject.SetActive(false);
+
+			Start();
 		}
 	}
 
@@ -58,7 +64,10 @@ public class GameManager : MonoBehaviour
 		{
 			for (int y = 0; y <= height; y++)
 			{
-				if (x == 1 && y == 1) continue; // Char Position
+				// Char Positions
+				var isSpawn = (x == 1 && y == 1) || (x == width-1 && y == height-1);
+				if (isSpawn)
+					continue;
 
 				var wall = Instantiate(Wall);
 				wall.name = string.Format("{0} ({1}; {2})", Wall.name, x, y);
