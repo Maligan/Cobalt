@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Wall : MonoBehaviour
+public class Wall : MonoBehaviour, ArenaObject
 {
 	public Material MaterialBox;
 	public Material MaterialBlock;
@@ -10,7 +10,11 @@ public class Wall : MonoBehaviour
 	[HideInInspector]
 	public WallType Type;
 
-	public void Reset(WallType type)
+    public Arena Arena { get; set; }
+    public ArenaCell Position { get; set; }
+    ArenaObjectType ArenaObject.Type => ArenaObjectType.Wall;
+
+    public void Reset(WallType type)
 	{
 		Type = type;
 
