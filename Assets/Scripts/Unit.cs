@@ -8,143 +8,136 @@ public class Unit : MonoBehaviour, ArenaObject
     private enum State { Idle, Move, Dig } 
 
     private State state;
+    private Vector2 move;
 
-    private Vector2 moveNext;
-    private Vector2 moveCurrent;
-    private float moveProgress;
-    private Vector2 moveFrom;
-    private Vector2 moveTo;
+    private Vector2 currMove;
+    private ArenaCell currMoveFrom;
+    private ArenaCell currMoveTo;
+    private float currMoveProgress;
 
-    private ArenaCell dig;
-    private float digProgress;
+    private Vector2 currDig;
+    private Wall currDigObj;
 
     public Arena Arena { get; set; }
     public ArenaCell Position { get; set; }
     public ArenaObjectType Type => ArenaObjectType.Unit;
 
-    public void Move(Vector2 direction)
-    {
-        moveNext = direction;
-    }
-
-    private void OnDrawGizmos()
-    {
-        if (state == State.Move)
-            Gizmos.DrawLine(moveFrom, moveTo);
-        else if (state == State.Dig)
-            Gizmos.DrawSphere(((Wall)dig.Objects[0]).transform.position, 1/2f);
-    }
-
     private void Update()
     {
-        if (state == State.Move)
-        {   
-            // Реверс текущего хода
-            if (moveNext != Vector2.zero && moveNext == -moveCurrent)
-            {
-                var tmp = moveFrom;
-                moveFrom = moveTo;
-                moveTo = tmp;
-                moveProgress = 1 - moveProgress;
+        UpdateInput();
 
-                moveCurrent = moveNext;
-                moveNext = Vector2.zero;
-            }
-
-            // Завершение хода
-            if (moveProgress >= 1)
-            {
-                Position = Arena.GetCell(
-                    Position.X + (int)moveCurrent.x,
-                    Position.Y + (int)moveCurrent.y
-                );
-
-                name = string.Format("Unit ({0};{1})", Position.X, Position.Y);
-
-                if (Position.Objects.Any(x => x.Type == ArenaObjectType.Exit))
-                    Debug.Log("WIN!");
-
-                if (moveNext == Vector2.zero)
-                {
-                    state = State.Idle;
-                }
-                else
-                {
-
-                    var next = Arena.GetCell(
-                        Position.X + (int)moveNext.x,
-                        Position.Y + (int)moveNext.y
-                    );
-
-                    var nextHasWall = next.Objects.Any(x => x.Type == ArenaObjectType.Wall);
-                    if (nextHasWall)
-                    {
-                        state = State.Dig;
-
-                        dig = next;
-                        digProgress = 0;          
-
-                        moveNext = Vector2.zero;
-                    }
-                    else
-                    {
-                        moveFrom = transform.localPosition;
-                        moveTo = moveFrom + moveNext;
-                        moveProgress %= 1;
-
-                        moveCurrent = moveNext;
-                        moveNext = Vector2.zero;
-                    }
-                }
-            }
-
-            moveProgress += Time.deltaTime*5;
-            transform.localPosition = Vector2.Lerp(moveFrom, moveTo, moveProgress);
-        }
-        else if (state == State.Idle)
+        switch (state)
         {
-            if (moveNext != Vector2.zero)
-            {
-                var next = Arena.GetCell(
-                    Position.X + (int)moveNext.x,
-                    Position.Y + (int)moveNext.y
-                );
-
-                var nextHasWall = next.Objects.Any(x => x.Type == ArenaObjectType.Wall);
-                if (nextHasWall)
-                {
-                    state = State.Dig;
-
-                    dig = next;
-                    digProgress = 0;          
-
-                    moveNext = Vector2.zero;          
-                }
-                else
-                {
-                    state = State.Move;
-
-                    moveFrom = transform.localPosition;
-                    moveTo = moveFrom + moveNext;
-                    moveProgress = 0;
-
-                    moveCurrent = moveNext;
-                    moveNext = Vector2.zero;
-                }
-            }
+            case State.Idle: UpdateIdle(); break;
+            case State.Move: UpdateMove(); break;
+            case State.Dig:  UpdateDig();  break;
         }
-        else if (state == State.Dig)
-        {
-            digProgress += Time.deltaTime*5;
+    }
 
-            if (digProgress >= 1)
+    private void UpdateInput()
+    {
+        var h = Input.GetAxisRaw("Horizontal");
+        var v = Input.GetAxisRaw("Vertical");
+
+        if (h > 0) move = Vector2.right;
+        else if (h < 0) move = Vector2.left;
+        else if (v > 0) move = Vector2.up;
+        else if (v < 0) move = Vector2.down;
+        else move = Vector2.zero;
+    }
+
+    private void UpdateIdle()
+    {
+        if (move != Vector2.zero)
+        {
+            TransitToMoveOrDig(0);
+        }
+    }
+
+    private void UpdateMove()
+    {
+        // Reverse
+        if (currMove == -move)
+        {
+            currMove = move;
+            currMoveProgress = 1 - currMoveProgress;
+            
+            var tmp = currMoveFrom;
+            currMoveFrom = currMoveTo;
+            currMoveTo = tmp;
+        }
+
+        // Locomotion
+        if (currMoveProgress < 1)
+        {
+            currMoveProgress += Time.deltaTime;
+
+            transform.localPosition = move == currMove && currMoveTo.GetNext(currMove).IsWalkable
+                ? Vector2.LerpUnclamped(currMoveFrom.Center, currMoveTo.Center, currMoveProgress)
+                : Vector2.Lerp(currMoveFrom.Center, currMoveTo.Center, currMoveProgress);
+        }
+        // Continue movement
+        else if (move != Vector2.zero)
+        {
+            Position = currMoveTo;
+            TransitToMoveOrDig(move == currMove ? currMoveProgress%1 : 0);
+        }
+        // Stay
+        else
+        {
+            state = State.Idle;
+
+            Position = currMoveTo;
+
+            currMoveFrom = null;
+            currMoveTo = null;
+            currMove = Vector2.zero;
+            currMoveProgress = 0;
+        }
+    }
+
+    private void TransitToMoveOrDig(float ratio)
+    {
+        var cell = Arena.GetCell(Position.X + (int)move.x, Position.Y + (int)move.y);
+
+        if (cell.IsDiggable)
+        {
+            state = State.Dig;
+
+            currDig = move;
+            currDigObj = cell.Objects.First(x => x.Type == ArenaObjectType.Wall) as Wall;
+        }
+        else if (cell.IsWalkable)
+        {
+            state = State.Move;
+
+            currMove = move;
+            currMoveFrom = Position;
+            currMoveTo = cell;
+            currMoveProgress = ratio;
+        }
+        else
+        {
+            Debug.Log("Stuck");
+        }
+    }
+
+    private void UpdateDig()
+    {
+        if (currDig == move)
+        {
+            currDigObj.Dig(this);
+
+            if (currDigObj.IsRemoved)
             {
                 state = State.Idle;
-
-                var wall = (Wall)dig.Objects[0];
-                wall.Position.Remove(wall);
-                Destroy(wall.gameObject);
+                currDigObj = null;
             }
+        }
+        else
+        {
+            state = State.Idle;
+            currDigObj = null;
         }
     }
 }
