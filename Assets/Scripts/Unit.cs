@@ -20,7 +20,7 @@ public class Unit : MonoBehaviour, ArenaObject
     private float currMoveProgress;
 
     private Vector2 currDig;
-    private Wall currDigObj;
+    private ArenaCell currDigCell;
 
     public Arena Arena { get; set; }
     public ArenaCell Position { get; set; }
@@ -118,7 +118,7 @@ public class Unit : MonoBehaviour, ArenaObject
             state = State.Dig;
 
             currDig = move;
-            currDigObj = cell.Objects.First(x => x.Type == ArenaObjectType.Wall) as Wall;
+            currDigCell = cell;
         }
         else if (cell.IsWalkable)
         {
@@ -139,18 +139,21 @@ public class Unit : MonoBehaviour, ArenaObject
     {
         if (currDig == move)
         {
-            currDigObj.Dig(this);
+            var wall = currDigCell.Objects.FirstOrDefault(x => x.Type == ArenaObjectType.Wall) as Wall;
 
-            if (currDigObj.IsRemoved)
+            if (wall != null)
+                wall.Dig(this);
+
+            if (wall == null || wall.IsRemoved)
             {
                 state = State.Idle;
-                currDigObj = null;
+                currDigCell = null;
             }
         }
         else
         {
             state = State.Idle;
-            currDigObj = null;
+            currDigCell = null;
         }
     }
 }
