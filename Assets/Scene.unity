@@ -142,13 +142,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 01e940b3aa32d2348afc06e131a0bffa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Wall: {fileID: 1386987325013674, guid: fc7776b2f225d1447bb7f7993a00ff58, type: 3}
-  Unit: {fileID: 1677757156014306, guid: bc91796585d15fd4a86a320eadc4264e, type: 3}
-  Bomb: {fileID: 1439820659281544, guid: f0cf7a72615b0e74a8926147ed19e3e3, type: 3}
-  Door: {fileID: 1540338719632024, guid: 143f57b6f223f99429a9ffe19a922a5d, type: 3}
-  UI: {fileID: 1250342936}
-  Units: []
-  Exit: {fileID: 0}
+  Prefabs:
+  - {fileID: 1439820659281544, guid: f0cf7a72615b0e74a8926147ed19e3e3, type: 3}
+  - {fileID: 1540338719632024, guid: 143f57b6f223f99429a9ffe19a922a5d, type: 3}
+  - {fileID: 1677757156014306, guid: bc91796585d15fd4a86a320eadc4264e, type: 3}
+  - {fileID: 1386987325013674, guid: fc7776b2f225d1447bb7f7993a00ff58, type: 3}
+  ArenaRoot: {fileID: 1887123111}
+  UIRoot: {fileID: 1250342936}
 --- !u!20 &158018538
 Camera:
   m_ObjectHideFlags: 0
@@ -549,3 +549,33 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
+--- !u!1 &1887123111
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1887123112}
+  m_Layer: 0
+  m_Name: Arena
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1887123112
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1887123111}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

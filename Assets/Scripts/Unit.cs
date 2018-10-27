@@ -3,12 +3,8 @@ using System.Collections;
 using System.Linq;
 using UnityEngine;
 
-public class Unit : MonoBehaviour, ArenaObject
+public class Unit : ArenaObjectBehaviour
 {
-    #region Default Prefabs
-    public GameObject BombPrefab;
-    #endregion
-
     public enum State { Idle, Move, Dig } 
 
     public State state;
@@ -22,21 +18,28 @@ public class Unit : MonoBehaviour, ArenaObject
     private Vector2 currDig;
     private ArenaCell currDigCell;
 
-    public Arena Arena { get; set; }
-    public ArenaCell Position { get; set; }
-    public ArenaObjectType Type => ArenaObjectType.Unit;
+    public override ArenaObjectType Type => ArenaObjectType.Unit;
+
+    public override void OnRemove()
+    {
+        base.OnRemove();
+
+        state = State.Idle;
+
+        currMove = Vector2.zero;
+        currMoveFrom = null;
+        currMoveTo = null;
+        currMoveProgress = 0;
+
+        currDig = Vector2.zero;
+        currDigCell = null;
+    }
 
     public void DoBomb()
     {
         if (Position.IsPlaceable)
         {
-            var bombObject = Instantiate(BombPrefab);
-            var bomb = bombObject.GetComponent<Bomb>();
-
-            bomb.Arena = Arena;
-            bomb.Position = Position;
-            bomb.Position.Add(bomb);
-            bombObject.transform.localPosition = bomb.Position.Center;
+            Arena.Pool.CreateBomb(Position);
         }
         else
         {
@@ -47,6 +50,11 @@ public class Unit : MonoBehaviour, ArenaObject
     public void DoMove(Vector2 move)
     {
         this.move = move;
+    }
+
+    public void Damage(int hp)
+    {
+        Arena.Pool.Recycle(this);
     }
 
     private void Update()

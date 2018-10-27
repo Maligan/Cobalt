@@ -2,19 +2,25 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Wall : MonoBehaviour, ArenaObject
+public class Wall : ArenaObjectBehaviour
 {
 	public Material MaterialBox;
 	public Material MaterialBlock;
 
-	[HideInInspector]
-	public WallType Type;
+	public WallType WallType;
 
-    public Arena Arena { get; set; }
-    public ArenaCell Position { get; set; }
-    ArenaObjectType ArenaObject.Type => ArenaObjectType.Wall;
+    public override ArenaObjectType Type => ArenaObjectType.Wall;
 
 	private Color color;
+
+	public override void OnCreate()
+	{
+		base.OnCreate();
+
+		HP = 100;
+		GetComponentInChildren<Renderer>().material.color = Color.gray;
+	}
+
 
 	public void Dig(ArenaObject actor)
 	{
@@ -30,8 +36,7 @@ public class Wall : MonoBehaviour, ArenaObject
 		if (HP == 0)
 		{
 			IsRemoved = true;
-			Destroy(gameObject);
-			Position.Remove(this);
+			Arena.Pool.Recycle(this);
 		}
 	}
 
@@ -40,12 +45,12 @@ public class Wall : MonoBehaviour, ArenaObject
 
     public void Reset(WallType type)
 	{
-		Type = type;
+		WallType = type;
 		HP = 100;
 
 		var renderer = GetComponentInChildren<Renderer>();
-		if (Type == WallType.Box) renderer.material = MaterialBox;
-		if (Type == WallType.Block) renderer.material = MaterialBlock;
+		if (WallType == WallType.Box) renderer.material = MaterialBox;
+		if (WallType == WallType.Block) renderer.material = MaterialBlock;
 
 		color = renderer.material.color;
 	}

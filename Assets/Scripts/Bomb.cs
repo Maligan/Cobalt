@@ -3,17 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class Bomb : MonoBehaviour, ArenaObject
+public class Bomb : ArenaObjectBehaviour
 {
 	public float Timeout;
 	public float Radius;
 
-    public Arena Arena { get; set; }
-    public ArenaCell Position  { get; set; }
-	public ArenaObjectType Type => ArenaObjectType.Bomb;
+	public override ArenaObjectType Type => ArenaObjectType.Bomb;
 
-    private void Start()
+    public override void OnCreate()
 	{
+		base.OnCreate();
 		Timeout = 4;
 	}
 
@@ -32,21 +31,16 @@ public class Bomb : MonoBehaviour, ArenaObject
 						wall.Damage(100);
 						break;
 					}
+					else if (obj.Type == ArenaObjectType.Unit)
+					{
+						var unit = (Unit)obj;
+						unit.Damage(100);
+						break;
+					}
 				}
 			}
 
-
-			Position.Remove(this);
-			Destroy(gameObject);
-
-			// var targets = FindObjectsOfType<Wall>()
-			// 	.Where(x => x.Type == WallType.Box)
-			// 	.Where(x => Vector2.Distance(x.transform.position, transform.position) <= Radius);
-
-			// foreach (var target in targets)
-			// 	Destroy(target.gameObject);
-
-			// Destroy(gameObject);
+			Arena.Pool.Recycle(this);
 		}
 	}
 }

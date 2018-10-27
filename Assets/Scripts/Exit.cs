@@ -1,8 +1,6 @@
 using UnityEngine;
 
-public class Exit : MonoBehaviour, ArenaObject
+public class Exit : ArenaObjectBehaviour
 {
-    public Arena Arena { get; set; }
-    public ArenaCell Position { get; set; }
-    public ArenaObjectType Type => ArenaObjectType.Exit;
+    public override ArenaObjectType Type => ArenaObjectType.Exit;
 }

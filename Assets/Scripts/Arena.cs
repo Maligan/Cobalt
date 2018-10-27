@@ -1,14 +1,26 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
 public class Arena
 {
-    private Dictionary<int, ArenaCell> cellsHash = new Dictionary<int, ArenaCell>();
-    private List<ArenaCell> cellsList = new List<ArenaCell>();
+    private Dictionary<int, ArenaCell> cellsHash;
+    private List<ArenaCell> cellsList;
+
+    public Arena(List<GameObject> prefabs, Transform parent)
+    {
+        cellsHash = new Dictionary<int, ArenaCell>();
+        cellsList = new List<ArenaCell>();
+
+        Pool = new ArenaFactory(prefabs, parent);
+    }
 
     public void Clear()
     {
+        // Recycle
+        Objects.ToList().ForEach(Pool.Recycle);
+
         cellsHash.Clear();
         cellsList.Clear();
     }
@@ -27,7 +39,6 @@ public class Arena
         return cellsHash[key];
     }
     
-
     public IEnumerable<ArenaCell> Cells
     {
         get
@@ -36,15 +47,17 @@ public class Arena
         }
     }
     
-    public IEnumerable<ArenaObject> Objects
+    public IEnumerable<ArenaObjectBehaviour> Objects
     {
         get
         {
             for (var i = 0; i < cellsList.Count; i++)
                 for (var j = 0; j < cellsList[i].Objects.Count; j++)
-                    yield return cellsList[i].Objects[j];
+                    yield return (ArenaObjectBehaviour)cellsList[i].Objects[j];
         }
     }
+
+    public ArenaFactory Pool { get; private set; }
 }
 
 public class ArenaCell
@@ -97,8 +110,11 @@ public class ArenaCell
 public interface ArenaObject
 {
     Arena Arena { get; }
-    ArenaCell Position { get; }
+    ArenaCell Position { get; set; }
     ArenaObjectType Type { get; }
+
+    void OnCreate();
+    void OnRemove();
 }
 
 public enum ArenaObjectType
@@ -107,4 +123,60 @@ public enum ArenaObjectType
     Wall,
     Exit,
     Bomb
+}
+
+public class ArenaFactory : UnityEngine.Object
+{
+    private Transform parent;
+    private List<GameObject> prefabs;
+    private Dictionary<ArenaObjectType, ArenaObjectList> objects;
+
+    public ArenaFactory(List<GameObject> prefabs, Transform parent)
+    {
+        this.prefabs = prefabs;
+        this.parent = parent;
+        this.objects = new Dictionary<ArenaObjectType, ArenaObjectList>();
+    }
+
+    public Exit CreateExit(ArenaCell pos) { return Create<Exit>(pos, ArenaObjectType.Exit); }
+    public Wall CreateWall(ArenaCell pos) { return Create<Wall>(pos, ArenaObjectType.Wall); }
+    public Unit CreateUnit(ArenaCell pos) { return Create<Unit>(pos, ArenaObjectType.Unit); }
+    public Bomb CreateBomb(ArenaCell pos) { return Create<Bomb>(pos, ArenaObjectType.Bomb); }
+
+    private T Create<T>(ArenaCell pos, ArenaObjectType type) where T : ArenaObject
+    {
+        var obj = GetFromPoolOrInstantiate<T>(type);
+        obj.Position = pos;
+        obj.OnCreate();
+        return obj;        
+    }
+
+    private T GetFromPoolOrInstantiate<T>(ArenaObjectType type)
+    {
+        var list = objects.ContainsKey(type) ? objects[type] : null;
+        if (list == null)
+            list = objects[type] = new ArenaObjectList();
+        
+        if (list.Count > 0)
+        {
+            var obj = list[list.Count-1];
+            list.RemoveAt(list.Count-1);
+            return (T)obj;
+        }
+
+        var prefab = prefabs.FirstOrDefault(x => x.GetComponent<T>() != null);
+        if (prefab == null)
+            throw new Exception("Prefab for '" + type + "' doesn't added");
+
+        return Instantiate(prefab, parent).GetComponent<T>();
+    }
+
+    public void Recycle(ArenaObject obj)
+    {
+        obj.OnRemove();
+        objects[obj.Type].Add(obj);
+    }
+
+    // For shorcut without excess <> symbols
+    private class ArenaObjectList : List<ArenaObject> { }
 }
