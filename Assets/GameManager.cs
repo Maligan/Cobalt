@@ -1,6 +1,6 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
-using Unity.Entities;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
@@ -17,10 +17,11 @@ public class GameManager : MonoBehaviour
 	
 	// Active objects
 	public GameObject UI;
-	[HideInInspector] public GameObject P1;
-	[HideInInspector] public GameObject Exit;
 
 	public Arena Arena;
+	public List<Unit> Units;
+	public GameObject Exit;
+
 
 	private void Awake()
 	{
@@ -44,23 +45,23 @@ public class GameManager : MonoBehaviour
 	{
 		while (true)
 		{
-			var p1 = P1.GetComponent<Unit>();
-			// if (Input.GetKey(KeyCode.UpArrow)) p1.Move(Vector2.up);
-			// if (Input.GetKey(KeyCode.DownArrow)) p1.Move(Vector2.down);
-			// if (Input.GetKey(KeyCode.RightArrow)) p1.Move(Vector2.right);
-			// if (Input.GetKey(KeyCode.LeftArrow)) p1.Move(Vector2.left);
-
-
-
-			if (Vector2.Distance(P1.transform.position, Exit.transform.position) < 1/3f)
+			foreach (var unit in Units)
 			{
-				FindObjectsOfType<Wall>().ToList().ForEach(x => Destroy(x.gameObject));
-				FindObjectsOfType<Bomb>().ToList().ForEach(x => Destroy(x.gameObject));
-				Destroy(P1);
-				Destroy(Exit);
+				if (Vector2.Distance(unit.transform.position, Exit.transform.position) < 1/3f)
+				{
+					foreach (var obj in Arena.Objects)
+						Destroy(((MonoBehaviour)obj).gameObject);
 
-				UI.SetActive(true);
-				StopAllCoroutines();
+					foreach (var u in Units)
+						Destroy(u.gameObject);
+
+					Units.Clear();
+					Arena.Clear();
+					UI.SetActive(true);
+					StopAllCoroutines();
+					
+					break;
+				}
 			}
 
 			yield return new WaitForSeconds(0.1f);
@@ -69,13 +70,16 @@ public class GameManager : MonoBehaviour
 
 	public void CreateLevel()
 	{
-		for (var x = -6; x <= 6; x++)
-			for (var y = -4; y <= 4; y++)
-				if (x != 0 || y != 0)
+		var hw = 6;
+		var hh = 4;
+
+		for (var x = -hw; x <= hw; x++)
+			for (var y = -hh; y <= hh; y++)
+				if (!(x ==-hw&&y==-hh) && !(x==hw&&y==hh))
 					{
 						var wall = Instantiate(Wall);
 						wall.name = string.Format("{0} ({1}; {2})", Wall.name, x, y);
-						wall.transform.Translate(x, y, 0);
+						wall.transform.localPosition = Arena.GetCell(x, y).Center;
 						wall.GetComponent<Wall>().Reset(WallType.Box);
 						wall.GetComponent<Wall>().Arena = Arena;
 						wall.GetComponent<Wall>().Position = Arena.GetCell(x, y);
@@ -93,16 +97,21 @@ public class GameManager : MonoBehaviour
 		exit.Arena = box.Arena;
 		Exit = exit.gameObject;
 
-		CreateUnit();
+		Units.Clear();
+		CreateUnit(-hw, -hh, false);
+		CreateUnit(+hw, +hh, true);
 	}
 
-	public void CreateUnit()
+	public void CreateUnit(int x, int y, bool ai)
 	{
-		P1 = Instantiate(Unit);
-		P1.name = Unit.name;
-		P1.transform.Translate(0, 0, 0);
-		P1.GetComponent<Unit>().Arena = Arena;
-		P1.GetComponent<Unit>().Position = Arena.GetCell(0, 0);
+		var unit = Instantiate(Unit);
+		unit.name = Unit.name;
+		unit.GetComponent<Unit>().Arena = Arena;
+		unit.GetComponent<Unit>().Position = Arena.GetCell(x, y);
+		unit.transform.localPosition = Arena.GetCell(x, y).Center;
+		if (ai) unit.AddComponent<UnitAI>();
+		else unit.AddComponent<UnitUserInput>();
+		Units.Add(unit.GetComponent<Unit>());
 	}
 
 

@@ -21,7 +21,7 @@ public class Wall : MonoBehaviour, ArenaObject
 		HP -= (100 * Time.deltaTime);
 		HP = Mathf.Max(HP, 0);
 
-		GetComponentInChildren<MeshRenderer>().material.color = color * HP/100f;
+		GetComponentInChildren<Renderer>().material.color = color * HP/100f;
 		
 		if (HP == 0)
 		{

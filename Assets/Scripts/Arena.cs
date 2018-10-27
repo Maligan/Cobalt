@@ -4,26 +4,57 @@ using UnityEngine;
 
 public class Arena
 {
-    private Dictionary<int, ArenaCell> cells = new Dictionary<int, ArenaCell>();
+    private Dictionary<int, ArenaCell> cellsHash = new Dictionary<int, ArenaCell>();
+    private List<ArenaCell> cellsList = new List<ArenaCell>();
 
     public void Clear()
     {
-        cells.Clear();
+        cellsHash.Clear();
+        cellsList.Clear();
     }
 
     public ArenaCell GetCell(int x, int y)
     {
         var key = (x & 0xFFFF) | (y & 0xFFFF) << 16;
 
-        if (cells.ContainsKey(key) == false)
-            cells[key] = new ArenaCell() { Arena = this, X = x, Y = y };
+        if (cellsHash.ContainsKey(key) == false)
+        {
+            var cell = new ArenaCell() { Arena = this, X = x, Y = y };
+            cellsHash.Add(key, cell);
+            cellsList.Add(cell);
+        }
 
-        return cells[key];
+        return cellsHash[key];
+    }
+    
+
+    public IEnumerable<ArenaCell> Cells
+    {
+        get
+        {
+            return cellsList;
+        }
+    }
+    
+    public IEnumerable<ArenaObject> Objects
+    {
+        get
+        {
+            for (var i = 0; i < cellsList.Count; i++)
+                for (var j = 0; j < cellsList[i].Objects.Count; j++)
+                    yield return cellsList[i].Objects[j];
+        }
     }
 }
 
 public class ArenaCell
 {
+    public static int Manhattan(ArenaCell c1, ArenaCell c2)
+    {
+        return Mathf.Abs(c1.X - c2.X)
+             + Mathf.Abs(c1.Y - c2.Y);
+    }
+
     public Arena Arena;
     public int X;
     public int Y;

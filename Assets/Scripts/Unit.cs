@@ -5,9 +5,9 @@ using UnityEngine;
 
 public class Unit : MonoBehaviour, ArenaObject
 {
-    private enum State { Idle, Move, Dig } 
+    public enum State { Idle, Move, Dig } 
 
-    private State state;
+    public State state;
     private Vector2 move;
 
     private Vector2 currMove;
@@ -22,28 +22,19 @@ public class Unit : MonoBehaviour, ArenaObject
     public ArenaCell Position { get; set; }
     public ArenaObjectType Type => ArenaObjectType.Unit;
 
+    public void SetMove(Vector2 move)
+    {
+        this.move = move;
+    }
+
     private void Update()
     {
-        UpdateInput();
-
         switch (state)
         {
             case State.Idle: UpdateIdle(); break;
             case State.Move: UpdateMove(); break;
             case State.Dig:  UpdateDig();  break;
         }
-    }
-
-    private void UpdateInput()
-    {
-        var h = Input.GetAxisRaw("Horizontal");
-        var v = Input.GetAxisRaw("Vertical");
-
-        if (h > 0) move = Vector2.right;
-        else if (h < 0) move = Vector2.left;
-        else if (v > 0) move = Vector2.up;
-        else if (v < 0) move = Vector2.down;
-        else move = Vector2.zero;
     }
 
     private void UpdateIdle()
