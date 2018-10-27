@@ -25,9 +25,9 @@ public class UnitAI : MonoBehaviour
                 var hasWall = unit.Position.GetNext(side).IsDiggable;
                 if (hasWall)
                 {
-                    unit.SetMove(side);
+                    unit.DoMove(side);
                     yield return new WaitWhile(() => unit.state != Unit.State.Move);
-                    unit.SetMove(Vector2.zero);
+                    unit.DoMove(Vector2.zero);
                     yield return new WaitWhile(() => unit.state != Unit.State.Idle);                    
                     break;
                 }
@@ -50,16 +50,16 @@ public class UnitAI : MonoBehaviour
 
                     if (dx != 0)
                     {
-                        unit.SetMove(new Vector2(dx, 0));
+                        unit.DoMove(new Vector2(dx, 0));
                         yield return new WaitWhile(() => unit.Position.X != wall.X - dx);
-                        unit.SetMove(Vector2.zero);
+                        unit.DoMove(Vector2.zero);
                     }
 
                     if (dy != 0)
                     {
-                        unit.SetMove(new Vector2(0, dy));
+                        unit.DoMove(new Vector2(0, dy));
                         yield return new WaitWhile(() => unit.Position.Y != wall.Y - dy);
-                        unit.SetMove(Vector2.zero);
+                        unit.DoMove(Vector2.zero);
                     }
                 }
             }

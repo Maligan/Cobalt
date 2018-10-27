@@ -67,8 +67,31 @@ public class ArenaCell
     
     public bool IsWalkable { get { return !IsDiggable; } }
     public bool IsDiggable { get { return Objects.Any(x => x.Type == ArenaObjectType.Wall); } }
+    public bool IsPlaceable { get { return Objects.All(X => X.Type != ArenaObjectType.Bomb); } }
 
     public ArenaCell GetNext(Vector2 direction) { return Arena.GetCell(X + (int)direction.x, Y + (int)direction.y); }
+    public IEnumerable<ArenaCell> GetRadius(float radius)
+    {
+        var fromX = Mathf.FloorToInt(X - radius);
+        var fromY = Mathf.FloorToInt(Y - radius);
+        var toX = Mathf.CeilToInt(X + radius);
+        var toY = Mathf.CeilToInt(Y + radius);
+
+        radius = radius*2;
+
+        for (var x = fromX; x <= toX; x++)
+        {
+            for (var y = fromY; y <= toY; y++)
+            {
+                var dx = X - x;
+                var dy = Y - y;
+                var d2 = dx*dx + dy*dy;
+
+                if (d2 <= radius)
+                    yield return Arena.GetCell(x, y);
+            }
+        }
+    }
 }
 
 public interface ArenaObject
@@ -82,5 +105,6 @@ public enum ArenaObjectType
 {
     Unit,
     Wall,
-    Exit
+    Exit,
+    Bomb
 }

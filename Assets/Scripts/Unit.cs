@@ -5,6 +5,10 @@ using UnityEngine;
 
 public class Unit : MonoBehaviour, ArenaObject
 {
+    #region Default Prefabs
+    public GameObject BombPrefab;
+    #endregion
+
     public enum State { Idle, Move, Dig } 
 
     public State state;
@@ -22,7 +26,25 @@ public class Unit : MonoBehaviour, ArenaObject
     public ArenaCell Position { get; set; }
     public ArenaObjectType Type => ArenaObjectType.Unit;
 
-    public void SetMove(Vector2 move)
+    public void DoBomb()
+    {
+        if (Position.IsPlaceable)
+        {
+            var bombObject = Instantiate(BombPrefab);
+            var bomb = bombObject.GetComponent<Bomb>();
+
+            bomb.Arena = Arena;
+            bomb.Position = Position;
+            bomb.Position.Add(bomb);
+            bombObject.transform.localPosition = bomb.Position.Center;
+        }
+        else
+        {
+            Debug.Log("Already is taken");
+        }
+    }
+
+    public void DoMove(Vector2 move)
     {
         this.move = move;
     }

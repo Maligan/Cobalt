@@ -18,8 +18,12 @@ public class Wall : MonoBehaviour, ArenaObject
 
 	public void Dig(ArenaObject actor)
 	{
-		HP -= (100 * Time.deltaTime);
-		HP = Mathf.Max(HP, 0);
+		Damage(Mathf.RoundToInt(100 * Time.deltaTime));
+	}
+
+	public void Damage(int hp)
+	{
+		HP = Mathf.Max(HP-hp, 0);
 
 		GetComponentInChildren<Renderer>().material.color = color * HP/100f;
 		

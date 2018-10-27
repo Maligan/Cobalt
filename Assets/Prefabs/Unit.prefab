@@ -9,7 +9,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4814788089217442}
-  - component: {fileID: 50266546508227598}
   - component: {fileID: 1195639294322307220}
   m_Layer: 0
   m_Name: Unit
@@ -34,27 +33,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!50 &50266546508227598
-Rigidbody2D:
-  serializedVersion: 4
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1677757156014306}
-  m_BodyType: 0
-  m_Simulated: 1
-  m_UseFullKinematicContacts: 0
-  m_UseAutoMass: 0
-  m_Mass: 1
-  m_LinearDrag: 0
-  m_AngularDrag: 0.05
-  m_GravityScale: 0
-  m_Material: {fileID: 0}
-  m_Interpolate: 0
-  m_SleepingMode: 1
-  m_CollisionDetection: 0
-  m_Constraints: 0
 --- !u!114 &1195639294322307220
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -67,6 +45,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 475fe71d27ed307498c53f4cd7ae598b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  BombPrefab: {fileID: 1439820659281544, guid: f0cf7a72615b0e74a8926147ed19e3e3, type: 3}
+  state: 0
 --- !u!1 &1463140174131840805
 GameObject:
   m_ObjectHideFlags: 0
@@ -160,7 +140,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &7048957798744500034
 Transform:
   m_ObjectHideFlags: 0
@@ -182,7 +162,7 @@ SpriteRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1479605731172514003}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
