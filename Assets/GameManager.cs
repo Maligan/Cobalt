@@ -69,16 +69,16 @@ public class GameManager : MonoBehaviour
 
 	public void CreateLevel()
 	{
-		var hw = 6;
-		var hh = 4;
+		var hw = 20;
+		var hh = 10;
 
-		for (var x = -hw; x <= hw; x++)
-			for (var y = -hh; y <= hh; y++)
-				if (!(x ==-hw&&y==-hh) && !(x==hw&&y==hh))
-						Arena.Pool
-						.CreateWall(Arena.GetCell(x, y))
+		var result = ArenaGenerator.Create(hw*2, hh*2);
+
+		for (var x = 0; x < hw*2; x++)
+			for (var y = 0; y < hh*2; y++)
+				if (result[x, y])
+						Arena.Pool.CreateWall(Arena.GetCell(x-hw, y-hh))
 						.name = string.Format("Wall ({0}; {1})", x, y);
-
 
 		var poses = FindObjectsOfType<Wall>().Where(x => x.WallType == WallType.Box).Select(x => x.Position).ToList();
 		var pos = poses[Random.Range(0, poses.Count)];
