@@ -97,10 +97,17 @@ public class Unit : ArenaObjectBehaviour
         {
             currMoveProgress += Time.deltaTime;
 
-            var lerpUnclamped = move == currMove && currMovePush[currMovePush.Count-1].Position.GetNext(currMove).IsWalkable;
+            var lerpUnclamped = move == currMove && false; // currMovePush[currMovePush.Count-1].Position.GetNext(currMove).IsWalkable;
 
-            foreach (var obj in currMovePush)
+            for (var i = 0; i < currMovePush.Count; i++)
             {
+                var obj = currMovePush[i];
+                if (obj.gameObject.activeSelf == false)
+                {
+                    currMovePush.RemoveAt(i--);
+                    continue;
+                }
+
                 var curr = obj.Position;
                 var next = obj.Position.GetNext(currMove);
 
@@ -129,8 +136,15 @@ public class Unit : ArenaObjectBehaviour
 
     private void DetachPush()
     {
-        foreach (var obj in currMovePush)
+        for (var i = 0; i < currMovePush.Count; i++)
         {
+            var obj = currMovePush[i];
+            if (obj.gameObject.activeSelf == false)
+            {
+                currMovePush.RemoveAt(i--);
+                continue;
+            }
+
             var curr = obj.Position;
             var next = obj.Position.GetNext(currMove);
             obj.Position = next;
