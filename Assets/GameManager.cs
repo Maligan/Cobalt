@@ -73,6 +73,8 @@ public class GameManager : MonoBehaviour
 		var hh = 10;
 
 		var result = ArenaGenerator.Create(hw*2, hh*2);
+		result[0, 0] = false;
+		result[hw*2-1, hh*2-1] = false;
 
 		for (var x = 0; x < hw*2; x++)
 			for (var y = 0; y < hh*2; y++)
