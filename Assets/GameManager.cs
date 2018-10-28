@@ -35,10 +35,13 @@ public class GameManager : MonoBehaviour
 
 	private IEnumerator InputCoroutine()
 	{
+		var unitCount = Arena.Objects.Count(x => x.Type == ArenaObjectType.Unit);
+
 		while (true)
 		{
 			var units = Arena.Objects.Where(x => x.Type == ArenaObjectType.Unit);
 			var exit = Arena.Objects.FirstOrDefault(x => x.Type == ArenaObjectType.Exit);
+			var win = unitCount != units.Count();
 
 			if (exit != null)
 			{
@@ -46,12 +49,18 @@ public class GameManager : MonoBehaviour
 				{
 					if (Vector2.Distance(unit.transform.position, exit.transform.position) < 1/3f)
 					{
-						Arena.Clear();
-						UIRoot.SetActive(true);
-						StopAllCoroutines();
+						win = true;
 						break;
 					}
 				}
+			}
+			
+
+			if (win)
+			{
+				Arena.Clear();
+				UIRoot.SetActive(true);
+				StopAllCoroutines();
 			}
 
 			yield return new WaitForSeconds(0.1f);
@@ -60,8 +69,8 @@ public class GameManager : MonoBehaviour
 
 	public void CreateLevel()
 	{
-		var hw = 2;
-		var hh = 2;
+		var hw = 6;
+		var hh = 4;
 
 		for (var x = -hw; x <= hw; x++)
 			for (var y = -hh; y <= hh; y++)
