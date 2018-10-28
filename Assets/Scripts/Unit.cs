@@ -37,6 +37,9 @@ public class Unit : ArenaObjectBehaviour
 
         currDig = Vector2.zero;
         currDigCell = null;
+
+        GetComponent<UnitAI>().enabled = false;
+        GetComponent<UnitUserInput>().enabled = false;
     }
 
     public void DoBomb()

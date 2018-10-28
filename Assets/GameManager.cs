@@ -91,8 +91,9 @@ public class GameManager : MonoBehaviour
 	public void CreateUnit(int x, int y, bool ai)
 	{
 		var unit = Arena.Pool.CreateUnit(Arena.GetCell(x, y));
-		if (ai) unit.gameObject.AddComponent<UnitAI>();
-		else unit.gameObject.AddComponent<UnitUserInput>();
+
+		if (ai) unit.GetComponent<UnitAI>().enabled = true;
+        else unit.GetComponent<UnitUserInput>().enabled = true;
 	}
 
 	#region Handlers 
