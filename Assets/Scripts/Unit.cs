@@ -1,5 +1,6 @@
 
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -11,14 +12,19 @@ public class Unit : ArenaObjectBehaviour
     private Vector2 move;
 
     private Vector2 currMove;
-    private ArenaCell currMoveFrom;
-    private ArenaCell currMoveTo;
     private float currMoveProgress;
+    private List<ArenaObjectBehaviour> currMovePush;
 
     private Vector2 currDig;
     private ArenaCell currDigCell;
 
     public override ArenaObjectType Type => ArenaObjectType.Unit;
+
+    public Unit()
+    {
+        currMovePush = new List<ArenaObjectBehaviour>();
+        currMovePush.Add(this);
+    }
 
     public override void OnRemove()
     {
@@ -27,8 +33,6 @@ public class Unit : ArenaObjectBehaviour
         state = State.Idle;
 
         currMove = Vector2.zero;
-        currMoveFrom = null;
-        currMoveTo = null;
         currMoveProgress = 0;
 
         currDig = Vector2.zero;
@@ -37,14 +41,10 @@ public class Unit : ArenaObjectBehaviour
 
     public void DoBomb()
     {
-        if (Position.IsPlaceable)
-        {
+        if (!Position.IsPushable)
             Arena.Pool.CreateBomb(Position);
-        }
         else
-        {
-            Debug.Log("Already is taken");
-        }
+            Debug.Log("Cell already is taken");
     }
 
     public void DoMove(Vector2 move)
@@ -72,35 +72,44 @@ public class Unit : ArenaObjectBehaviour
         if (move != Vector2.zero)
         {
             TransitToMoveOrDig(0);
+            // move = Vector2.zero;
         }
     }
 
     private void UpdateMove()
     {
-        // Reverse
-        if (currMove == -move)
-        {
-            currMove = move;
-            currMoveProgress = 1 - currMoveProgress;
+        // Reverse (only if do not pushing)
+        // if (currMove == -move)
+        // {
+        //     currMove = move;
+        //     currMoveProgress = 1 - currMoveProgress;
             
-            var tmp = currMoveFrom;
-            currMoveFrom = currMoveTo;
-            currMoveTo = tmp;
-        }
+        //     var tmp = currMoveFrom;
+        //     currMoveFrom = currMoveTo;
+        //     currMoveTo = tmp;
+        // }
 
         // Locomotion
         if (currMoveProgress < 1)
         {
             currMoveProgress += Time.deltaTime;
 
-            transform.localPosition = move == currMove && currMoveTo.GetNext(currMove).IsWalkable
-                ? Vector2.LerpUnclamped(currMoveFrom.Center, currMoveTo.Center, currMoveProgress)
-                : Vector2.Lerp(currMoveFrom.Center, currMoveTo.Center, currMoveProgress);
+            var lerpUnclamped = move == currMove && currMovePush[currMovePush.Count-1].Position.GetNext(currMove).IsWalkable;
+
+            foreach (var obj in currMovePush)
+            {
+                var curr = obj.Position;
+                var next = obj.Position.GetNext(currMove);
+
+                obj.transform.localPosition = lerpUnclamped
+                    ? Vector2.LerpUnclamped(curr.Center, next.Center, currMoveProgress)
+                    : Vector2.Lerp(curr.Center, next.Center, currMoveProgress);
+            }                
         }
         // Continue movement
         else if (move != Vector2.zero)
         {
-            Position = currMoveTo;
+            DetachPush();
             TransitToMoveOrDig(move == currMove ? currMoveProgress%1 : 0);
         }
         // Stay
@@ -108,38 +117,60 @@ public class Unit : ArenaObjectBehaviour
         {
             state = State.Idle;
 
-            Position = currMoveTo;
+            DetachPush();
 
-            currMoveFrom = null;
-            currMoveTo = null;
             currMove = Vector2.zero;
             currMoveProgress = 0;
         }
     }
 
+    private void DetachPush()
+    {
+        foreach (var obj in currMovePush)
+        {
+            var curr = obj.Position;
+            var next = obj.Position.GetNext(currMove);
+            obj.Position = next;
+        }
+
+        currMovePush.RemoveRange(1, currMovePush.Count-1);
+    }
+
     private void TransitToMoveOrDig(float ratio)
     {
-        var cell = Arena.GetCell(Position.X + (int)move.x, Position.Y + (int)move.y);
+        var cell = Position.GetNext(move);
 
         if (cell.IsDiggable)
         {
             state = State.Dig;
-
             currDig = move;
             currDigCell = cell;
         }
-        else if (cell.IsWalkable)
-        {
-            state = State.Move;
-
-            currMove = move;
-            currMoveFrom = Position;
-            currMoveTo = cell;
-            currMoveProgress = ratio;
-        }
         else
         {
-            Debug.Log("Stuck");
+            while (true)
+            {
+                if (cell.IsPushable)
+                {
+                    currMovePush.Add(cell.Objects[0] as ArenaObjectBehaviour);
+                    cell = cell.GetNext(move);
+                }
+                else if (cell.IsWalkable)
+                {
+                    state = State.Move;
+                    currMove = move;
+                    currMoveProgress = ratio;
+                    break;
+                }
+                else
+                {
+                    state = State.Idle;
+                    currMove = Vector2.zero;
+                    currMoveProgress = 0;
+                    currMovePush.RemoveRange(1, currMovePush.Count-1);
+                    break;
+                }
+            }
         }
     }
 

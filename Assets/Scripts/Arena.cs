@@ -78,9 +78,9 @@ public class ArenaCell
 
     public Vector2 Center { get { return new Vector2(X, Y); } }
     
-    public bool IsWalkable { get { return !IsDiggable; } }
     public bool IsDiggable { get { return Objects.Any(x => x.Type == ArenaObjectType.Wall); } }
-    public bool IsPlaceable { get { return Objects.All(X => X.Type != ArenaObjectType.Bomb); } }
+    public bool IsPushable { get { return Objects.Any(X => X.Type == ArenaObjectType.Bomb); } }
+    public bool IsWalkable { get { return !IsDiggable && !IsPushable; } }
 
     public ArenaCell GetNext(Vector2 direction) { return Arena.GetCell(X + (int)direction.x, Y + (int)direction.y); }
     public IEnumerable<ArenaCell> GetRadius(float radius)

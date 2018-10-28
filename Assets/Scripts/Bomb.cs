@@ -13,7 +13,7 @@ public class Bomb : ArenaObjectBehaviour
     public override void OnCreate()
 	{
 		base.OnCreate();
-		Timeout = 4;
+		Timeout = 8;
 	}
 
 	private void Update()
