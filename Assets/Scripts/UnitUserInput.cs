@@ -16,7 +16,7 @@ public class UnitUserInput : MonoBehaviour
     {
         // [Move]
 
-        Vector2 move;
+        Vector2 move = Vector2.zero;
 
         var h = Input.GetAxisRaw("Horizontal");
         var v = Input.GetAxisRaw("Vertical");
@@ -25,9 +25,9 @@ public class UnitUserInput : MonoBehaviour
         else if (h < 0) move = Vector2.left;
         else if (v > 0) move = Vector2.up;
         else if (v < 0) move = Vector2.down;
-        else move = Vector2.zero;
 
-        unit.DoMove(move);
+        if (move != Vector2.zero)
+            unit.DoMove(move);
 
         // [Place]
 

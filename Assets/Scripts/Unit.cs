@@ -13,6 +13,7 @@ public class Unit : ArenaObjectBehaviour
 
     private Vector2 currMove;
     private float currMoveProgress;
+    [SerializeField] private bool currMoveHalf;
     private List<ArenaObjectBehaviour> currMovePush;
 
     private Vector2 currDig;
@@ -31,9 +32,11 @@ public class Unit : ArenaObjectBehaviour
         base.OnRemove();
 
         state = State.Idle;
+        move = Vector2.zero;
 
         currMove = Vector2.zero;
         currMoveProgress = 0;
+        currMoveHalf = false;
 
         currDig = Vector2.zero;
         currDigCell = null;
@@ -97,10 +100,14 @@ public class Unit : ArenaObjectBehaviour
         {
             currMoveProgress += Time.deltaTime;
 
+            var moveNext = currMoveHalf == false && currMoveProgress > 1/2f;
+            if (moveNext) currMoveHalf = true;
+
             var lerpUnclamped = move == currMove && false; // currMovePush[currMovePush.Count-1].Position.GetNext(currMove).IsWalkable;
 
             for (var i = 0; i < currMovePush.Count; i++)
             {
+                // If pushed object was removed
                 var obj = currMovePush[i];
                 if (obj.gameObject.activeSelf == false)
                 {
@@ -108,8 +115,11 @@ public class Unit : ArenaObjectBehaviour
                     continue;
                 }
 
-                var curr = obj.Position;
-                var next = obj.Position.GetNext(currMove);
+                if (moveNext)
+                    obj.Position = obj.Position.GetNext(currMove);
+
+                var curr = currMoveHalf ? obj.Position.GetNext(-currMove) : obj.Position;
+                var next = currMoveHalf ? obj.Position                    : obj.Position.GetNext(currMove);
 
                 obj.transform.localPosition = lerpUnclamped
                     ? Vector2.LerpUnclamped(curr.Center, next.Center, currMoveProgress)
@@ -119,38 +129,20 @@ public class Unit : ArenaObjectBehaviour
         // Continue movement
         else if (move != Vector2.zero)
         {
-            DetachPush();
-            TransitToMoveOrDig(move == currMove ? currMoveProgress%1 : 0);
+            currMovePush.RemoveRange(1, currMovePush.Count-1);
+
+            TransitToMoveOrDig(move == currMove ? currMoveProgress%1 : 0); // FIXME: in case progress > 1.5 ?!
         }
         // Stay
         else
         {
+            currMovePush.RemoveRange(1, currMovePush.Count-1);
+
             state = State.Idle;
-
-            DetachPush();
-
             currMove = Vector2.zero;
             currMoveProgress = 0;
+            currMoveHalf = false;
         }
-    }
-
-    private void DetachPush()
-    {
-        for (var i = 0; i < currMovePush.Count; i++)
-        {
-            var obj = currMovePush[i];
-            if (obj.gameObject.activeSelf == false)
-            {
-                currMovePush.RemoveAt(i--);
-                continue;
-            }
-
-            var curr = obj.Position;
-            var next = obj.Position.GetNext(currMove);
-            obj.Position = next;
-        }
-
-        currMovePush.RemoveRange(1, currMovePush.Count-1);
     }
 
     private void TransitToMoveOrDig(float ratio)
@@ -177,6 +169,7 @@ public class Unit : ArenaObjectBehaviour
                     state = State.Move;
                     currMove = move;
                     currMoveProgress = ratio;
+                    currMoveHalf = false;
                     break;
                 }
                 else
@@ -184,6 +177,7 @@ public class Unit : ArenaObjectBehaviour
                     state = State.Idle;
                     currMove = Vector2.zero;
                     currMoveProgress = 0;
+                    currMoveHalf = false;
                     currMovePush.RemoveRange(1, currMovePush.Count-1);
                     break;
                 }
