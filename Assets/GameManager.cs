@@ -1,13 +1,154 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Server;
 using UnityEngine;
+
+public class StageView : MonoBehaviour
+{
+	public GameObject Prefab;
+	public GameObject Root;
+	public Dictionary<int, GameObject> Objects = new Dictionary<int, GameObject>();
+
+	public void Apply(Data[] datas)
+	{
+		foreach (var data in datas)
+		{
+			if (Objects.ContainsKey(data.ID) == false)
+				Objects[data.ID] = Instantiate(Prefab);
+
+			var obj = Objects[data.ID];
+			obj.transform.localPosition = new Vector2(data.X, data.Y);
+		}
+	}
+}
+
+public class Channel
+{
+	public event Action<Message> OnMessage;
+
+	public void Send(Message message)
+	{
+		if (OnMessage != null)
+			OnMessage(message);
+	}
+}
+
+public class Message
+{
+	public string Type;
+	public Data[] Data;
+	public Vector2Int Dir;
+}
+
+
+
+
+
+
+
+
+
+
+
 
 public class GameManager : MonoBehaviour
 {
+
+
+
 	public static GameManager Current { get; private set; }
 
-	// Hooks
+	// Server
+	public Stage Stage;
+	public int time;
+
+	// Server-Client
+	public Channel Channel;
+
+	// Client #1
+	public StageView StageView;
+	public GameObject StageViewPrefab;
+
+
+	private void Start()
+	{
+		return;
+
+		Stage = new Stage();
+		Stage.Objects.Add(new StageUnit(Stage));
+		Stage.Objects[0].Data.ID = 1;
+
+		// Stage.Objects.Add(new StageUnit(Stage));
+		// Stage.Objects[1].Data.ID = 2;
+		// Stage.Objects[1].Data.Y  = 2;
+
+		StageView = new StageView();
+		StageView.Root = new GameObject();
+		StageView.Prefab = StageViewPrefab;
+
+		Channel = new Channel();
+		Channel.OnMessage += OnMessage;
+	}
+
+	private void FixedUpdate()
+	{
+		return;
+		
+		// Server
+		var ms = (int)(Time.fixedDeltaTime * 1000);
+		time += ms;
+
+		if (time > 300)
+		{
+			time %= 300;
+			Stage.Update(300);
+			Channel.Send(new Message() { Type = "Update", Data = Stage.Objects.Select(
+				x => JsonUtility.FromJson<Data>(JsonUtility.ToJson(x.Data))
+			).ToArray() });
+		}
+	}
+
+	private void OnMessage(Message message)
+	{
+		switch (message.Type)
+		{
+			case "Update":
+				StageView.Apply(message.Data);
+				break;
+			case "Move":
+				Stage.Objects[0].Data.DX = message.Dir.x;
+				Stage.Objects[0].Data.DY = message.Dir.y;
+				break;
+			default:
+				Debug.Log("Unknown message type: " + message.Type);
+				break;
+		}
+	}
+
+	private void Update()
+	{
+		if (Input.GetKeyDown(KeyCode.UpArrow)) Channel.Send(new Message() { Type = "Move", Dir = Vector2Int.up });
+		if (Input.GetKeyDown(KeyCode.RightArrow)) Channel.Send(new Message() { Type = "Move", Dir = Vector2Int.right });
+		if (Input.GetKeyDown(KeyCode.DownArrow)) Channel.Send(new Message() { Type = "Move", Dir = Vector2Int.down });
+		if (Input.GetKeyDown(KeyCode.LeftArrow)) Channel.Send(new Message() { Type = "Move", Dir = Vector2Int.left });
+		if (Input.GetKeyDown(KeyCode.Space)) Channel.Send(new Message() { Type = "Move", Dir = Vector2Int.zero });
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+	/*
 
 	// Prefabs
 	public List<GameObject> Prefabs;
@@ -32,6 +173,8 @@ public class GameManager : MonoBehaviour
 		CreateLevel();
 		StartCoroutine(InputCoroutine());
 	}
+
+
 
 	private IEnumerator InputCoroutine()
 	{
@@ -107,4 +250,6 @@ public class GameManager : MonoBehaviour
 	}
 
 	#endregion
+
+	 */
 }
