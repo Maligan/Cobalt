@@ -4,27 +4,30 @@ using ProtoBuf;
 
 namespace Cobalt.Shard
 {
-    public class Shard
+    public class Match
     {
-        public ShardState State;
-        public ShardSystem[] Systems;
+        public MatchState State;
+        public IMatchSystem[] Systems;
 
-        public Shard()
+        public float tps = 1;
+        private float timeout;
+
+        public Match()
         {
             Systems = new [] {
                 new UnitSystem(),
             };
 
-            State = new ShardState {
+            State = new MatchState {
                 inputs = new [] {
-                    new Input() {
+                    new UnitInput() {
                         move = Unit.Rotation.Right
                     },
                 },
 
                 units = new [] {
                     new Unit() {
-                        moveSpeed = 1f
+                        moveSpeed = 5f
                     },
                 },
             };
@@ -39,34 +42,75 @@ namespace Cobalt.Shard
             throw new Exception();
         }
 
-        public void Tick(float sec)
+        public bool Tick(float sec)
         {
-            foreach (var system in Systems)
-                system.Tick(this, sec);
-            
+            timeout -= sec;
+            var needTick = tps <= 0 ? true : timeout <= 0;
+            if (needTick)
+            {            
+                foreach (var system in Systems)
+                    system.Tick(this, 1/tps - timeout);
+
+                timeout = tps <= 0 ? 0 : 1/tps;
+            }
+
             State.timestamp += sec;
+            return needTick;
+        }
+    }
+
+    public class MatchTimeline
+    {
+        public MatchTimeline()
+        {
+            States = new List<MatchState>();
+            Capacity = 8;
+        }
+
+        public List<MatchState> States { get; private set; }
+        public float Time { get; set; }
+        public int Capacity { get; set; }
+        public int Count => States.Count;
+        public MatchState this[int index] => States[index];
+
+        public void Add(MatchState state)
+        {
+            States.Add(state);
+            
+            if (States.Count > Capacity)
+                States.RemoveAt(0);
+
+            States.Sort(Sorter);
+        }
+
+        private int Sorter(MatchState s1, MatchState s2)
+        {
+            var delta = s1.timestamp - s2.timestamp;
+            if (delta > 0) return +1;
+            if (delta < 0) return -1;
+            return 0; 
         }
     }
 
     [ProtoContract]
-    public class ShardState
+    public class MatchState
     {
         [ProtoMember(1)]
         public float timestamp;
         [ProtoMember(2)]
         public Unit[] units;
-        public Input[] inputs;
+        public UnitInput[] inputs;
     }
 
     // Entities
 
-    public class Input
+    public class UnitInput
     {
         public Unit.Rotation move;
     }
 
     [ProtoContract]
-    public class Unit : IPos
+    public class Unit : ITransform
     {
         public enum Rotation
         {
@@ -101,7 +145,7 @@ namespace Cobalt.Shard
 
     // Components
 
-    public interface IPos
+    public interface ITransform
     {
         float x { get; set; }
         float y { get; set; }
@@ -109,14 +153,14 @@ namespace Cobalt.Shard
 
     // Systems
 
-    public interface ShardSystem
+    public interface IMatchSystem
     {
-        void Tick(Shard shard, float sec);
+        void Tick(Match shard, float sec);
     }
 
-    public class UnitSystem : ShardSystem
+    public class UnitSystem : IMatchSystem
     {
-        public void Tick(Shard shard, float sec)
+        public void Tick(Match shard, float sec)
         {
             for (int i = 0; i < shard.State.units.Length; i++)
             {
@@ -150,9 +194,14 @@ namespace Cobalt.Shard
                             unit.state = Unit.State.Idle;
                             unit.moveProgress = 0;
                         }
-                        else
+                        else if (unitInput.move == unit.rotation)
                         {
                             unit.moveProgress %= 1;
+                        }
+                        else
+                        {
+                            unit.rotation = unitInput.move;
+                            unit.moveProgress = 0;
                         }
                     }
 

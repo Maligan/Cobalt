@@ -9,66 +9,79 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-	private Shard shard = new Shard();
-	private float shardStep;
-
-	private List<ShardState> clientStates = new List<ShardState>();
-	private float clientTime;
-	private Vector2 clientPosition;
-
+	public Match match = new Match();
+	public MatchTimeline timeline = new MatchTimeline();
 	public GameObject unit;
 
+	public void Start()
+	{
+		match.tps = 120;
+		unit.GetComponent<TransformInterpolator>().Timeline = timeline;
+	}
 
 	public void Update()
 	{
+		UpdateInput();
 		UpdateServer();
 		UpdateClient();
-
-		unit.transform.localPosition = clientPosition;
 	}
 
 	private void UpdateServer()
 	{
 		// Update
-		shard.Tick(Time.deltaTime);
-
-		// Send
-		shardStep -= Time.deltaTime;
-		if (shardStep > 0) return;
-		shardStep = 1f;
-
-		var stream = new MemoryStream();
-		Serializer.Serialize(stream, shard.State);
-		
-		// --------------------------
-
-		stream.Position = 0;
-		var state = Serializer.Deserialize<ShardState>(stream);
-		clientStates.Add(state);
+		var change = match.Tick(Time.deltaTime);
+		if (change)
+		{
+			var stream = new MemoryStream();
+			Serializer.Serialize(stream, match.State);
+			
+			stream.Position = 0;
+			var state = Serializer.Deserialize<MatchState>(stream);
+			timeline.Add(state);
+		}
 	}
 
 	private void UpdateClient()
 	{
-		if (clientStates.Count < 2) return;
+		// Выход по опережению
+		if (timeline.Count < 3) return;
 
-		clientTime += Time.deltaTime;
+		// Ускорение по отставани
+		// TODO: ---
 
-		while (clientTime > clientStates[1].timestamp)
-            clientStates.RemoveAt(0);
+		// Нормальный просчёт
+		timeline.Time += Time.deltaTime;
 
-		var curr = new Vector2(clientStates[0].units[0].x, clientStates[0].units[0].y);
-        var next = new Vector2(clientStates[1].units[0].x, clientStates[1].units[0].y);
+		while (timeline.Count > 2 && timeline.Time > timeline[1].timestamp)
+            timeline.States.RemoveAt(0);
 
-		var delta = clientTime - clientStates[0].timestamp;
-        var total = clientStates[1].timestamp - clientStates[0].timestamp;
-        
-        var t = delta / total; // [0; 1)
 
-        clientPosition = Vector2.LerpUnclamped(curr, next, t);
+		// Update all Interpolators()
+	}
+
+	private void UpdateInput()
+	{
+		if (Input.GetKeyDown(KeyCode.Space))
+			match.State.inputs[0].move = Unit.Rotation.None;
+			
+		if (Input.GetKeyDown(KeyCode.W))
+			match.State.inputs[0].move = Unit.Rotation.Top;
+			
+		if (Input.GetKeyDown(KeyCode.S))
+			match.State.inputs[0].move = Unit.Rotation.Bottom;
+
+		if (Input.GetKeyDown(KeyCode.D))
+			match.State.inputs[0].move = Unit.Rotation.Right;
+			
+		if (Input.GetKeyDown(KeyCode.A))
+			match.State.inputs[0].move = Unit.Rotation.Left;
 	}
 
 	public void OnDrawGizmos()
 	{
-		Gizmos.DrawCube(clientPosition, Vector3.one);
+		var state = match.State.units[0];
+		var position = new Vector2(state.x, state.y);
+		Gizmos.color = Color.magenta;
+		Gizmos.DrawCube(position, Vector3.one/3);
 	}
 }
