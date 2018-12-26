@@ -3,58 +3,71 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Cobalt.Shard;
+using Cobalt.Core;
+using NetcodeIO.NET;
 using ProtoBuf;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-	public Match match = new Match();
+	public Shard shard;
+
+	public Client client;
 	public MatchTimeline timeline = new MatchTimeline();
 	public GameObject unit;
 
 	public void Start()
 	{
-		match.tps = 120;
+		shard = new Shard(new Shard.Options());
+		shard.Start();
+
+		client = new Client();
+		client.OnStateChanged += x => Debug.Log(x);
+		client.OnMessageReceived += OnMessageReceived;
+		client.Connect(shard.GetToken());
+		client.Tickrate = 30;
+
 		unit.GetComponent<TransformInterpolator>().Timeline = timeline;
 	}
 
-	public void Update()
-	{
-		UpdateInput();
-		UpdateServer();
-		UpdateClient();
-	}
+    private void OnMessageReceived(byte[] payload, int payloadSize)
+    {
+		client.Send(new byte[1] { 255 }, 1);
 
-	private void UpdateServer()
-	{
-		// Update
-		var change = match.Tick(Time.deltaTime);
-		if (change)
+		try
 		{
-			var stream = new MemoryStream();
-			Serializer.Serialize(stream, match.State);
-			
-			stream.Position = 0;
+			var stream = new MemoryStream(payload, 0, payloadSize);
 			var state = Serializer.Deserialize<MatchState>(stream);
 			timeline.Add(state);
 		}
+		catch (Exception e)
+		{
+			Debug.LogError(e);
+		}
+
+    }
+
+    public void Update()
+	{
+		shard.Tick(Time.deltaTime);
+
+		UpdateInput();
+		// UpdateClient();
 	}
 
 	private void UpdateClient()
 	{
-		// Выход по опережению
-		if (timeline.Count < 3) return;
+		// // Выход по опережению
+		// if (timeline.Count < 3) return;
 
-		// Ускорение по отставани
-		// TODO: ---
+		// // Ускорение по отставани
+		// // TODO: ---
 
-		// Нормальный просчёт
-		timeline.Time += Time.deltaTime;
+		// // Нормальный просчёт
+		// timeline.Time += Time.deltaTime;
 
-		while (timeline.Count > 2 && timeline.Time > timeline[1].timestamp)
-            timeline.States.RemoveAt(0);
-
+		// while (timeline.Count > 2 && timeline.Time > timeline[1].timestamp)
+        //     timeline.States.RemoveAt(0);
 
 		// Update all Interpolators()
 	}
@@ -62,26 +75,18 @@ public class GameManager : MonoBehaviour
 	private void UpdateInput()
 	{
 		if (Input.GetKeyDown(KeyCode.Space))
-			match.State.inputs[0].move = Unit.Rotation.None;
+			shard.match.State.inputs[0].move = Unit.Rotation.None;
 			
 		if (Input.GetKeyDown(KeyCode.W))
-			match.State.inputs[0].move = Unit.Rotation.Top;
+			shard.match.State.inputs[0].move = Unit.Rotation.Top;
 			
 		if (Input.GetKeyDown(KeyCode.S))
-			match.State.inputs[0].move = Unit.Rotation.Bottom;
+			shard.match.State.inputs[0].move = Unit.Rotation.Bottom;
 
 		if (Input.GetKeyDown(KeyCode.D))
-			match.State.inputs[0].move = Unit.Rotation.Right;
+			shard.match.State.inputs[0].move = Unit.Rotation.Right;
 			
 		if (Input.GetKeyDown(KeyCode.A))
-			match.State.inputs[0].move = Unit.Rotation.Left;
-	}
-
-	public void OnDrawGizmos()
-	{
-		var state = match.State.units[0];
-		var position = new Vector2(state.x, state.y);
-		Gizmos.color = Color.magenta;
-		Gizmos.DrawCube(position, Vector3.one/3);
+			shard.match.State.inputs[0].move = Unit.Rotation.Left;
 	}
 }

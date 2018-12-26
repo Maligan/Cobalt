@@ -1,5 +1,5 @@
 using UnityEngine;
-using Cobalt.Shard;
+using Cobalt.Core;
 using System.Collections.Generic;
 
 public class TransformInterpolator : MonoBehaviour
@@ -8,6 +8,20 @@ public class TransformInterpolator : MonoBehaviour
 
     private void Update()
     {
+        if (Timeline == null) return;
+
+        //-------------------------------------------------------------------
+		// Выход по опережению
+		if (Timeline.Count < 3) return;
+        if (Timeline.Time == 0) Timeline.Time = Timeline[0].timestamp;
+		// Ускорение по отставани
+		// TODO: ---
+		// Нормальный просчёт
+		Timeline.Time += Time.deltaTime;
+		while (Timeline.Count > 2 && Timeline.Time > Timeline[1].timestamp)
+            Timeline.States.RemoveAt(0);
+        //-------------------------------------------------------------------
+
         if (Timeline.Count < 2) return;
 
         // Calculate states for interpolation
@@ -20,11 +34,25 @@ public class TransformInterpolator : MonoBehaviour
         var t = delta / total;
 
         // Interpolate
-        transform.position = Vector2.Lerp(
+        transform.position = Vector2.LerpUnclamped(
             new Vector2(t0.x, t0.y),
             new Vector2(t1.x, t1.y),
             t
         );
+    }
+
+    private void OnDrawGizmos()
+    {
+        if (Timeline != null)
+        {
+            for (int i = 0; i < Timeline.Count; i++)
+            {
+                var state = GetTransform(i);
+                var vector = new Vector2(state.x, state.y);
+        		Gizmos.color = Color.magenta;
+                Gizmos.DrawCube(vector, Vector3.one * 1/10f);
+            }
+        }
     }
 
     private float GetTime()

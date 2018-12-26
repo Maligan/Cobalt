@@ -1,225 +1,151 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Net;
+using System.Security.Cryptography;
+using Cobalt.Core;
+using NetcodeIO.NET;
 using ProtoBuf;
+using UnityEngine;
 
-namespace Cobalt.Shard
+namespace Cobalt.Core
 {
-    public class Match
+    public class Shard
     {
-        public MatchState State;
-        public IMatchSystem[] Systems;
+        private Options options;
 
-        public float tps = 1;
-        private float timeout;
+        private TokenFactory tokens;
+        private Server server;
+        private List<RemoteClient> clients;
 
-        public Match()
+        private State state;
+        public Match match;
+
+        public Shard(Options options)
         {
-            Systems = new [] {
-                new UnitSystem(),
-            };
-
-            State = new MatchState {
-                inputs = new [] {
-                    new UnitInput() {
-                        move = Unit.Rotation.Right
-                    },
-                },
-
-                units = new [] {
-                    new Unit() {
-                        moveSpeed = 5f
-                    },
-                },
-            };
-        }
-
-        public T Get<T>()
-        {
-            foreach (var system in Systems)
-                if (system is T)
-                    return (T)system;
-                
-            throw new Exception();
-        }
-
-        public bool Tick(float sec)
-        {
-            timeout -= sec;
-            var needTick = tps <= 0 ? true : timeout <= 0;
-            if (needTick)
-            {            
-                foreach (var system in Systems)
-                    system.Tick(this, 1/tps - timeout);
-
-                timeout = tps <= 0 ? 0 : 1/tps;
-            }
-
-            State.timestamp += sec;
-            return needTick;
-        }
-    }
-
-    public class MatchTimeline
-    {
-        public MatchTimeline()
-        {
-            States = new List<MatchState>();
-            Capacity = 8;
-        }
-
-        public List<MatchState> States { get; private set; }
-        public float Time { get; set; }
-        public int Capacity { get; set; }
-        public int Count => States.Count;
-        public MatchState this[int index] => States[index];
-
-        public void Add(MatchState state)
-        {
-            States.Add(state);
+            this.options = options;
             
-            if (States.Count > Capacity)
-                States.RemoveAt(0);
+            state = State.Stop;
 
-            States.Sort(Sorter);
+            tokens = new TokenFactory(options.version, GetKey(options.key));
+            server = new Server(
+                options.numPlayers,
+                options.ip,
+                options.port,
+                options.version,
+                GetKey(options.key)
+            );
+
+            server.OnClientConnected += OnClientConnected;
+            server.OnClientDisconnected += OnClientDisconnected;
+            server.OnClientMessageReceived += OnClientMessageReceived;
+            clients = new List<RemoteClient>();
+
+            
+            match = new Match();
+            match.tps = 60;
+            server.Tickrate = 30;
         }
 
-        private int Sorter(MatchState s1, MatchState s2)
+        public byte[] GetToken()
         {
-            var delta = s1.timestamp - s2.timestamp;
-            if (delta > 0) return +1;
-            if (delta < 0) return -1;
-            return 0; 
-        }
-    }
-
-    [ProtoContract]
-    public class MatchState
-    {
-        [ProtoMember(1)]
-        public float timestamp;
-        [ProtoMember(2)]
-        public Unit[] units;
-        public UnitInput[] inputs;
-    }
-
-    // Entities
-
-    public class UnitInput
-    {
-        public Unit.Rotation move;
-    }
-
-    [ProtoContract]
-    public class Unit : ITransform
-    {
-        public enum Rotation
-        {
-            None = 0,   // 000
-            Top = 4,    // 100
-            Right = 5,  // 101
-            Bottom = 6, // 110
-            Left = 7,   // 111
+            return tokens.GenerateConnectToken(
+                new [] { new IPEndPoint(IPAddress.Parse(options.ip), options.port) },
+                options.expiry,
+                options.timeout,
+                0,
+                0,
+                new byte[0]
+            );
         }
 
-        public enum State
+        public void Start()
         {
-            Idle,
-            Move,
-            Die,
+            if (state != State.Stop)
+                throw new Exception();
+
+            state = State.Lobby;
+            server.Start();
         }
 
-        [ProtoMember(1)]
-        public float x { get; set; }
-        [ProtoMember(2)]
-        public float y { get; set; }
-
-        public int cellX { get; set; }
-        public int cellY { get; set; }
-
-        public Rotation rotation { get; set; }
-        public State state { get; set; }
-
-        public float moveProgress { get; set; }
-        public float moveSpeed { get; set; }
-    }
-
-    // Components
-
-    public interface ITransform
-    {
-        float x { get; set; }
-        float y { get; set; }
-    }
-
-    // Systems
-
-    public interface IMatchSystem
-    {
-        void Tick(Match shard, float sec);
-    }
-
-    public class UnitSystem : IMatchSystem
-    {
-        public void Tick(Match shard, float sec)
+        public void Stop()
         {
-            for (int i = 0; i < shard.State.units.Length; i++)
+            if (state == State.Stop)
+                throw new Exception();
+
+            state = State.Stop;
+            server.Stop();
+            clients.Clear();
+        }
+
+        public void Tick(float sec)
+        {
+            if (state != State.Play) return;
+
+            var change = match.Tick(sec);
+            if (change)
             {
-                var unit = shard.State.units[i];
-                var unitInput = shard.State.inputs[i];
+                var stream = new MemoryStream();
+                Serializer.Serialize(stream, match.State);
+                var bytes = stream.GetBuffer();
 
-                if (unit.state == Unit.State.Move)
-                {
-                    var dx = 0;
-                    var dy = 0;
-                    
-                    switch (unit.rotation)
-                    {
-                        case Unit.Rotation.Top:    dy = +1; break;
-                        case Unit.Rotation.Right:  dx = +1; break;
-                        case Unit.Rotation.Bottom: dy = -1; break;
-                        case Unit.Rotation.Left:   dx = -1; break;
-                    }
-
-                    // Движение
-                    unit.moveProgress += unit.moveSpeed * sec;
-                    
-                    // Переход
-                    if (unit.moveProgress >= 1)
-                    {
-                        unit.cellX += dx;
-                        unit.cellY += dy;
-
-                        if (unitInput.move == Unit.Rotation.None)
-                        {
-                            unit.state = Unit.State.Idle;
-                            unit.moveProgress = 0;
-                        }
-                        else if (unitInput.move == unit.rotation)
-                        {
-                            unit.moveProgress %= 1;
-                        }
-                        else
-                        {
-                            unit.rotation = unitInput.move;
-                            unit.moveProgress = 0;
-                        }
-                    }
-
-                    // Координаты для клиента
-                    unit.x = unit.cellX + dx*unit.moveProgress;
-                    unit.y = unit.cellY + dy*unit.moveProgress;
-                }
-                else if (unit.state == Unit.State.Idle)
-                {
-                    if (unitInput.move != Unit.Rotation.None)
-                    {
-                        unit.state = Unit.State.Move;
-                        unit.rotation = unitInput.move;
-                    }
-                }
+                foreach (var client in clients)
+                    client.SendPayload(bytes, (int)stream.Position);
             }
         }
+
+        private void OnClientConnected(RemoteClient client)
+        {
+            if (state != State.Lobby)
+                throw new Exception();
+
+            clients.Add(client);
+
+            if (clients.Count == options.numPlayers)
+                state = State.Play;
+        }
+
+        private void OnClientDisconnected(RemoteClient client)
+        {
+            if (state == State.Play)
+                Stop();
+            else
+                clients.Remove(client);
+        }
+
+        private void OnClientMessageReceived(RemoteClient sender, byte[] payload, int payloadSize)
+        {
+        }
+
+        public class Options
+        {
+            public int      numPlayers  = 1;
+            public string   ip          = IPAddress.Loopback.ToString();
+            public int      port        = 8888;
+            public string   key         = "key";
+            public ulong    version     = 0;
+
+            public int      timeout     = 3;
+            public int      expiry      = int.MaxValue;
+        }
+
+        private enum State
+        {
+            Stop,
+            Lobby,
+            Play
+        }
+
+        private static byte[] GetKey(string keyString)
+        {
+            var hash = SHA256.Create();
+            var keyBytes = System.Text.Encoding.ASCII.GetBytes(keyString);
+            var keyHash = hash.ComputeHash(keyBytes);
+            hash.Dispose();
+
+            return keyHash;
+        }
     }
+
+
 }
-
-
