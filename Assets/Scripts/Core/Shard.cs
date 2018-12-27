@@ -6,7 +6,6 @@ using System.Security.Cryptography;
 using Cobalt.Core;
 using NetcodeIO.NET;
 using ProtoBuf;
-using UnityEngine;
 
 namespace Cobalt.Core
 {
@@ -17,6 +16,7 @@ namespace Cobalt.Core
         private TokenFactory tokens;
         private Server server;
         private List<RemoteClient> clients;
+        private float time;
 
         private State state;
         public Match match;
@@ -64,6 +64,7 @@ namespace Cobalt.Core
             if (state != State.Stop)
                 throw new Exception();
 
+            time = 0;
             state = State.Lobby;
             server.Start(false);
         }
@@ -80,7 +81,8 @@ namespace Cobalt.Core
 
         public void Tick(float sec)
         {
-            server.Tick(Time.time);
+            time += sec;
+            server.Tick(time);
 
             if (state != State.Play) return;
 
@@ -98,7 +100,7 @@ namespace Cobalt.Core
                 }
                 catch(Exception e)
                 {
-                    Debug.Log(e);
+                    Console.WriteLine(e.StackTrace);
                 }
 
                 // match.tps = UnityEngine.Random.Range(10, 61);
