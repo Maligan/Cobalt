@@ -16,16 +16,18 @@ public class GameManager : MonoBehaviour
 	public void Start()
 	{
 		shard = new Shard(new Shard.Options());
-		// shard.Start();
+		shard.Start();
 
-		match.Connect(shard.GetToken());
+		match.Connect(new Shard(new Shard.Options()).GetToken());
 	}
 
     public void Update()
 	{
-		shard.Tick(Time.deltaTime);
-
-		UpdateInput();
+		if (shard != null)
+		{
+			shard.Tick(Time.deltaTime);
+			UpdateInput();
+		}
 	}
 
 	private void UpdateInput()

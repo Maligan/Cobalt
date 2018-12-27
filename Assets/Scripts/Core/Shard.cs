@@ -14,7 +14,7 @@ namespace Cobalt.Core
         private Options options;
 
         private TokenFactory tokens;
-        private Server server;
+        public Server server;
         private List<RemoteClient> clients;
         private float time;
 
@@ -39,6 +39,7 @@ namespace Cobalt.Core
             server.OnClientConnected += OnClientConnected;
             server.OnClientDisconnected += OnClientDisconnected;
             server.OnClientMessageReceived += OnClientMessageReceived;
+
             server.LogLevel = NetcodeLogLevel.Debug;
 
             clients = new List<RemoteClient>();
@@ -46,6 +47,8 @@ namespace Cobalt.Core
             match = new Match();
             match.tps = 60;
         }
+
+        public bool IsRunning => state != State.Stop;
 
         public byte[] GetToken()
         {
@@ -71,9 +74,6 @@ namespace Cobalt.Core
 
         public void Stop()
         {
-            if (state == State.Stop)
-                throw new Exception();
-
             state = State.Stop;
             server.Stop();
             clients.Clear();
