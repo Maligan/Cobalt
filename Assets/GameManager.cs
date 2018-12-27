@@ -11,48 +11,20 @@ using UnityEngine;
 public class GameManager : MonoBehaviour
 {
 	public Shard shard;
-
-	public Client client;
-	public MatchTimeline timeline = new MatchTimeline();
-	public GameObject unit;
+	public MatchBehaviour match;
 
 	public void Start()
 	{
 		shard = new Shard(new Shard.Options());
 		shard.Start();
 
-		client = new Client();
-		client.OnStateChanged += x => Debug.Log(x);
-		client.OnMessageReceived += OnMessageReceived;
-		client.Connect(shard.GetToken(), false);
-
-		unit.GetComponent<TransformInterpolator>().Timeline = timeline;
+		match.Connect(shard.GetToken());
 	}
-
-    private void OnMessageReceived(byte[] payload, int payloadSize)
-    {
-		client.Send(new byte[1] { 255 }, 1);
-
-		try
-		{
-			var rnd = new System.Random();
-			if (rnd.Next(0, 100) > 95) return;
-
-			var stream = new MemoryStream(payload, 0, payloadSize);
-			var state = Serializer.Deserialize<MatchState>(stream);
-			timeline.Add(state);
-		}
-		catch (Exception e)
-		{
-			Debug.LogError(e);
-		}
-    }
 
     public void Update()
 	{
 		shard.Tick(Time.deltaTime);
 
-		client.Tick(Time.time);
 		UpdateInput();
 	}
 

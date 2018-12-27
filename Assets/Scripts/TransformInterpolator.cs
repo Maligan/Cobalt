@@ -11,12 +11,15 @@ public class TransformInterpolator : MonoBehaviour
         if (Timeline == null) return;
 
         //-------------------------------------------------------------------
-		// Выход по опережению (либо по кол-во кадров, либо по задержке)
-        // if (Timeline.Time == 0 && Timeline.Length < 0.35f) return;
-        if (Timeline.Time == 0 && Timeline.Count < 3) return;
-
         // Первая интерполяция - начинает отсчёт времени
-        if (Timeline.Time == 0) Timeline.Time = Timeline[0].timestamp;
+        if (Timeline.Time == 0)
+        {
+            // Выход по опережению (либо по кол-во кадров, либо по задержке)
+            // if (Timeline.Length < 0.35f) return;
+            if (Timeline.Count < 3) return;
+
+            Timeline.Time = Timeline[0].timestamp;
+        }
 
 		// Ускорение по отставанию
 		// TODO: ---
