@@ -39,12 +39,12 @@ namespace Cobalt.Core
             server.OnClientConnected += OnClientConnected;
             server.OnClientDisconnected += OnClientDisconnected;
             server.OnClientMessageReceived += OnClientMessageReceived;
-            clients = new List<RemoteClient>();
+            server.LogLevel = NetcodeLogLevel.Debug;
 
+            clients = new List<RemoteClient>();
             
             match = new Match();
             match.tps = 60;
-            server.Tickrate = 30;
         }
 
         public byte[] GetToken()
@@ -65,7 +65,7 @@ namespace Cobalt.Core
                 throw new Exception();
 
             state = State.Lobby;
-            server.Start();
+            server.Start(false);
         }
 
         public void Stop()
@@ -80,17 +80,28 @@ namespace Cobalt.Core
 
         public void Tick(float sec)
         {
+            server.Tick(Time.time);
+
             if (state != State.Play) return;
 
             var change = match.Tick(sec);
             if (change)
             {
-                var stream = new MemoryStream();
-                Serializer.Serialize(stream, match.State);
-                var bytes = stream.GetBuffer();
+                try
+                {
+                    var stream = new MemoryStream();
+                    Serializer.Serialize(stream, match.State);
+                    var bytes = stream.GetBuffer();
 
-                foreach (var client in clients)
-                    client.SendPayload(bytes, (int)stream.Position);
+                    foreach (var client in clients)
+                        client.SendPayload(bytes, (int)stream.Position);
+                }
+                catch(Exception e)
+                {
+                    Debug.Log(e);
+                }
+
+                // match.tps = UnityEngine.Random.Range(10, 61);
             }
         }
 

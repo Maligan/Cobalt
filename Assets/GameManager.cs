@@ -24,8 +24,7 @@ public class GameManager : MonoBehaviour
 		client = new Client();
 		client.OnStateChanged += x => Debug.Log(x);
 		client.OnMessageReceived += OnMessageReceived;
-		client.Connect(shard.GetToken());
-		client.Tickrate = 30;
+		client.Connect(shard.GetToken(), false);
 
 		unit.GetComponent<TransformInterpolator>().Timeline = timeline;
 	}
@@ -36,6 +35,9 @@ public class GameManager : MonoBehaviour
 
 		try
 		{
+			var rnd = new System.Random();
+			if (rnd.Next(0, 100) > 95) return;
+
 			var stream = new MemoryStream(payload, 0, payloadSize);
 			var state = Serializer.Deserialize<MatchState>(stream);
 			timeline.Add(state);
@@ -44,32 +46,14 @@ public class GameManager : MonoBehaviour
 		{
 			Debug.LogError(e);
 		}
-
     }
 
     public void Update()
 	{
 		shard.Tick(Time.deltaTime);
 
+		client.Tick(Time.time);
 		UpdateInput();
-		// UpdateClient();
-	}
-
-	private void UpdateClient()
-	{
-		// // Выход по опережению
-		// if (timeline.Count < 3) return;
-
-		// // Ускорение по отставани
-		// // TODO: ---
-
-		// // Нормальный просчёт
-		// timeline.Time += Time.deltaTime;
-
-		// while (timeline.Count > 2 && timeline.Time > timeline[1].timestamp)
-        //     timeline.States.RemoveAt(0);
-
-		// Update all Interpolators()
 	}
 
 	private void UpdateInput()

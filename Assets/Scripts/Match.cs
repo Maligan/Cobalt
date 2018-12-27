@@ -28,7 +28,7 @@ namespace Cobalt.Core
 
                 units = new [] {
                     new Unit() {
-                        moveSpeed = 5f
+                        moveSpeed = 3f
                     },
                 },
             };
@@ -65,11 +65,12 @@ namespace Cobalt.Core
         public MatchTimeline()
         {
             States = new List<MatchState>();
-            Capacity = 8;
+            Capacity = 16;
         }
 
         public List<MatchState> States { get; private set; }
         public float Time { get; set; }
+        public float Length => States.Count > 0 ? (States[States.Count-1].timestamp - Time) : 0;
         public int Capacity { get; set; }
         public int Count => States.Count;
         public MatchState this[int index] => States[index];
@@ -79,9 +80,18 @@ namespace Cobalt.Core
             States.Add(state);
             
             if (States.Count > Capacity)
+            {
                 States.RemoveAt(0);
+    			Console.WriteLine("[MatchTimeline] Capacity overhead");
+            }
 
             States.Sort(Sorter);
+        }
+
+        public void Purge()
+        {
+            while (Count > 2 && Time > States[1].timestamp)
+                States.RemoveAt(0);
         }
 
         private int Sorter(MatchState s1, MatchState s2)

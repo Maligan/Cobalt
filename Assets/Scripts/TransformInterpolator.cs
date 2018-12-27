@@ -11,18 +11,20 @@ public class TransformInterpolator : MonoBehaviour
         if (Timeline == null) return;
 
         //-------------------------------------------------------------------
-		// Выход по опережению
-		if (Timeline.Count < 3) return;
+		// Выход по опережению (либо по кол-во кадров, либо по задержке)
+        // if (Timeline.Time == 0 && Timeline.Length < 0.35f) return;
+        if (Timeline.Time == 0 && Timeline.Count < 3) return;
+
+        // Первая интерполяция - начинает отсчёт времени
         if (Timeline.Time == 0) Timeline.Time = Timeline[0].timestamp;
-		// Ускорение по отставани
+
+		// Ускорение по отставанию
 		// TODO: ---
 		// Нормальный просчёт
 		Timeline.Time += Time.deltaTime;
-		while (Timeline.Count > 2 && Timeline.Time > Timeline[1].timestamp)
-            Timeline.States.RemoveAt(0);
-        //-------------------------------------------------------------------
+        Timeline.Purge();
 
-        if (Timeline.Count < 2) return;
+        //-------------------------------------------------------------------
 
         // Calculate states for interpolation
         var t0 = GetTransform(0);
@@ -30,8 +32,11 @@ public class TransformInterpolator : MonoBehaviour
 
         // Calculate t [0; 1)
         var total = GetTimestamp(1) - GetTimestamp(0);
-        var delta = GetTime()       - GetTimestamp(0);
+        var delta = Timeline.Time   - GetTimestamp(0);
         var t = delta / total;
+
+        if (t < 0 || t > 1)
+            Debug.LogWarningFormat("[TransformInterpolator] Interpolation t-factor is out of range (0; 1): {0}", t);
 
         // Interpolate
         transform.position = Vector2.LerpUnclamped(
@@ -53,11 +58,6 @@ public class TransformInterpolator : MonoBehaviour
                 Gizmos.DrawCube(vector, Vector3.one * 1/10f);
             }
         }
-    }
-
-    private float GetTime()
-    {
-        return Timeline.Time;
     }
 
     private float GetTimestamp(int stateIndex)
