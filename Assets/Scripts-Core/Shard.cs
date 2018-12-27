@@ -45,7 +45,7 @@ namespace Cobalt.Core
             clients = new List<RemoteClient>();
             
             match = new Match();
-            match.tps = 60;
+            match.tps = options.tps;
         }
 
         public bool IsRunning => state != State.Stop;
@@ -140,6 +140,8 @@ namespace Cobalt.Core
 
             public int      timeout     = 3;
             public int      expiry      = int.MaxValue;
+
+            public int      tps         = 10;
         }
 
         private enum State

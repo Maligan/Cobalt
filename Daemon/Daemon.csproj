@@ -5,19 +5,14 @@
 		<OutputType>Exe</OutputType>
 	</PropertyGroup>
 
-	<!--<PropertyGroup>-->
-		<!--<TargetFramework>netstandard2</TargetFramework>-->
-	<!--</PropertyGroup>-->
-
 	<PropertyGroup>
 		<EnableDefaultItems>false</EnableDefaultItems>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<Reference Include="../Assets/Plugins/*.dll" />
-
-		<Compile Include="../Assets/Scripts/Daemon/*.cs" />
-		<Compile Include="../Assets/Scripts/Core/*.cs" />
+		<Compile Include="../Assets/Scripts-Core/*.cs" />
+		<Compile Include="../Assets/Scripts-Daemon/*.cs" />
 	</ItemGroup>
 
 </Project>

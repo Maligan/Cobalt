@@ -1,6 +1,10 @@
-/*
-/Assets/Plugins*
-/Daemon/*
+*
 
-!/Assets
-!/.gitignore
+!Daemon
+!Daemon/**.cs
+
+!Assets
+!Assets/**
+
+!Plugins
+!Plugins/**
