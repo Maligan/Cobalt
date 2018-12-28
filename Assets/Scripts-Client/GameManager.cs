@@ -15,8 +15,8 @@ public class GameManager : MonoBehaviour
 
 	public void Start()
 	{
-		shard = new Shard(new Shard.Options());
-		shard.Start();
+		// shard = new Shard(new Shard.Options());
+		// shard.Start();
 
 		match.Connect(new Shard(new Shard.Options()).GetToken());
 	}

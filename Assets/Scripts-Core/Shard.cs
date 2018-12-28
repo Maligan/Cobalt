@@ -11,7 +11,7 @@ namespace Cobalt.Core
 {
     public class Shard
     {
-        private Options options;
+        public Options options;
 
         private TokenFactory tokens;
         public Server server;
@@ -102,8 +102,6 @@ namespace Cobalt.Core
                 {
                     Console.WriteLine(e.StackTrace);
                 }
-
-                // match.tps = UnityEngine.Random.Range(10, 61);
             }
         }
 
@@ -134,7 +132,7 @@ namespace Cobalt.Core
         {
             public int      numPlayers  = 1;
             public string   ip          = IPAddress.Loopback.ToString();
-            public int      port        = 8888;
+            public int      port        = 8889;
             public string   key         = "key";
             public ulong    version     = 0;
 
