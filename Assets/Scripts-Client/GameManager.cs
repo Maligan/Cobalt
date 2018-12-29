@@ -7,18 +7,31 @@ using Cobalt.Core;
 using NetcodeIO.NET;
 using ProtoBuf;
 using UnityEngine;
+using UnityEngine.Networking;
 
 public class GameManager : MonoBehaviour
 {
 	public Shard shard;
 	public MatchBehaviour match;
 
-	public void Start()
+	public IEnumerator Start()
 	{
-		// shard = new Shard(new Shard.Options());
-		// shard.Start();
+		byte[] token = null;
 
-		match.Connect(new Shard(new Shard.Options()).GetToken());
+		/*
+		shard = new Shard(new Shard.Options());
+		shard.Start();
+		token = new Shard(new Shard.Options()).GetToken();
+ 		/*/
+		var www = UnityWebRequest.Get("localhost:8080/auth");
+		yield return www.SendWebRequest(); 
+		if (www.isNetworkError || www.isHttpError) yield break;
+		var key = www.downloadHandler.text;
+		token = Convert.FromBase64String(key);
+		//*/
+
+		match.Connect(token);
+		yield break;
 	}
 
     public void Update()

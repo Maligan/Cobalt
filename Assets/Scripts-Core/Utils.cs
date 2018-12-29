@@ -16,5 +16,14 @@ namespace Cobalt.Core
                 Console.WriteLine(format, args);
             #endif
         }
+
+        public static void LogError(Exception e)
+        {
+            #if UNITY_EDITOR
+                Debug.LogError(e);
+            #else
+                Console.Error.WriteLine(e);
+            #endif
+        }
     }
 } 

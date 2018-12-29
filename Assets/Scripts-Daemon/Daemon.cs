@@ -1,68 +1,205 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Text.RegularExpressions;
 // using System.Net.Http;
 using System.Threading;
+using System.Threading.Tasks;
 using Cobalt.Core;
 
 namespace Cobalt
 {
     public class Daemon
     {
-        private static ShardCollection shards;
-
         public static void Main(string[] args)
         {
-            shards = new ShardCollection();
-            // shards.Create(new Shard.Options());
-            // shards.Create(new Shard.Options() { port = 8890 });
-            
-            HttpProc(null);
+            var daemon = new Daemon();
+            daemon.Start();
 
             Console.ReadLine();
         }
 
-        private static void HttpProc(object stateInfo)
+        private HttpService httpService;
+        private ShardService shardService;
+        private LocalDiscoveryService discoveryService; 
+
+        public Daemon()
         {
-            var listener = new HttpListener();
-            listener.Prefixes.Add("http://localhost:8080/auth/");
-
-            Console.WriteLine("Listening...");
-            listener.Start();
-
-            while (true)
-            {
-                var context = listener.GetContext();
-                var request = context.Request;
-                var response = context.Response;
-
-                var shard = shards.Peak();
-                if (shard == null)
-                    shard = shards.Create(new Shard.Options());
-
-                var tokenBytes = shard.GetToken();
-                var token = Convert.ToBase64String(tokenBytes);
-
-                // Construct a response.
-                string responseString = token;
-                byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
-                // Get a response stream and write the response to it.
-                response.ContentLength64 = buffer.Length;
-                System.IO.Stream output = response.OutputStream;
-                output.Write(buffer, 0, buffer.Length);
-                // You must close the output stream.
-                output.Close();
-            }
-
-            listener.Stop();
+            discoveryService = new LocalDiscoveryService();
+            // httpService = new HttpService();
+            // shardService = new ShardService();
         }
 
-        
+        public void Start()
+        {
+            discoveryService.Start(8888, "1.0", "http://localhost:8080/");
+
+
+            // discoveryService.Stop();
+            discoveryService.Refresh();
+        }
     }
 }
 
 
-public class ShardCollection
+public class LocalDiscoveryService
+{
+    private const string COBALT = "COBALT";
+
+    public List<Result> Results { get; private set; }
+    public event Action ResultsChange;
+
+    private List<UdpClient> clients = new List<UdpClient>();
+
+    public async void Start(int port, string version, string http)
+    {
+        var response = String.Format("{0}/{1}: {2}", COBALT, version, http);
+        var responseBytes = Encoding.ASCII.GetBytes(response);
+
+        var server = new UdpClient(port);
+        clients.Add(server);
+
+        while (clients.Count > 0)
+        {
+            try
+            {
+                var clientRequest = await server.ReceiveAsync();
+                var clientRequestString = Encoding.ASCII.GetString(clientRequest.Buffer);
+                if (clientRequestString == COBALT)
+                    server.Send(responseBytes, responseBytes.Length, clientRequest.RemoteEndPoint);
+            }
+            catch (Exception e)
+            {
+                Utils.LogError(e);
+            }
+        }
+    }
+
+    public void Stop()
+    {
+        foreach (var udpClient in clients)
+            udpClient.Close();
+        
+        clients.Clear();
+    }
+
+    public async void Refresh()
+    {
+        Results = new List<Result>();
+
+        var clientRequest = Encoding.ASCII.GetBytes(COBALT);
+
+        var client = new UdpClient();
+        client.EnableBroadcast = true;
+        client.Send(clientRequest, clientRequest.Length, new IPEndPoint(IPAddress.Broadcast, 8888));
+
+        var serverResponse = await client.ReceiveAsync();
+        var serverResponseString = Encoding.ASCII.GetString(serverResponse.Buffer);
+
+        var result = Result.Parse(serverResponseString, serverResponse.RemoteEndPoint);
+        if (result != null)
+        {
+            Results.Add(result);
+
+            Utils.Log("Add {0} from {1} (version {2})", result.URL, result.Source, result.Version);
+        }
+
+        client.Close();
+    }
+
+    
+    public class Result
+    {
+        public static Result Parse(string str, IPEndPoint source)
+        {
+            var regex = new Regex(COBALT + @"/(\d+\.\d+): (.+)");
+            var match = regex.Match(str);
+
+            if (match.Success)
+            {
+                return new Result
+                {
+                    Source = source,
+                    Version = match.Groups[1].Value,
+                    URL = match.Groups[2].Value
+                };
+            }
+
+            return null;
+        }
+
+        public IPEndPoint Source;
+        public string Version;
+        public string URL;
+    }
+}
+
+
+
+public class HttpService
+{
+    private HttpListener listener;
+    private ShardService shards;
+
+    public HttpService()
+    {
+        shards = new ShardService();
+
+        listener = new HttpListener();
+    }
+
+    public void Stop()
+    {
+        listener.Prefixes.Clear();
+        listener.Stop();
+    }
+
+    public async void Start()
+    {
+        Console.WriteLine("Listening...");
+        listener.Prefixes.Add("http://localhost:8080/auth/");
+        listener.Start();
+
+        while (listener.IsListening)
+        {
+            try { await Process(); }
+            catch (Exception e) { Utils.LogError(e); }
+        }
+    }
+
+    private async Task Process()
+    {
+        var context = await listener.GetContextAsync();
+        var request = context.Request;
+        var response = context.Response;
+
+        var shard = shards.Peak();
+        if (shard == null)
+            shard = shards.Create(new Shard.Options());
+
+        var tokenBytes = shard.GetToken();
+        var token = Convert.ToBase64String(tokenBytes);
+
+        // Construct a response.
+        string responseString = token;
+        byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
+
+        response.ContentLength64 = buffer.Length;
+        
+        var output = response.OutputStream;
+        output.Write(buffer, 0, buffer.Length);
+        output.Close();
+    }
+}
+
+
+
+
+
+
+public class ShardService
 {
     private List<Shard> shards = new List<Shard>();
 
