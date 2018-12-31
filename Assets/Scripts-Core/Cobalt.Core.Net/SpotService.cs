@@ -24,17 +24,12 @@ namespace Cobalt.Core.Net
 
         public void Start()
         {
-            var ips = SpotUtils.GetSupportedIPs();
-            if (ips.Count == 0)
-                throw new Exception("There are no available network interafces");
-
-            foreach (var ip in ips)
-               StartService(ip);
+            StartService(IPAddress.Any);
         }
 
         private async void StartService(IPAddress ip)
         {
-            var responseStr = string.Format("{0}/{1}: http://{2}:{3}/", Spot.REQUEST, version, ip, port);
+            var responseStr = string.Format("{0}/{1}", Spot.REQUEST, version);
             var responseBytes = Encoding.ASCII.GetBytes(responseStr);
 
             var socketEndpoint = new IPEndPoint(ip, port);
@@ -67,6 +62,7 @@ namespace Cobalt.Core.Net
     {
         public event Action SpotsChange;
         public List<Spot> Spots { get; private set; }
+        public bool IsRefreshing { get; private set; }
 
         private int port;
         private List<UdpClient> sockets;
@@ -81,6 +77,8 @@ namespace Cobalt.Core.Net
 
         public void Refresh()
         {
+            IsRefreshing = true;
+
             Spots.Clear();
 
             var ips = SpotUtils.GetSupportedIPs();
@@ -127,6 +125,8 @@ namespace Cobalt.Core.Net
 
         public void Stop()
         {
+            IsRefreshing = false;
+            
             foreach (var socket in sockets)
                 socket.Close();
             
@@ -143,34 +143,25 @@ namespace Cobalt.Core.Net
     public class Spot
     {
         public static readonly string REQUEST = "COBALT";
-        public static readonly Regex RESPONSE = new Regex(REQUEST + @"/(\d+): (.+)"); 
+        public static readonly Regex RESPONSE = new Regex(REQUEST + @"/(\d+)"); 
 
         public static Spot Parse(string response, IPEndPoint source)
         {
             var match = RESPONSE.Match(response);
             if (match.Success)
             {
-                Uri url;
-                var urlString = match.Groups[2].Value;
-                var urlCreated = Uri.TryCreate(urlString, UriKind.Absolute, out url);
-
-                if (urlCreated)
+                return new Spot
                 {
-                    return new Spot
-                    {
-                        Source = source,
-                        Version = int.Parse(match.Groups[1].Value),
-                        URL = url
-                    };
-                }
+                    EndPoint = source,
+                    Version = int.Parse(match.Groups[1].Value),
+                };
             }
 
             return null;
         }
 
-        public IPEndPoint Source;
+        public IPEndPoint EndPoint;
         public int Version;
-        public Uri URL;
     }
 
     internal static class SpotUtils

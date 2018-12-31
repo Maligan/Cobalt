@@ -5,7 +5,7 @@ using NetcodeIO.NET;
 using ProtoBuf;
 using UnityEngine;
 
-public class MatchBehaviour : MonoBehaviour
+public class MatchManager : MonoBehaviour
 {
     [SerializeField]
     private GameObject unit;

@@ -50,7 +50,7 @@ namespace Cobalt.Core.Net
             var response = context.Response;
 
             var path = request.Url.LocalPath;
-            if (path == "/auth")
+            if (path == "/join")
             {
                 var shard = shards.Peak();
                 if (shard == null)
