@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Cobalt.Core;
+using Cobalt.UI;
 using NetcodeIO.NET;
 using ProtoBuf;
 using UnityEngine;
@@ -12,6 +13,7 @@ using UnityEngine.Networking;
 public class App : MonoBehaviour
 {
 	public static App Instance { get; private set; }
+	public static UIManager UI { get { return Instance.GetComponent<UIManager>(); } }
 	public static MatchManager MatchManager { get { return Instance.GetComponent<MatchManager>(); } }
 	public App() { Instance = this; }
 

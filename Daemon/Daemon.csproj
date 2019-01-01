@@ -11,8 +11,8 @@
 
 	<ItemGroup>
 		<Reference Include="../Assets/Plugins/*.dll" />
-		<Compile Include="../Assets/Scripts-Core/**/*.cs" />
-		<Compile Include="../Assets/Scripts-Daemon/**/*.cs" />
+		<Compile Include="../Assets/Scripts/Core/**/*.cs" />
+		<Compile Include="../Assets/Scripts/Daemon/**/*.cs" />
 	</ItemGroup>
 
 </Project>

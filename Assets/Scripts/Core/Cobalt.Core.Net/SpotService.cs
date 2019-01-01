@@ -60,9 +60,9 @@ namespace Cobalt.Core.Net
 
     public class SpotServiceFinder
     {
-        public event Action SpotsChange;
         public List<Spot> Spots { get; private set; }
-        public bool IsRefreshing { get; private set; }
+        public event Action Change;
+        public bool IsRunning { get; private set; }
 
         private int port;
         private List<UdpClient> sockets;
@@ -77,8 +77,6 @@ namespace Cobalt.Core.Net
 
         public void Refresh()
         {
-            IsRefreshing = true;
-
             Spots.Clear();
 
             var ips = SpotUtils.GetSupportedIPs();
@@ -89,6 +87,9 @@ namespace Cobalt.Core.Net
                StartRefresh(ip);
 
             StopAfter(150);
+
+            IsRunning = true;
+            if (Change != null) Change();
         }
 
         private async void StartRefresh(IPAddress ip)
@@ -110,27 +111,19 @@ namespace Cobalt.Core.Net
 
                 var responseString = Encoding.ASCII.GetString(response.Buffer);
                 var spot = Spot.Parse(responseString, response.RemoteEndPoint);
-                if (spot != null)
-                {
-                    lock (Spots)
-                    {
-                        Spots.Add(spot);
-
-                        if (SpotsChange != null)
-                            SpotsChange();
-                    }
-                }
+                if (spot != null) lock (Spots) Spots.Add(spot);
             }
         }
 
         public void Stop()
-        {
-            IsRefreshing = false;
-            
+        {            
             foreach (var socket in sockets)
                 socket.Close();
             
             sockets.Clear();
+
+            IsRunning = false;
+            if (Change != null) Change();
         }
 
         private async void StopAfter(int milliseconds)
@@ -143,7 +136,7 @@ namespace Cobalt.Core.Net
     public class Spot
     {
         public static readonly string REQUEST = "COBALT";
-        public static readonly Regex RESPONSE = new Regex(REQUEST + @"/(\d+)"); 
+        public static readonly Regex RESPONSE = new Regex("^" + REQUEST + @"/(\d+)"); 
 
         public static Spot Parse(string response, IPEndPoint source)
         {

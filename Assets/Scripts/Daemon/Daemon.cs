@@ -30,16 +30,21 @@ namespace Cobalt
         {
             var port = 8888;
 
-            // var spot = new SpotService(1, port);
-            // spot.Start();
+            var spot = new SpotService(1, port);
+            spot.Start();
 
-            // var spotFinder = new SpotServiceFinder(port);
-            // spotFinder.Refresh();
+            var spotFinder = new SpotServiceFinder(port);
+            spotFinder.Refresh();
+
+            spotFinder.Change += () => {
+                foreach (var s in spotFinder.Spots)
+                    Utils.Log(s.EndPoint.Address.ToString());
+            };
             
 
-            var shards = new ShardService();
-            var httpService = new HttpService(port, shards);
-            httpService.Start();
+            // var shards = new ShardService();
+            // var httpService = new HttpService(port, shards);
+            // httpService.Start();
 
             // lanSpotService = new LANSpotService();
             // shardService = new ShardService();
