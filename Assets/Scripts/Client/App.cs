@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Cobalt.Core;
+using Cobalt.Core.Net;
 using Cobalt.UI;
 using NetcodeIO.NET;
 using ProtoBuf;
@@ -15,36 +16,41 @@ public class App : MonoBehaviour
 	public static App Instance { get; private set; }
 	public static UIManager UI { get { return Instance.GetComponent<UIManager>(); } }
 	public static MatchManager MatchManager { get { return Instance.GetComponent<MatchManager>(); } }
-	public App() { Instance = this; }
+	public static ShardService ShardService { get; private set; }
+
+	public App()
+	{
+		Instance = this;
+		ShardService = new ShardService();
+	}
 
 	public void Start()
 	{
-		// byte[] token = null;
-
-		// /*
-		// shard = new Shard(new Shard.Options());
-		// shard.Start();
-		// token = new Shard(new Shard.Options()).GetToken();
- 		// /*/
-		// var www = UnityWebRequest.Get("localhost:8080/auth");
-		// yield return www.SendWebRequest(); 
-		// if (www.isNetworkError || www.isHttpError) yield break;
-		// var key = www.downloadHandler.text;
-		// token = Convert.FromBase64String(key);
-		// //*/
-
-		// match.Connect(token);
-		// yield break;
+		DoMenu();
 	}
 
-    public void Update()
+	public void Update()
 	{
-		// if (shard != null)
-		// {
-		// 	shard.Tick(Time.deltaTime);
-		// 	UpdateInput();
-		// }
+		ShardService.Update(Time.deltaTime);
 	}
+
+	public static void DoConnect(byte[] token)
+	{
+		App.UI.Get<MenuPanel>().Require(Instance, 0);
+		App.MatchManager.Connect(token);
+		App.Instance.transform.Find("Match").gameObject.SetActive(true);
+
+	}
+
+	public static void DoMenu()
+	{
+		App.UI.Get<MenuPanel>().Require(Instance, +1);
+		App.Instance.transform.Find("Match").gameObject.SetActive(false);
+	}
+
+
+
+
 
 	private void UpdateInput()
 	{

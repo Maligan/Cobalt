@@ -4,24 +4,24 @@ using System.Threading.Tasks;
 
 namespace Cobalt.Core.Net
 {
-    public class HttpService
+    public class JoinService
     {
         private HttpListener listener;
-        private ShardService shards;
+        private Shard shard;
         private int port;
 
         public string Prefix { get; private set; }
 
-        public HttpService(int port, ShardService shards)
+        public JoinService(int port, Shard shard)
         {
             this.port = port;
-            this.shards = shards;
+            this.shard = shard;
             listener = new HttpListener();
         }
 
         public void Stop()
         {
-            listener.Prefixes.Clear();
+            // listener.Prefixes.Clear();
             listener.Stop();
         }
 
@@ -45,26 +45,26 @@ namespace Cobalt.Core.Net
 
         private async Task Process()
         {
-            var context = await listener.GetContextAsync();
+            HttpListenerContext context = null;
+            
+            try { context = await listener.GetContextAsync(); }
+            catch { return; /* Lister are closed - it's ok */ }
+
             var request = context.Request;
             var response = context.Response;
 
             var path = request.Url.LocalPath;
             if (path == "/join")
             {
-                var shard = shards.Peak();
-                if (shard == null)
-                    shard = shards.Create(new Shard.Options());
-
                 var tokenBytes = shard.GetToken();
                 var token = Convert.ToBase64String(tokenBytes);
 
                 // Construct a response.
-                string responseString = token;
-                byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
+                // string responseString = token;
+                // byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
 
-                response.ContentLength64 = buffer.Length;
-                response.OutputStream.Write(buffer, 0, buffer.Length);
+                response.ContentLength64 = tokenBytes.Length;
+                response.OutputStream.Write(tokenBytes, 0, tokenBytes.Length);
             }
             else
             {

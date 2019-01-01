@@ -9,9 +9,6 @@ namespace Cobalt.Core
         public MatchState State;
         public IMatchSystem[] Systems;
 
-        public float tps = 10;
-        private float timeout;
-
         public Match()
         {
             Systems = new [] {
@@ -42,20 +39,10 @@ namespace Cobalt.Core
             throw new Exception();
         }
 
-        public bool Tick(float sec)
+        public void Tick(float sec)
         {
-            timeout -= sec;
-            var needTick = tps <= 0 ? true : timeout <= 0;
-            if (needTick)
-            {            
-                foreach (var system in Systems)
-                    system.Tick(this, 1/tps - timeout);
-
-                timeout = tps <= 0 ? 0 : 1/tps;
-            }
-
-            State.timestamp += sec;
-            return needTick;
+            foreach (var system in Systems)
+                system.Tick(this, sec);
         }
     }
 

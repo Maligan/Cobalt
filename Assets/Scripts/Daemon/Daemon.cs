@@ -28,19 +28,8 @@ namespace Cobalt
 
         public Daemon()
         {
-            var port = 8888;
-
-            var spot = new SpotService(1, port);
-            spot.Start();
-
-            var spotFinder = new SpotServiceFinder(port);
-            spotFinder.Refresh();
-
-            spotFinder.Change += () => {
-                foreach (var s in spotFinder.Spots)
-                    Utils.Log(s.EndPoint.Address.ToString());
-            };
-            
+            var shard = new ShardService();
+            shard.Start();
 
             // var shards = new ShardService();
             // var httpService = new HttpService(port, shards);

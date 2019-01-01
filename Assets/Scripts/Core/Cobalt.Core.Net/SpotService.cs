@@ -86,7 +86,7 @@ namespace Cobalt.Core.Net
             foreach (var ip in ips)
                StartRefresh(ip);
 
-            StopAfter(150);
+            StopRefresh(150);
 
             IsRunning = true;
             if (Change != null) Change();
@@ -115,6 +115,12 @@ namespace Cobalt.Core.Net
             }
         }
 
+        private async void StopRefresh(int millisecondsDelay)
+        {
+            await Task.Delay(millisecondsDelay);
+            Stop();
+        }
+
         public void Stop()
         {            
             foreach (var socket in sockets)
@@ -125,18 +131,12 @@ namespace Cobalt.Core.Net
             IsRunning = false;
             if (Change != null) Change();
         }
-
-        private async void StopAfter(int milliseconds)
-        {
-            await Task.Delay(milliseconds);
-            Stop();
-        }
     }
 
     public class Spot
     {
-        public static readonly string REQUEST = "COBALT";
-        public static readonly Regex RESPONSE = new Regex("^" + REQUEST + @"/(\d+)"); 
+        internal static readonly string REQUEST = "COBALT";
+        internal static readonly Regex RESPONSE = new Regex("^" + REQUEST + @"/(\d+)"); 
 
         public static Spot Parse(string response, IPEndPoint source)
         {
@@ -176,8 +176,11 @@ namespace Cobalt.Core.Net
 
                 foreach (var unicast in unicasts)
                     if (unicast.Address.AddressFamily == AddressFamily.InterNetwork)
-                            result.Add(unicast.Address);
+                        result.Add(unicast.Address);
             }
+
+            if (result.Count > 1)
+                result.RemoveAll(address => IPAddress.IsLoopback(address));
 
             return result;
         }

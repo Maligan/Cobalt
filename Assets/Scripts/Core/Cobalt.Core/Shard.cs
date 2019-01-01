@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
 using Cobalt.Core;
@@ -17,6 +18,7 @@ namespace Cobalt.Core
         public Server server;
         private List<RemoteClient> clients;
         private float time;
+        private float timeDelta;
 
         private State state;
         public Match match;
@@ -30,7 +32,7 @@ namespace Cobalt.Core
             tokens = new TokenFactory(options.version, GetKey(options.key));
             server = new Server(
                 options.numPlayers,
-                options.ip,
+                IPAddress.Any.ToString(),
                 options.port,
                 options.version,
                 GetKey(options.key)
@@ -45,7 +47,6 @@ namespace Cobalt.Core
             clients = new List<RemoteClient>();
             
             match = new Match();
-            match.tps = options.tps;
         }
 
         public bool IsRunning => state != State.Stop;
@@ -53,7 +54,7 @@ namespace Cobalt.Core
         public byte[] GetToken()
         {
             return tokens.GenerateConnectToken(
-                new [] { new IPEndPoint(IPAddress.Parse(options.ip), options.port) },
+                options.ips.Select(ip => new IPEndPoint(ip, options.port)).ToArray(),
                 options.expiry,
                 options.timeout,
                 0,
@@ -79,34 +80,39 @@ namespace Cobalt.Core
             clients.Clear();
         }
 
-        public void Tick(float sec)
+        public void Update(float sec)
         {
+            timeDelta -= sec;
             time += sec;
             server.Tick(time);
+            
+            if (timeDelta >= 0) return;
+
+            timeDelta = 1/options.tps;
 
             if (state != State.Play) return;
 
-            var change = match.Tick(sec);
-            if (change)
-            {
-                try
-                {
-                    var stream = new MemoryStream();
-                    Serializer.Serialize(stream, match.State);
-                    var bytes = stream.GetBuffer();
+            match.Tick(1/options.tps);
 
-                    foreach (var client in clients)
-                        client.SendPayload(bytes, (int)stream.Position);
-                }
-                catch(Exception e)
-                {
-                    Console.WriteLine(e.StackTrace);
-                }
+            try
+            {
+                var stream = new MemoryStream();
+                Serializer.Serialize(stream, match.State);
+                var bytes = stream.GetBuffer();
+
+                foreach (var client in clients)
+                    client.SendPayload(bytes, (int)stream.Position);
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine(e.StackTrace);
             }
         }
 
         private void OnClientConnected(RemoteClient client)
         {
+            Utils.Log("[Shard] OnClientConnected");
+
             if (state != State.Lobby)
                 throw new Exception();
 
@@ -130,16 +136,16 @@ namespace Cobalt.Core
 
         public class Options
         {
-            public int      numPlayers  = 1;
-            public string   ip          = IPAddress.Loopback.ToString();
-            public int      port        = 8889;
-            public string   key         = "key";
-            public ulong    version     = 0;
+            public int          numPlayers  = 1;
+            public IPAddress[]  ips         = new [] { IPAddress.Loopback };
+            public int          port        = 8889;
+            public string       key         = "key";
+            public ulong        version     = 0;
 
-            public int      timeout     = 3;
-            public int      expiry      = int.MaxValue;
+            public int          timeout     = 3;
+            public int          expiry      = int.MaxValue;
 
-            public int      tps         = 10;
+            public int          tps         = 10;
         }
 
         private enum State
