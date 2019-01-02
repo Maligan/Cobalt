@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Linq;
+using Cobalt.Core;
 using Cobalt.Core.Net;
 using Cobalt.UI;
 using UnityEngine;
@@ -64,11 +65,11 @@ public class MenuPanel : UIPanel
 
     private IEnumerator OnHostClickCoroutine()
     {
-        App.ShardService.Start();
+        App.ShardService.Start(new ShardOptions());
 
         yield return OnRefreshClickCoroutine(false);
 
-        var ips = App.ShardService.shard.options.ips;
+        var ips = App.ShardService.Options.ips;
 
         var spot = finder.Spots.FirstOrDefault(s => {
             var ip = s.EndPoint.Address;

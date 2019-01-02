@@ -26,12 +26,20 @@ public class App : MonoBehaviour
 
 	public void Start()
 	{
-		DoMenu();
+		DoLocal();
 	}
 
 	public void Update()
 	{
-		ShardService.Update(Time.deltaTime);
+		ShardService.Tick(Time.deltaTime);
+	}
+
+	#region Commands
+
+	public static void DoLocal()
+	{
+		ShardService.Start(new ShardOptions());
+		DoConnect(ShardService.GetToken());
 	}
 
 	public static void DoConnect(byte[] token)
@@ -48,25 +56,5 @@ public class App : MonoBehaviour
 		App.Instance.transform.Find("Match").gameObject.SetActive(false);
 	}
 
-
-
-
-
-	private void UpdateInput()
-	{
-		// if (Input.GetKeyDown(KeyCode.Space))
-		// 	shard.match.State.inputs[0].move = Unit.Rotation.None;
-			
-		// if (Input.GetKeyDown(KeyCode.W))
-		// 	shard.match.State.inputs[0].move = Unit.Rotation.Top;
-			
-		// if (Input.GetKeyDown(KeyCode.S))
-		// 	shard.match.State.inputs[0].move = Unit.Rotation.Bottom;
-
-		// if (Input.GetKeyDown(KeyCode.D))
-		// 	shard.match.State.inputs[0].move = Unit.Rotation.Right;
-			
-		// if (Input.GetKeyDown(KeyCode.A))
-		// 	shard.match.State.inputs[0].move = Unit.Rotation.Left;
-	}
+	#endregion
 }

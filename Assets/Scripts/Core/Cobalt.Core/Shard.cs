@@ -12,44 +12,25 @@ namespace Cobalt.Core
 {
     public class Shard
     {
-        public Options options;
-
-        private TokenFactory tokens;
-        public Server server;
-        private List<RemoteClient> clients;
-        private float time;
-        private float timeDelta;
+        public ShardOptions options;
 
         private State state;
-        public Match match;
 
-        public Shard(Options options)
+        private TokenFactory tokens;
+        private Server server;
+        private List<RemoteClient> clients;
+        private Match match;
+
+        private float time;
+
+        public Shard(ShardOptions options)
         {
             this.options = options;
             
             state = State.Stop;
-
-            tokens = new TokenFactory(options.version, GetKey(options.key));
-            server = new Server(
-                options.numPlayers,
-                IPAddress.Any.ToString(),
-                options.port,
-                options.version,
-                GetKey(options.key)
-            );
-
-            server.OnClientConnected += OnClientConnected;
-            server.OnClientDisconnected += OnClientDisconnected;
-            server.OnClientMessageReceived += OnClientMessageReceived;
-
-            server.LogLevel = NetcodeLogLevel.Debug;
-
+            tokens = new TokenFactory(options.version, ShardOptions.GetKey(options.key));
             clients = new List<RemoteClient>();
-            
-            match = new Match();
         }
-
-        public bool IsRunning => state != State.Stop;
 
         public byte[] GetToken()
         {
@@ -70,48 +51,64 @@ namespace Cobalt.Core
 
             time = 0;
             state = State.Lobby;
+
+            server = new Server(
+                options.numPlayers,
+                IPAddress.Any.ToString(),
+                options.port,
+                options.version,
+                ShardOptions.GetKey(options.key)
+            );
+
+            server.OnClientConnected += OnClientConnected;
+            server.OnClientDisconnected += OnClientDisconnected;
+            server.OnClientMessageReceived += OnClientMessageReceived;
             server.Start(false);
+
+            match = new Match();
         }
 
         public void Stop()
         {
+            if (state == State.Stop)
+                throw new Exception();
+
             state = State.Stop;
-            server.Stop();
+
             clients.Clear();
+            
+            server.OnClientConnected -= OnClientConnected;
+            server.OnClientDisconnected -= OnClientDisconnected;
+            server.OnClientMessageReceived -= OnClientMessageReceived;
+            server.Stop();
+            server = null;
+
+            match = null;
         }
 
-        public void Update(float sec)
+        public void Tick(float sec)
         {
-            timeDelta -= sec;
+            if (state == State.Stop) return;
+
             time += sec;
             server.Tick(time);
-            
-            if (timeDelta >= 0) return;
-
-            timeDelta = 1/options.tps;
 
             if (state != State.Play) return;
 
-            match.Tick(1/options.tps);
-
-            try
+            var tickIndexBefore = (int)((time - sec) / options.spt);
+            var tickIndexAfter = (int)(time / options.spt);
+            if (tickIndexBefore != tickIndexAfter)
             {
-                var stream = new MemoryStream();
-                Serializer.Serialize(stream, match.State);
-                var bytes = stream.GetBuffer();
-
-                foreach (var client in clients)
-                    client.SendPayload(bytes, (int)stream.Position);
-            }
-            catch(Exception e)
-            {
-                Console.WriteLine(e.StackTrace);
+                match.Tick(options.spt);
+                clients.Send(match.State);
             }
         }
 
+        #region Netcode Events
+
         private void OnClientConnected(RemoteClient client)
         {
-            Utils.Log("[Shard] OnClientConnected");
+            Utils.Log("[Shard] Client Connected #" + client.ClientID);
 
             if (state != State.Lobby)
                 throw new Exception();
@@ -124,6 +121,8 @@ namespace Cobalt.Core
 
         private void OnClientDisconnected(RemoteClient client)
         {
+            Utils.Log("[Shard] Client Disconnected #" + client.ClientID);
+
             if (state == State.Play)
                 Stop();
             else
@@ -132,21 +131,14 @@ namespace Cobalt.Core
 
         private void OnClientMessageReceived(RemoteClient sender, byte[] payload, int payloadSize)
         {
+            var stream = new MemoryStream(payload, 0, payloadSize);
+            var input = Serializer.Deserialize<UnitInput>(stream);
+            match.State.inputs[0] = input;
         }
 
-        public class Options
-        {
-            public int          numPlayers  = 1;
-            public IPAddress[]  ips         = new [] { IPAddress.Loopback };
-            public int          port        = 8889;
-            public string       key         = "key";
-            public ulong        version     = 0;
+        #endregion
 
-            public int          timeout     = 3;
-            public int          expiry      = int.MaxValue;
-
-            public int          tps         = 10;
-        }
+        public bool IsRunning => state != State.Stop;
 
         private enum State
         {
@@ -154,8 +146,23 @@ namespace Cobalt.Core
             Lobby,
             Play
         }
+    }
 
-        private static byte[] GetKey(string keyString)
+    public class ShardOptions
+    {
+        public int          numPlayers  = 1;
+        public IPAddress[]  ips         = new [] { IPAddress.Loopback };
+        public int          port        = 8889;
+        public string       key         = "key";
+        public ulong        version     = 0;
+
+        public int          timeout     = 3;
+        public int          expiry      = int.MaxValue;
+
+        public int          tps         = 20;
+        public float        spt        => 1f / tps;
+
+        internal static byte[] GetKey(string keyString)
         {
             var hash = SHA256.Create();
             var keyBytes = System.Text.Encoding.ASCII.GetBytes(keyString);
@@ -165,6 +172,4 @@ namespace Cobalt.Core
             return keyHash;
         }
     }
-
-
 }

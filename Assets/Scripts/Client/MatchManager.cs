@@ -26,20 +26,31 @@ public class MatchManager : MonoBehaviour
 
 	private void Update()
 	{
+		UnitInput input = null;
+
+		if (Input.GetKeyDown(KeyCode.Space)) input = new UnitInput { move = Unit.Direction.None };
+		if (Input.GetKeyDown(KeyCode.W)) input = new UnitInput { move = Unit.Direction.Top };
+		if (Input.GetKeyDown(KeyCode.S)) input = new UnitInput { move = Unit.Direction.Bottom };
+		if (Input.GetKeyDown(KeyCode.D)) input = new UnitInput { move = Unit.Direction.Right };
+		if (Input.GetKeyDown(KeyCode.A)) input = new UnitInput { move = Unit.Direction.Left };
+
 		if (client != null)
+		{
+			if (client.State == ClientState.Connected && input != null)
+				client.Send(input);
+			
 			client.Tick(Time.time);
+		}
 	}
 
     private void OnMessageReceived(byte[] payload, int payloadSize)
     {
 		try
 		{
-			var rnd = new System.Random();
-			if (rnd.Next(0, 100) > 95) return;
+			// var rnd = new System.Random();
+			// if (rnd.Next(0, 100) > 95) return;
 
-			var stream = new MemoryStream(payload, 0, payloadSize);
-			var state = Serializer.Deserialize<MatchState>(stream);
-			timeline.Add(state);
+			timeline.Add(NetcodeUtils.Read<MatchState>(payload, payloadSize));
 		}
 		catch (Exception e)
 		{

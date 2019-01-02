@@ -18,7 +18,7 @@ namespace Cobalt.Core
             State = new MatchState {
                 inputs = new [] {
                     new UnitInput() {
-                        move = Unit.Rotation.Right
+                        move = Unit.Direction.Right
                     },
                 },
 
@@ -41,6 +41,8 @@ namespace Cobalt.Core
 
         public void Tick(float sec)
         {
+            State.timestamp += sec;
+
             foreach (var system in Systems)
                 system.Tick(this, sec);
         }
@@ -101,15 +103,19 @@ namespace Cobalt.Core
 
     // Entities
 
+    [ProtoContract]
     public class UnitInput
     {
-        public Unit.Rotation move;
+        [ProtoMember(1)]
+        public Unit.Direction move;
+        [ProtoMember(2)]
+        public bool t = true;
     }
 
     [ProtoContract]
     public class Unit : ITransform
     {
-        public enum Rotation
+        public enum Direction
         {
             None = 0,   // 000
             Top = 4,    // 100
@@ -133,7 +139,7 @@ namespace Cobalt.Core
         public int cellX { get; set; }
         public int cellY { get; set; }
 
-        public Rotation rotation { get; set; }
+        public Direction direction { get; set; }
         public State state { get; set; }
 
         public float moveProgress { get; set; }
@@ -169,12 +175,12 @@ namespace Cobalt.Core
                     var dx = 0;
                     var dy = 0;
                     
-                    switch (unit.rotation)
+                    switch (unit.direction)
                     {
-                        case Unit.Rotation.Top:    dy = +1; break;
-                        case Unit.Rotation.Right:  dx = +1; break;
-                        case Unit.Rotation.Bottom: dy = -1; break;
-                        case Unit.Rotation.Left:   dx = -1; break;
+                        case Unit.Direction.Top:    dy = +1; break;
+                        case Unit.Direction.Right:  dx = +1; break;
+                        case Unit.Direction.Bottom: dy = -1; break;
+                        case Unit.Direction.Left:   dx = -1; break;
                     }
 
                     // Движение
@@ -186,19 +192,19 @@ namespace Cobalt.Core
                         unit.cellX += dx;
                         unit.cellY += dy;
 
-                        if (unitInput.move == Unit.Rotation.None)
+                        if (unitInput.move == Unit.Direction.None)
                         {
-                            unitInput.move = Unit.Rotation.None;
+                            unitInput.move = Unit.Direction.None;
                             unit.state = Unit.State.Idle;
                             unit.moveProgress = 0;
                         }
-                        else if (unitInput.move == unit.rotation)
+                        else if (unitInput.move == unit.direction)
                         {
                             unit.moveProgress %= 1;
                         }
                         else
                         {
-                            unit.rotation = unitInput.move;
+                            unit.direction = unitInput.move;
                             unit.moveProgress = 0;
                         }
                     }
@@ -212,15 +218,13 @@ namespace Cobalt.Core
                 }
                 else if (unit.state == Unit.State.Idle)
                 {
-                    if (unitInput.move != Unit.Rotation.None)
+                    if (unitInput.move != Unit.Direction.None)
                     {
                         unit.state = Unit.State.Move;
-                        unit.rotation = unitInput.move;
+                        unit.direction = unitInput.move;
                     }
                 }
             }
         }
     }
 }
-
-

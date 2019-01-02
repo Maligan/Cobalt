@@ -14,22 +14,17 @@ namespace Cobalt
 {
     public class Daemon
     {
-        public static void Main(string[] args)
-        {
-            var daemon = new Daemon();
-            daemon.Start();
-
-            Console.ReadLine();
-        }
-
-        // private LANSpotService lanSpotService; 
-        // private HttpService httpService;
-        // private ShardService shardService;
+        // public static void Main(string[] args)
+        // {
+        //     var daemon = new Daemon();
+        //     daemon.Start();
+        //     Console.ReadLine();
+        // }
 
         public Daemon()
         {
-            var shard = new ShardService();
-            shard.Start();
+            // var shard = new ShardService(new ShardOptions());
+            // shard.Start();
 
             // var shards = new ShardService();
             // var httpService = new HttpService(port, shards);

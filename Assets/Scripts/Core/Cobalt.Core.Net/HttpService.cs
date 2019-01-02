@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Cobalt.Core.Net
 {
-    public class JoinService
+    public class HttpService
     {
         private HttpListener listener;
         private Shard shard;
@@ -12,7 +12,7 @@ namespace Cobalt.Core.Net
 
         public string Prefix { get; private set; }
 
-        public JoinService(int port, Shard shard)
+        public HttpService(int port, Shard shard)
         {
             this.port = port;
             this.shard = shard;
