@@ -4,7 +4,7 @@ using System;
 using UnityEngine;
 #endif
 
-namespace Cobalt.Core
+namespace Cobalt.Math
 {
     public static class Utils
     {

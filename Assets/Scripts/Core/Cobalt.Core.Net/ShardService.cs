@@ -1,4 +1,4 @@
-namespace Cobalt.Core.Net
+namespace Cobalt.Math.Net
 {
     public class ShardService
     {

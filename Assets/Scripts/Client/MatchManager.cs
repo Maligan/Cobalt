@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using Cobalt.Core;
+using Cobalt.Math;
 using NetcodeIO.NET;
 using ProtoBuf;
 using UnityEngine;

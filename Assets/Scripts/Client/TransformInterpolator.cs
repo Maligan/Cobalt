@@ -1,6 +1,7 @@
 using UnityEngine;
-using Cobalt.Core;
+using Cobalt.Math;
 using System.Collections.Generic;
+using Cobalt.Core;
 
 public class TransformInterpolator : MonoBehaviour
 {
@@ -68,8 +69,8 @@ public class TransformInterpolator : MonoBehaviour
         return Timeline[stateIndex].timestamp;
     }
 
-    private ITransform GetTransform(int stateIndex)
+    private Vec2f GetTransform(int stateIndex)
     {
-        return Timeline[stateIndex].units[0];
+        return Timeline[stateIndex].units[0].pos;
     }
 }

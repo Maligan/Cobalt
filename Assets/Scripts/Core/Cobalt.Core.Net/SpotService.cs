@@ -7,7 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Cobalt.Core.Net
+namespace Cobalt.Math.Net
 {
     public class SpotService
     {

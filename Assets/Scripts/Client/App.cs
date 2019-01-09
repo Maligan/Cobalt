@@ -3,8 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Cobalt.Core;
-using Cobalt.Core.Net;
+using Cobalt.Math;
+using Cobalt.Math.Net;
 using Cobalt.UI;
 using NetcodeIO.NET;
 using ProtoBuf;
@@ -26,8 +26,9 @@ public class App : MonoBehaviour
 
 	public void Start()
 	{
+		// DoMenu();
 		DoLocal();
-	}
+    }
 
 	public void Update()
 	{

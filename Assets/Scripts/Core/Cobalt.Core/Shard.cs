@@ -4,11 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
-using Cobalt.Core;
+using Cobalt.Math;
 using NetcodeIO.NET;
 using ProtoBuf;
 
-namespace Cobalt.Core
+namespace Cobalt.Math
 {
     public class Shard
     {
