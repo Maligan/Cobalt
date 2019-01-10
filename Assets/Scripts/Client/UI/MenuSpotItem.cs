@@ -48,10 +48,16 @@ public class MenuSpotItem : MonoBehaviour
     {
         // yield break;
         var url = string.Format("http://{0}/join", Spot.EndPoint);
+        Debug.Log("Try Connect to " + url);
         var www = UnityWebRequest.Get(url);
         yield return www.SendWebRequest();
 
+        var isSuccess = www.isDone && !www.isHttpError && !www.isNetworkError;
+        Debug.Log("Try Connect success = " + isSuccess);
+
         if (www.isDone && !www.isHttpError && !www.isNetworkError)
+        {
             App.DoConnect(www.downloadHandler.data);
+        }
     }
 }

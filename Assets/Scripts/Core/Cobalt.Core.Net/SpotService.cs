@@ -84,6 +84,7 @@ namespace Cobalt.Core.Net
         public void Refresh()
         {
             Spots.Clear();
+            lock (Spots) Spots.Add(new Spot { EndPoint = new IPEndPoint(IPAddress.Parse("192.168.1.111"), port) });
 
             var ips = SpotUtils.GetSupportedIPs();
             if (ips.Count == 0)
