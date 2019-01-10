@@ -18,6 +18,7 @@ public class MatchManager : MonoBehaviour
         timeline = new MatchTimeline();
 
         client = new Client();
+		client.OnStateChanged += x => Debug.Log("[Client] " + x); 
 		client.OnMessageReceived += OnMessageReceived;
 		client.Connect(token, false);
 

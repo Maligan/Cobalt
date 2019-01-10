@@ -65,6 +65,8 @@ namespace Cobalt.Core
             server.OnClientMessageReceived += OnClientMessageReceived;
             server.Start(false);
 
+            server.LogLevel = NetcodeLogLevel.Debug;
+
             match = new Match();
         }
 
