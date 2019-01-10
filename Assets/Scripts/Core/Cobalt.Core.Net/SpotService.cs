@@ -5,9 +5,10 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
-namespace Cobalt.Math.Net
+namespace Cobalt.Core.Net
 {
     public class SpotService
     {
@@ -24,11 +25,12 @@ namespace Cobalt.Math.Net
 
         public void Start()
         {
-            StartService(IPAddress.Any);
+            ThreadPool.QueueUserWorkItem(StartService, IPAddress.Any);
         }
 
-        private async void StartService(IPAddress ip)
+        private void StartService(object stateInfo)
         {
+            var ip = (IPAddress)stateInfo;
             var responseStr = string.Format("{0}/{1}", Spot.REQUEST, version);
             var responseBytes = Encoding.ASCII.GetBytes(responseStr);
 
@@ -36,15 +38,19 @@ namespace Cobalt.Math.Net
             var socket = new UdpClient(socketEndpoint);
             sockets.Add(socket);
 
-            while (true)
+            while (sockets.Count > 0)
             {
-                var request = await socket.ReceiveAsyncOrNull();
+                Utils.Log("[SpotService] Wait for Request...");
+                var request = socket.ReceiveOrNull();
+                Utils.Log("[SpotService] Process Request... " + request.RemoteEndPoint);
                 if (request == SpotUtils.NULL) break;
 
                 var requestStr = Encoding.ASCII.GetString(request.Buffer);
+                Utils.Log("[SpotService] Process Request... " + requestStr);
                 if (requestStr == Spot.REQUEST)
                 {
                     socket.Send(responseBytes, responseBytes.Length, request.RemoteEndPoint);
+                    Utils.Log("[SpotService] Send Response... " + responseStr);
                 }
             }
         }
@@ -53,7 +59,7 @@ namespace Cobalt.Math.Net
         {
             foreach (var socket in sockets)
                 socket.Close();
-            
+
             sockets.Clear();
         }
     }
@@ -84,16 +90,17 @@ namespace Cobalt.Math.Net
                 throw new Exception("There are no available network interfaces");
 
             foreach (var ip in ips)
-               StartRefresh(ip);
+                ThreadPool.QueueUserWorkItem(StartRefresh, ip);
 
-            StopRefresh(150);
+            StopRefresh(1500);
 
             IsRunning = true;
             if (Change != null) Change();
         }
 
-        private async void StartRefresh(IPAddress ip)
+        private void StartRefresh(object stateInfo)
         {
+            var ip = (IPAddress)stateInfo;
             var request = Encoding.ASCII.GetBytes(Spot.REQUEST);
 
             var socketEndpoint = new IPEndPoint(ip, 0);
@@ -102,15 +109,20 @@ namespace Cobalt.Math.Net
             sockets.Add(socket);
 
             var broadcastEndpoint = new IPEndPoint(IPAddress.Broadcast, port);
+            Utils.Log("[SpotServiceFinder] Send Broadcast... " + broadcastEndpoint);
             socket.Send(request, request.Length, broadcastEndpoint);
 
-            while (true)
+            while (sockets.Count > 0)
             {
-                var response = await socket.ReceiveAsyncOrNull();
+                Utils.Log("[SpotServiceFinder] Wait for Response...");
+                var response = socket.ReceiveOrNull();
+                Utils.Log("[SpotServiceFinder] Process Response... " + response.RemoteEndPoint);
                 if (response == SpotUtils.NULL) break;
 
                 var responseString = Encoding.ASCII.GetString(response.Buffer);
+                Utils.Log("[SpotServiceFinder] Process Response... " + responseString);
                 var spot = Spot.Parse(responseString, response.RemoteEndPoint);
+                Utils.Log("[SpotServiceFinder] Process Response... " + spot);
                 if (spot != null) lock (Spots) Spots.Add(spot);
             }
         }
@@ -122,7 +134,9 @@ namespace Cobalt.Math.Net
         }
 
         public void Stop()
-        {            
+        {
+            Utils.Log("[SpotServiceFinder] Stop... ");
+
             foreach (var socket in sockets)
                 socket.Close();
             
@@ -151,6 +165,11 @@ namespace Cobalt.Math.Net
             }
 
             return null;
+        }
+
+        public override string ToString()
+        {
+            return "<Spot: " + EndPoint + " / " + Version + ">";
         }
 
         public IPEndPoint EndPoint;
@@ -185,10 +204,19 @@ namespace Cobalt.Math.Net
             return result;
         }
 
-        public static async Task<UdpReceiveResult> ReceiveAsyncOrNull(this UdpClient socket)
+        public static UdpReceiveResult ReceiveOrNull(this UdpClient socket)
         {
-            try { return await socket.ReceiveAsync(); }
-            catch { return NULL; }
+            try
+            {
+                var reciveEP = NULL.RemoteEndPoint;
+                var reciveBytes = socket.Receive(ref reciveEP);
+                return new UdpReceiveResult(reciveBytes, reciveEP);
+            }
+            catch (Exception e)
+            {
+                // Utils.LogError(e);
+                return NULL;
+            }
         }
     }
 }

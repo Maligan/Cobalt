@@ -4,46 +4,41 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
-// using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Cobalt.Math;
-using Cobalt.Math.Net;
+using Cobalt.Core;
+using Cobalt.Core.Net;
 
 namespace Cobalt
 {
     public class Daemon
     {
-        // public static void Main(string[] args)
-        // {
-        //     var daemon = new Daemon();
-        //     daemon.Start();
-        //     Console.ReadLine();
-        // }
+        private ShardService shard;
 
-        public Daemon()
+        public static void Main(string[] args)
         {
-            // var shard = new ShardService(new ShardOptions());
-            // shard.Start();
-
-            // var shards = new ShardService();
-            // var httpService = new HttpService(port, shards);
-            // httpService.Start();
-
-            // lanSpotService = new LANSpotService();
-            // shardService = new ShardService();
-
-            // IPAddress.Loopback
-            // httpService = new HttpService("http://localhost.ru/", shardService);
+            var daemon = new Daemon();
+            daemon.Start();
+            // Console.WriteLine("Start...");
+            Console.ReadLine();
         }
 
-        public void Start()
+        private void Start()
         {
-            // httpService.Start();
+            shard = new ShardService();
+            shard.Start(new ShardOptions());
 
-            // lanSpotService.Spot("1.0", "http://localhost:8080/");
-            // lanSpotService.Discovery();
+            StartTick();
         }
+
+        private async void StartTick()
+        {
+            while (true)
+            {
+                shard.Tick(1/30f);
+                await Task.Delay(1000/30);
+            }
+        } 
     }
 }
 

@@ -1,5 +1,5 @@
 using UnityEngine;
-using Cobalt.Math;
+using Cobalt.Core;
 using System.Collections.Generic;
 using Cobalt.Core;
 

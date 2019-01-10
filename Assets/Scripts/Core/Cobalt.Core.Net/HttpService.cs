@@ -2,7 +2,7 @@ using System;
 using System.Net;
 using System.Threading.Tasks;
 
-namespace Cobalt.Math.Net
+namespace Cobalt.Core.Net
 {
     public class HttpService
     {

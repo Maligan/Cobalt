@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Linq;
-using Cobalt.Math;
-using Cobalt.Math.Net;
+using Cobalt.Core;
+using Cobalt.Core.Net;
 using Cobalt.UI;
 using UnityEngine;
 using UnityEngine.Experimental.UIElements;
@@ -19,7 +19,6 @@ public class MenuPanel : UIPanel
     {
         finder = new SpotServiceFinder(8888);
         yield return null;
-        OnRefreshClick();
     }
 
     private void RebuildList(Spot selected)

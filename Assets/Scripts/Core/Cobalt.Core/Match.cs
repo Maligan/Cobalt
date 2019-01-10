@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using ProtoBuf;
 using Cobalt.Core;
 
-namespace Cobalt.Math
+namespace Cobalt.Core
 {
     public class Match
     {
@@ -139,6 +139,7 @@ namespace Cobalt.Math
         public Direction moveDirection;
         public float moveProgress;
         public Vec2f moveFrom;
+        public Vec2f moveTo;
         public float moveSpeed;
     }
 
@@ -174,9 +175,24 @@ namespace Cobalt.Math
             // }
         }
 
-        public void Lerp(Unit.Direction direction, float ratio, ref Vec2f from)
-        {
+        // public void Lerp(Unit.Direction direction, float ratio)
+        // {
             
+        // }
+
+        
+
+        private static Vec2f GetNext(Vec2f v, Unit.Direction direction)
+        {
+            switch (direction)
+            {
+                case Unit.Direction.Top:    return new Vec2f(v.x, v.y+1);
+                case Unit.Direction.Bottom: return new Vec2f(v.x, v.y-1);
+                case Unit.Direction.Right:  return new Vec2f(v.x+1, v.y);
+                case Unit.Direction.Left:   return new Vec2f(v.x-1, v.y);
+
+                default:                    throw  new ArgumentException();
+            }
         }
 
         public void Tick(Match match, float sec)
@@ -193,15 +209,18 @@ namespace Cobalt.Math
                     {
                         unit.state = Unit.State.Move;
 
-                        unit.moveFrom = unit.pos;
-                        unit.moveProgress = 0;
                         unit.moveDirection = unitInput.move;
+                        unit.moveProgress = 0;
+                        unit.moveFrom = unit.pos;
+                        unit.moveTo = GetNext(unit.pos, unit.moveDirection);
                     }
                 }
 
                 // Tick [Move]
                 if (unit.state == Unit.State.Move)
                 {
+                    unit.moveProgress += unit.moveSpeed * sec;
+
                     // Изменилось направление движения в процессе перемещения
                     if (unit.moveProgress <= 0.5f && unit.moveDirection != unitInput.move)
                     {
@@ -209,71 +228,13 @@ namespace Cobalt.Math
                     // Дошли до следующей ячейки
                     else if (unit.moveProgress >= 1f)
                     {
-                        unit.moveProgress = 1;
-                        unit.moveDirection = Unit.Direction.None;
+                        unit.state = Unit.State.Idle;
+                        // unit.moveProgress = 0;
+                        // unit.moveDirection = Unit.Direction.None;
                     }
-                    // Дошли до ячейки и идём дальше
-                    else if (unit.move)
 
-
-                    unit.moveProgress += unit.moveSpeed * sec;
-
-                    Lerp(unit.moveDirection, unit.moveProgress, ref unit.pos);
+                    unit.pos = Vec2f.Lerp(unit.moveFrom, unit.moveTo, unit.moveProgress);
                 }
-
-                /*
-                if (unit.state == Unit.State.Move)
-                {
-                    var dx = 0;
-                    var dy = 0;
-                    
-                    switch (unit.direction)
-                    {
-                        case Unit.Direction.Top:    dy = +1; break;
-                        case Unit.Direction.Right:  dx = +1; break;
-                        case Unit.Direction.Bottom: dy = -1; break;
-                        case Unit.Direction.Left:   dx = -1; break;
-                    }
-
-                    // Движение
-                    unit.moveProgress += unit.moveSpeed * sec;
-                    
-                    // Переход
-                    if (unit.moveProgress >= 1)
-                    {
-                        unit.cellX += dx;
-                        unit.cellY += dy;
-
-                        if (unitInput.move == Unit.Direction.None)
-                        {
-                            unitInput.move = Unit.Direction.None;
-                            unit.state = Unit.State.Idle;
-                            unit.moveProgress = 0;
-                        }
-                        else if (unitInput.move == unit.direction)
-                        {
-                            unit.moveProgress %= 1;
-                        }
-                        else
-                        {
-                            unit.direction = unitInput.move;
-                            unit.moveProgress = 0;
-                        }
-                    }
-
-                    // Координаты для клиента
-                    unit.x = unit.cellX + dx*unit.moveProgress;
-                    unit.y = unit.cellY + dy*unit.moveProgress;
-                }
-                else if (unit.state == Unit.State.Idle)
-                {
-                    if (unitInput.move != Unit.Direction.None)
-                    {
-                        unit.state = Unit.State.Move;
-                        unit.direction = unitInput.move;
-                    }
-                }
-                */
             }
         }
     }
