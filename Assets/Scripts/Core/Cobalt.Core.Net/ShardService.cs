@@ -13,11 +13,11 @@ namespace Cobalt.Core.Net
             Options = options;
             Options.ips = SpotUtils.GetSupportedIPs().ToArray();
 
-            // shard = new Shard(Options);
+            shard = new Shard(Options);
             join = new HttpService(8888, shard);
             spot = new SpotService(1, 8888);
 
-            // shard.Start();
+            shard.Start();
             join.Start();
             spot.Start();
         }
@@ -32,7 +32,7 @@ namespace Cobalt.Core.Net
         {
             if (shard != null)
             {
-                // shard.Stop();
+                shard.Stop();
                 spot.Stop();
                 join.Stop();
 

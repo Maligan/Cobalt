@@ -32,7 +32,7 @@ public class MenuPanel : UIPanel
             var lobbyItem = Instantiate(lobbyPrefab, lobbyList);
             var lobby = lobbyItem.GetComponent<MenuSpotItem>();
             lobby.Spot = spot;
-            if (spot == selected) lobby.Select();
+            // if (spot == selected) lobby.Select();
         }
 
         lobbyEmpty.gameObject.SetActive(finder.Spots.Count == 0);

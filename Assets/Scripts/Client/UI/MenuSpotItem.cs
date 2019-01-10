@@ -46,11 +46,7 @@ public class MenuSpotItem : MonoBehaviour
 
     private IEnumerator Connect()
     {
-        yield break;
-
-
-        
-
+        // yield break;
         var url = string.Format("http://{0}/join", Spot.EndPoint);
         var www = UnityWebRequest.Get(url);
         yield return www.SendWebRequest();
