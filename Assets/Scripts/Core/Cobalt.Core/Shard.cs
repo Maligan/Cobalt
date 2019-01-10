@@ -158,7 +158,7 @@ namespace Cobalt.Core
         public string       key         = "key";
         public ulong        version     = 0;
 
-        public int          timeout     = 3;
+        public int          timeout     = int.MaxValue;
         public int          expiry      = int.MaxValue;
 
         public int          tps         = 20;
