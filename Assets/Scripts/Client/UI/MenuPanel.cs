@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Linq;
 using Cobalt.Core;
@@ -40,6 +41,10 @@ public class MenuPanel : UIPanel
 
     public void OnRefreshClick()
     {
+        Debug.Log("IsHeld...");
+        var isHeld = MulticastLock();
+        Debug.Log("IsHeld: " + isHeld);
+
         StopLAN();
         StartCoroutine(OnRefreshClickCoroutine(true));
     }
@@ -83,9 +88,38 @@ public class MenuPanel : UIPanel
     {
         App.ShardService.Stop();
     }
+
+
+
+    private AndroidJavaObject multicastLock;
+    private bool MulticastLock()
+    {
+        if (multicastLock != null) return true;
+
+        try
+        {
+            using (AndroidJavaObject activity = new AndroidJavaClass("com.unity3d.player.UnityPlayer").GetStatic<AndroidJavaObject>("currentActivity"))
+            {
+                using (var wifiManager = activity.Call<AndroidJavaObject>("getSystemService", "wifi"))
+                {
+                    multicastLock = wifiManager.Call<AndroidJavaObject>("createMulticastLock", "lock");
+                    multicastLock.Call("acquire");
+                    return multicastLock.Call<bool>("isHeld");
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError(e);
+        }
+
+        return false;
+    }
 }
 
 public class SpotInfo
 {
     public Spot Spot;
 }
+
+

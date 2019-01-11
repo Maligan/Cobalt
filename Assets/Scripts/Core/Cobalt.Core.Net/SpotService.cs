@@ -12,6 +12,8 @@ namespace Cobalt.Core.Net
 {
     public class SpotService
     {
+        private int frequency = 1;
+
         private int version;
         private int port;
         private List<UdpClient> sockets;
@@ -25,33 +27,32 @@ namespace Cobalt.Core.Net
 
         public void Start()
         {
-            ThreadPool.QueueUserWorkItem(StartService, IPAddress.Any);
+            var ips = SpotUtils.GetSupportedIPs();
+            if (ips.Count == 0)
+                throw new Exception("There are no available network interfaces");
+
+            foreach (var ip in ips)
+                StartService(ip);
         }
 
-        private void StartService(object stateInfo)
+        private async void StartService(IPAddress ip)
         {
-            var ip = (IPAddress)stateInfo;
             var responseStr = string.Format("{0}/{1}", Spot.REQUEST, version);
             var responseBytes = Encoding.ASCII.GetBytes(responseStr);
 
             var socketEndpoint = new IPEndPoint(ip, port);
-            var socket = new UdpClient(socketEndpoint);
+            var socket = new UdpClient();
+            socket.EnableBroadcast = true;
+            socket.ExclusiveAddressUse = false;
+            socket.Client.Bind(socketEndpoint);
             sockets.Add(socket);
+
+            var broadcastEndpoint = new IPEndPoint(IPAddress.Broadcast, port);
 
             while (sockets.Count > 0)
             {
-                Utils.Log("[SpotService] Wait for Request...");
-                var request = socket.ReceiveOrNull();
-                Utils.Log("[SpotService] Process Request... " + request.RemoteEndPoint);
-                if (request == SpotUtils.NULL) break;
-
-                var requestStr = Encoding.ASCII.GetString(request.Buffer);
-                Utils.Log("[SpotService] Process Request... " + requestStr);
-                if (requestStr == Spot.REQUEST)
-                {
-                    socket.Send(responseBytes, responseBytes.Length, request.RemoteEndPoint);
-                    Utils.Log("[SpotService] Send Response... " + responseStr);
-                }
+                socket.Send(responseBytes, responseBytes.Length, broadcastEndpoint);
+                await Task.Delay(1000 / frequency);
             }
         }
 
@@ -83,72 +84,52 @@ namespace Cobalt.Core.Net
 
         public void Refresh()
         {
-            Spots.Clear();
-            lock (Spots) Spots.Add(new Spot { EndPoint = new IPEndPoint(IPAddress.Parse("192.168.1.111"), port) });
+            // var ips = SpotUtils.GetSupportedIPs();
+            // if (ips.Count == 0)
+            //     throw new Exception("There are no available network interfaces");
 
-            var ips = SpotUtils.GetSupportedIPs();
-            if (ips.Count == 0)
-                throw new Exception("There are no available network interfaces");
-
-            foreach (var ip in ips)
-                ThreadPool.QueueUserWorkItem(StartRefresh, ip);
-
-            StopRefresh(1500);
-
-            IsRunning = true;
-            if (Change != null) Change();
+            // StartRefresh(IPAddress.Any);
+            // IsRunning = true;
         }
 
-        private void StartRefresh(object stateInfo)
+        private async void StartRefresh(IPAddress ip)
         {
-            var ip = (IPAddress)stateInfo;
-            var request = Encoding.ASCII.GetBytes(Spot.REQUEST);
+            // var request = Encoding.ASCII.GetBytes(Spot.REQUEST);
 
-            var socketEndpoint = new IPEndPoint(ip, 0);
-            var socket = new UdpClient(socketEndpoint);
+            var socketEndpoint = new IPEndPoint(ip, port);
+            var socket = new UdpClient();
             socket.EnableBroadcast = true;
+            socket.ExclusiveAddressUse = false;
+            socket.Client.Bind(socketEndpoint);
             sockets.Add(socket);
-
-            var broadcastEndpoint = new IPEndPoint(IPAddress.Broadcast, port);
-            Utils.Log("[SpotServiceFinder] Send Broadcast... " + broadcastEndpoint);
-            socket.Send(request, request.Length, broadcastEndpoint);
 
             while (sockets.Count > 0)
             {
-                Utils.Log("[SpotServiceFinder] Wait for Response...");
                 var response = socket.ReceiveOrNull();
-                Utils.Log("[SpotServiceFinder] Process Response... " + response.RemoteEndPoint);
                 if (response == SpotUtils.NULL) break;
 
-                var responseString = Encoding.ASCII.GetString(response.Buffer);
-                Utils.Log("[SpotServiceFinder] Process Response... " + responseString);
-                var spot = Spot.Parse(responseString, response.RemoteEndPoint);
-                Utils.Log("[SpotServiceFinder] Process Response... " + spot);
-                if (spot != null) lock (Spots) Spots.Add(spot);
+                Utils.Log("Get Broadcast");
+                await Task.Delay(1000);
+            //     var responseString = Encoding.ASCII.GetString(response.Buffer);
+            //     Utils.Log("[SpotServiceFinder] Process Response... " + responseString);
+            //     var spot = Spot.Parse(responseString, response.RemoteEndPoint);
+            //     Utils.Log("[SpotServiceFinder] Process Response... " + spot);
+            //     if (spot != null) lock (Spots) Spots.Add(spot);
             }
-        }
-
-        private async void StopRefresh(int millisecondsDelay)
-        {
-            await Task.Delay(millisecondsDelay);
-            Stop();
         }
 
         public void Stop()
         {
-            Utils.Log("[SpotServiceFinder] Stop... ");
-
             foreach (var socket in sockets)
                 socket.Close();
             
             sockets.Clear();
 
             IsRunning = false;
-            if (Change != null) Change();
         }
     }
 
-    public class Spot
+    public class Spot : IEquatable<Spot>
     {
         internal static readonly string REQUEST = "COBALT";
         internal static readonly Regex RESPONSE = new Regex("^" + REQUEST + @"/(\d+)"); 
@@ -175,6 +156,13 @@ namespace Cobalt.Core.Net
 
         public IPEndPoint EndPoint;
         public int Version;
+
+        bool IEquatable<Spot>.Equals(Spot other)
+        {
+            return EndPoint.Address == other.EndPoint.Address
+                && EndPoint.Port == other.EndPoint.Port
+                && Version == other.Version;
+        }
     }
 
     internal static class SpotUtils
@@ -185,13 +173,18 @@ namespace Cobalt.Core.Net
         {
             var result = new List<IPAddress>();
 
-            foreach (var networkInterface in NetworkInterface.GetAllNetworkInterfaces())
+            foreach (var adapter in NetworkInterface.GetAllNetworkInterfaces())
             {
                 // TODO: More checkers for valid NetworkInterface/IPAdress
 
-                if (networkInterface.OperationalStatus != OperationalStatus.Up) continue;
+                var valid = false;
+                valid |= adapter.OperationalStatus == OperationalStatus.Up;
+                valid |= adapter.OperationalStatus == OperationalStatus.Unknown;
+                valid &= adapter.Supports(NetworkInterfaceComponent.IPv4);
 
-                var props = networkInterface.GetIPProperties();
+                if (!valid) continue;
+
+                var props = adapter.GetIPProperties();
                 var unicasts = props.UnicastAddresses;
 
                 foreach (var unicast in unicasts)
@@ -203,6 +196,43 @@ namespace Cobalt.Core.Net
                 result.RemoveAll(address => IPAddress.IsLoopback(address));
 
             return result;
+        }
+
+        public static string GetInterfaceSummary()
+        {
+            var result = new StringBuilder();
+            var interfaces = NetworkInterface.GetAllNetworkInterfaces();
+
+            foreach (NetworkInterface adapter in interfaces)
+            {
+                result.AppendLine($"Name: {adapter.Name}");
+                result.AppendLine(adapter.Description);
+                result.AppendLine(String.Empty.PadLeft(adapter.Description.Length,'-'));
+                result.AppendLine($"  Interface type .......................... : {adapter.NetworkInterfaceType}");
+                result.AppendLine($"  Operational status ...................... : {adapter.OperationalStatus}");
+                result.AppendLine($"  Supports multicast ...................... : {adapter.SupportsMulticast}");
+                string versions ="";
+
+                // Create a display string for the supported IP versions.
+                if (adapter.Supports(NetworkInterfaceComponent.IPv4))
+                {
+                    versions = "IPv4";
+                }
+                if (adapter.Supports(NetworkInterfaceComponent.IPv6))
+                {
+                    if (versions.Length > 0)
+                    {
+                        versions += " ";
+                    }
+                    versions += "IPv6";
+                }
+                result.AppendLine($"  IP version .............................. : {versions}");
+                result.AppendLine();
+            }
+
+            result.AppendLine();
+
+            return string.Empty; // result.ToString();
         }
 
         public static UdpReceiveResult ReceiveOrNull(this UdpClient socket)
