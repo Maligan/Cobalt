@@ -22,6 +22,12 @@ public class MenuPanel : UIPanel
         yield return null;
     }
 
+    public void OnDisable()
+    {
+        App.ShardService.Stop();
+        finder.Stop();
+    }
+
     private void RebuildList(Spot selected)
     {
         foreach (Transform lobbyItem in lobbyList)
@@ -52,10 +58,8 @@ public class MenuPanel : UIPanel
     private IEnumerator OnRefreshClickCoroutine(bool rebuild)
     {
         // Refresh Data
-        if (finder.IsRunning) yield break;
         finder.Refresh();
-        while (finder.IsRunning) yield return null;
-
+        yield return new WaitForSeconds(1f);
         // Refresh List
         if (rebuild) RebuildList(null);
     }
@@ -94,24 +98,30 @@ public class MenuPanel : UIPanel
     private AndroidJavaObject multicastLock;
     private bool MulticastLock()
     {
-        if (multicastLock != null) return true;
+        #if UNITY_ANDROID && !UNITY_EDITOR
 
         try
         {
-            using (AndroidJavaObject activity = new AndroidJavaClass("com.unity3d.player.UnityPlayer").GetStatic<AndroidJavaObject>("currentActivity"))
+            if (multicastLock == null)
             {
-                using (var wifiManager = activity.Call<AndroidJavaObject>("getSystemService", "wifi"))
+                using (AndroidJavaObject activity = new AndroidJavaClass("com.unity3d.player.UnityPlayer").GetStatic<AndroidJavaObject>("currentActivity"))
                 {
-                    multicastLock = wifiManager.Call<AndroidJavaObject>("createMulticastLock", "lock");
-                    multicastLock.Call("acquire");
-                    return multicastLock.Call<bool>("isHeld");
+                    using (var wifiManager = activity.Call<AndroidJavaObject>("getSystemService", "wifi"))
+                    {
+                        multicastLock = wifiManager.Call<AndroidJavaObject>("createMulticastLock", "lock");
+                        multicastLock.Call("acquire");
+                    }
                 }
             }
+
+            return multicastLock.Call<bool>("isHeld");
         }
         catch (Exception e)
         {
             Debug.LogError(e);
         }
+
+        #endif
 
         return false;
     }

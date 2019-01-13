@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
@@ -12,7 +13,7 @@ namespace Cobalt.Core.Net
 {
     public class SpotService
     {
-        private int frequency = 1;
+        private int frequency = 3;
 
         private int version;
         private int port;
@@ -27,6 +28,8 @@ namespace Cobalt.Core.Net
 
         public void Start()
         {
+            Utils.Log("[SpotService] Starting...");
+
             var ips = SpotUtils.GetSupportedIPs();
             if (ips.Count == 0)
                 throw new Exception("There are no available network interfaces");
@@ -35,23 +38,22 @@ namespace Cobalt.Core.Net
                 StartService(ip);
         }
 
-        private async void StartService(IPAddress ip)
+        private async void StartService(SpotUtils.IP ip)
         {
-            var responseStr = string.Format("{0}/{1}", Spot.REQUEST, version);
-            var responseBytes = Encoding.ASCII.GetBytes(responseStr);
+            var broadcastStr = string.Format(Spot.MESSAGE_FORMAT, version);
+            var broadcastBytes = Encoding.ASCII.GetBytes(broadcastStr);
+            var broadcastEndpoint = new IPEndPoint(ip.GetBroadcast(), port);
 
-            var socketEndpoint = new IPEndPoint(ip, port);
+            var socketEndpoint = new IPEndPoint(ip.Address, port);
             var socket = new UdpClient();
             socket.EnableBroadcast = true;
             socket.ExclusiveAddressUse = false;
             socket.Client.Bind(socketEndpoint);
-            sockets.Add(socket);
+            lock(sockets) sockets.Add(socket);
 
-            var broadcastEndpoint = new IPEndPoint(IPAddress.Broadcast, port);
-
-            while (sockets.Count > 0)
+            while (sockets.IndexOf(socket) != -1)
             {
-                socket.Send(responseBytes, responseBytes.Length, broadcastEndpoint);
+                socket.Send(broadcastBytes, broadcastBytes.Length, broadcastEndpoint);
                 await Task.Delay(1000 / frequency);
             }
         }
@@ -67,82 +69,117 @@ namespace Cobalt.Core.Net
 
     public class SpotServiceFinder
     {
-        public List<Spot> Spots { get; private set; }
+        public List<Spot> Spots => spots;
         public event Action Change;
-        public bool IsRunning { get; private set; }
 
         private int port;
-        private List<UdpClient> sockets;
+        private UdpClient socket;
+        private List<Spot> spots;
+        private CancellationTokenSource tokenSource;
 
         public SpotServiceFinder(int port)
         {
             this.port = port;
-
-            Spots = new List<Spot>();
-            sockets = new List<UdpClient>();
+            this.spots = new List<Spot>();
         }
 
         public void Refresh()
         {
-            // var ips = SpotUtils.GetSupportedIPs();
-            // if (ips.Count == 0)
-            //     throw new Exception("There are no available network interfaces");
+            Stop();
 
-            // StartRefresh(IPAddress.Any);
-            // IsRunning = true;
+            tokenSource = new CancellationTokenSource();
+            StartListener(tokenSource.Token);
+            StartPurge(tokenSource.Token);
         }
 
-        private async void StartRefresh(IPAddress ip)
+        private async void StartPurge(CancellationToken token)
         {
-            // var request = Encoding.ASCII.GetBytes(Spot.REQUEST);
+            while (!token.IsCancellationRequested)
+            {
+                Purge();
+                Utils.Log("Spots.Count = " + spots.Count);
+                await Task.Delay(100);
+            }
+        }
 
-            var socketEndpoint = new IPEndPoint(ip, port);
-            var socket = new UdpClient();
+        private async void StartListener(CancellationToken token)
+        {
+            var socketEndpoint = new IPEndPoint(IPAddress.Any, port);
+            
+            socket = new UdpClient();
             socket.EnableBroadcast = true;
             socket.ExclusiveAddressUse = false;
             socket.Client.Bind(socketEndpoint);
-            sockets.Add(socket);
 
-            while (sockets.Count > 0)
+            while (!token.IsCancellationRequested)
             {
-                var response = socket.ReceiveOrNull();
+                var response = await socket.ReceiveAsyncOrNull();
                 if (response == SpotUtils.NULL) break;
 
-                Utils.Log("Get Broadcast");
-                await Task.Delay(1000);
-            //     var responseString = Encoding.ASCII.GetString(response.Buffer);
-            //     Utils.Log("[SpotServiceFinder] Process Response... " + responseString);
-            //     var spot = Spot.Parse(responseString, response.RemoteEndPoint);
-            //     Utils.Log("[SpotServiceFinder] Process Response... " + spot);
-            //     if (spot != null) lock (Spots) Spots.Add(spot);
+                var responseString = Encoding.ASCII.GetString(response.Buffer);
+                var spot = Spot.Parse(responseString, response.RemoteEndPoint);
+                if (spot != null) Insert(spot);
+            }
+        }
+
+        private void Insert(Spot spot)
+        {
+            lock (spots)
+            {
+                var indexOf = spots.IndexOf(spot);
+                if (indexOf == -1) spots.Add(spot);
+                else spots[indexOf] = spot;
+            }
+
+            Purge();
+        }
+
+        private void Purge()
+        {
+            lock (spots)
+            {
+                var now = DateTime.UtcNow;
+                var i = spots.Count;
+                while (i --> 0)
+                {
+                    var spot = spots[i];
+                    var span = (now - spot.Time).TotalMilliseconds;
+
+                    if (span > 1000)
+                        spots.RemoveAt(i);
+                }
             }
         }
 
         public void Stop()
         {
-            foreach (var socket in sockets)
+            if (socket != null)
+            {
                 socket.Close();
-            
-            sockets.Clear();
+                socket = null;
+            }
 
-            IsRunning = false;
+            if (tokenSource != null)
+                tokenSource.Cancel();
         }
     }
 
-    public class Spot : IEquatable<Spot>
+    public class Spot
     {
-        internal static readonly string REQUEST = "COBALT";
-        internal static readonly Regex RESPONSE = new Regex("^" + REQUEST + @"/(\d+)"); 
+        private static readonly string MESSAGE = "COBALT";
+        private static readonly Regex MESSAGE_REGEX = new Regex("^" + MESSAGE + @"/(\d+)");
+        internal static readonly string MESSAGE_FORMAT = MESSAGE + "/{0}";
 
         public static Spot Parse(string response, IPEndPoint source)
         {
-            var match = RESPONSE.Match(response);
+            var match = MESSAGE_REGEX.Match(response);
             if (match.Success)
             {
                 return new Spot
                 {
                     EndPoint = source,
                     Version = int.Parse(match.Groups[1].Value),
+                    Time = DateTime.UtcNow
                 };
             }
 
@@ -154,46 +191,51 @@ namespace Cobalt.Core.Net
             return "<Spot: " + EndPoint + " / " + Version + ">";
         }
 
+        public override bool Equals(object obj)
+        {
+            var other = obj as Spot;
+
+            if (other == null) return false;
+            if (other.Version != Version) return false;
+            if (other.EndPoint.Port != other.EndPoint.Port) return false;
+
+            var b1 = EndPoint.Address.GetAddressBytes();
+            var b2 = other.EndPoint.Address.GetAddressBytes();
+            return b1.SequenceEqual(b2);
+        }
+
         public IPEndPoint EndPoint;
         public int Version;
-
-        bool IEquatable<Spot>.Equals(Spot other)
-        {
-            return EndPoint.Address == other.EndPoint.Address
-                && EndPoint.Port == other.EndPoint.Port
-                && Version == other.Version;
-        }
+        public DateTime Time;
     }
 
     internal static class SpotUtils
     {
         public static UdpReceiveResult NULL = new UdpReceiveResult();
 
-        public static List<IPAddress> GetSupportedIPs()
+        public static List<IP> GetSupportedIPs()
         {
-            var result = new List<IPAddress>();
+            var result = new List<IP>();
 
             foreach (var adapter in NetworkInterface.GetAllNetworkInterfaces())
             {
-                // TODO: More checkers for valid NetworkInterface/IPAdress
-
                 var valid = false;
                 valid |= adapter.OperationalStatus == OperationalStatus.Up;
                 valid |= adapter.OperationalStatus == OperationalStatus.Unknown;
                 valid &= adapter.Supports(NetworkInterfaceComponent.IPv4);
-
                 if (!valid) continue;
 
-                var props = adapter.GetIPProperties();
-                var unicasts = props.UnicastAddresses;
-
+                var unicasts = adapter.GetIPProperties().UnicastAddresses;
                 foreach (var unicast in unicasts)
                     if (unicast.Address.AddressFamily == AddressFamily.InterNetwork)
-                        result.Add(unicast.Address);
+                        result.Add(new IP {
+                            Address = unicast.Address,
+                            Mask = unicast.IPv4Mask
+                        });
             }
 
             if (result.Count > 1)
-                result.RemoveAll(address => IPAddress.IsLoopback(address));
+                result.RemoveAll(ip => IPAddress.IsLoopback(ip.Address));
 
             return result;
         }
@@ -235,19 +277,35 @@ namespace Cobalt.Core.Net
             return string.Empty; // result.ToString();
         }
 
-        public static UdpReceiveResult ReceiveOrNull(this UdpClient socket)
+        public static async Task<UdpReceiveResult> ReceiveAsyncOrNull(this UdpClient socket)
         {
-            try
+            try { return await socket.ReceiveAsync(); }
+            catch { return NULL; }
+        }
+    
+        public class IP
+        {
+            public IPAddress Address;
+            public IPAddress Mask;
+
+            public IPAddress GetBroadcast()
             {
-                var reciveEP = NULL.RemoteEndPoint;
-                var reciveBytes = socket.Receive(ref reciveEP);
-                return new UdpReceiveResult(reciveBytes, reciveEP);
-            }
-            catch (Exception e)
-            {
-                // Utils.LogError(e);
-                return NULL;
-            }
+                if (IPAddress.IsLoopback(Address))
+                    return Address;
+
+                byte[] addressBytes = Address.GetAddressBytes();
+                byte[] maskBytes = Mask.GetAddressBytes();
+
+                if (addressBytes.Length != maskBytes.Length)
+                    throw new ArgumentException("Lengths of IP address and subnet mask do not match.");
+
+                byte[] broadcastAddress = new byte[addressBytes.Length];
+
+                for (int i = 0; i < broadcastAddress.Length; i++)
+                    broadcastAddress[i] = (byte)(addressBytes[i] | (maskBytes[i] ^ 255));
+
+                return new IPAddress(broadcastAddress);
+            } 
         }
     }
 }

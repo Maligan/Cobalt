@@ -151,6 +151,7 @@ namespace Network
         /// </summary>
         private bool MulticastLock()
         {
+            #if UNITY_ANDROID && !UNITY_EDITOR
             try
             {
                 using (AndroidJavaObject activity = new AndroidJavaClass("com.unity3d.player.UnityPlayer").GetStatic<AndroidJavaObject>("currentActivity"))
@@ -167,6 +168,7 @@ namespace Network
             {
                 Debug.LogError(e);
             }
+            #endif
 
             return false;
         }

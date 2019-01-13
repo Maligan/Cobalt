@@ -1,3 +1,5 @@
+using System.Linq;
+
 namespace Cobalt.Core.Net
 {
     public class ShardService
@@ -11,7 +13,7 @@ namespace Cobalt.Core.Net
         public void Start(ShardOptions options)
         {
             Options = options;
-            Options.ips = SpotUtils.GetSupportedIPs().ToArray();
+            Options.ips = SpotUtils.GetSupportedIPs().Select(ip => ip.Address).ToArray();
 
             shard = new Shard(Options);
             join = new HttpService(8888, shard);
