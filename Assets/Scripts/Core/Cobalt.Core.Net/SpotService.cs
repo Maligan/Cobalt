@@ -13,7 +13,7 @@ namespace Cobalt.Core.Net
 {
     public class SpotService
     {
-        private int frequency = 3;
+        private const int frequency = 2;
 
         private int version;
         private int port;
@@ -69,6 +69,8 @@ namespace Cobalt.Core.Net
 
     public class SpotServiceFinder
     {
+        private const int timeout = 1500;
+
         public List<Spot> Spots => spots;
         public event Action Change;
 
@@ -87,6 +89,7 @@ namespace Cobalt.Core.Net
         {
             Stop();
 
+            SpotUtils.ToggleWifiMulticast(true);
             tokenSource = new CancellationTokenSource();
             StartListener(tokenSource.Token);
             StartPurge(tokenSource.Token);
@@ -96,8 +99,7 @@ namespace Cobalt.Core.Net
         {
             while (!token.IsCancellationRequested)
             {
-                Purge();
-                Utils.Log("Spots.Count = " + spots.Count);
+                Purge(false);
                 await Task.Delay(100);
             }
         }
@@ -124,17 +126,19 @@ namespace Cobalt.Core.Net
 
         private void Insert(Spot spot)
         {
+            var indexOf = -1;
+
             lock (spots)
             {
-                var indexOf = spots.IndexOf(spot);
+                indexOf = spots.IndexOf(spot);
                 if (indexOf == -1) spots.Add(spot);
                 else spots[indexOf] = spot;
             }
 
-            Purge();
+            Purge(indexOf != -1);
         }
 
-        private void Purge()
+        private void Purge(bool changed)
         {
             lock (spots)
             {
@@ -145,14 +149,22 @@ namespace Cobalt.Core.Net
                     var spot = spots[i];
                     var span = (now - spot.Time).TotalMilliseconds;
 
-                    if (span > 1000)
+                    if (span > timeout)
+                    {
                         spots.RemoveAt(i);
+                        changed = true;
+                    }
                 }
+
+                if (changed && Change != null)
+                    Change();
             }
         }
 
         public void Stop()
         {
+            SpotUtils.ToggleWifiMulticast(false);
+
             if (socket != null)
             {
                 socket.Close();
@@ -290,6 +302,8 @@ namespace Cobalt.Core.Net
 
             public IPAddress GetBroadcast()
             {
+                // return IPAddress.Parse("224.0.0.1")
+
                 if (IPAddress.IsLoopback(Address))
                     return Address;
 
@@ -307,5 +321,47 @@ namespace Cobalt.Core.Net
                 return new IPAddress(broadcastAddress);
             } 
         }
+
+        #region Android WiFi-Multicast
+
+        #if UNITY_ANDROID && !UNITY_EDITOR
+
+        private AndroidJavaObject multicastLock;
+
+        public static bool ToggleWifiMulticast(bool value)
+        {
+            try
+            {
+                if (multicastLock == null)
+                {
+                    using (AndroidJavaObject activity = new AndroidJavaClass("com.unity3d.player.UnityPlayer").GetStatic<AndroidJavaObject>("currentActivity"))
+                    {
+                        using (var wifiManager = activity.Call<AndroidJavaObject>("getSystemService", "wifi"))
+                        {
+                            multicastLock = wifiManager.Call<AndroidJavaObject>("createMulticastLock", "lock");
+                            multicastLock.Call("acquire");
+                        }
+                    }
+                }
+
+                return multicastLock.Call<bool>("isHeld");
+            }
+            catch (Exception e)
+            {
+                Utils.LogError(e);
+            }
+
+            return false;
+        }
+
+        #else
+
+        public static bool ToggleWifiMulticast(bool value) { return value; }
+
+        #endif
+
+
+
+        #endregion
     }
 }
