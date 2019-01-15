@@ -4,6 +4,7 @@ using System.Linq;
 using Cobalt.Core;
 using Cobalt.Core.Net;
 using Cobalt.UI;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Experimental.UIElements;
 using UnityEngine.Networking;
@@ -19,6 +20,9 @@ public class MenuPanel : UIPanel
     public IEnumerator Start()
     {
         finder = new SpotServiceFinder(8888);
+        finder.Refresh();
+
+        StartCoroutine(RebuildListCoroutine());
         yield return null;
     }
 
@@ -26,6 +30,15 @@ public class MenuPanel : UIPanel
     {
         App.ShardService.Stop();
         finder.Stop();
+    }
+
+    private IEnumerator RebuildListCoroutine()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(1f);
+            RebuildList(null);
+        }
     }
 
     private void RebuildList(Spot selected)
@@ -48,40 +61,20 @@ public class MenuPanel : UIPanel
     public void OnRefreshClick()
     {
         StopLAN();
-        StartCoroutine(OnRefreshClickCoroutine(true));
-    }
-
-    private IEnumerator OnRefreshClickCoroutine(bool rebuild)
-    {
-        // Refresh Data
-        finder.Refresh();
-        yield return new WaitForSeconds(1f);
-        // Refresh List
-        if (rebuild) RebuildList(null);
     }
 
     public void OnHostClick()
     {
         StopLAN();
-
-        StartCoroutine(OnHostClickCoroutine());
-    }
-
-    private IEnumerator OnHostClickCoroutine()
-    {
+        
         App.ShardService.Start(new ShardOptions());
 
-        yield return OnRefreshClickCoroutine(false);
-
         var ips = App.ShardService.Options.ips;
-
         var spot = finder.Spots.FirstOrDefault(s => {
             var ip = s.EndPoint.Address;
             var ipInOptions = ips.Any(x => x.Equals(ip));
             return ipInOptions;
         });
-
-        RebuildList(spot);
     }
 
     private void StopLAN()

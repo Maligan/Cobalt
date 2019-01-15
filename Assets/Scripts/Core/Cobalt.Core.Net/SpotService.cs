@@ -163,7 +163,7 @@ namespace Cobalt.Core.Net
 
         public void Stop()
         {
-            SpotUtils.ToggleWifiMulticast(false);
+            // SpotUtils.ToggleWifiMulticast(false);
 
             if (socket != null)
             {
@@ -324,9 +324,9 @@ namespace Cobalt.Core.Net
 
         #region Android WiFi-Multicast
 
-        #if UNITY_ANDROID && !UNITY_EDITOR
+        #if UNITY_ANDROID //&& !UNITY_EDITOR
 
-        private AndroidJavaObject multicastLock;
+        private static UnityEngine.AndroidJavaObject multicastLock;
 
         public static bool ToggleWifiMulticast(bool value)
         {
@@ -334,11 +334,11 @@ namespace Cobalt.Core.Net
             {
                 if (multicastLock == null)
                 {
-                    using (AndroidJavaObject activity = new AndroidJavaClass("com.unity3d.player.UnityPlayer").GetStatic<AndroidJavaObject>("currentActivity"))
+                    using (UnityEngine.AndroidJavaObject activity = new UnityEngine.AndroidJavaClass("com.unity3d.player.UnityPlayer").GetStatic<UnityEngine.AndroidJavaObject>("currentActivity"))
                     {
-                        using (var wifiManager = activity.Call<AndroidJavaObject>("getSystemService", "wifi"))
+                        using (var wifiManager = activity.Call<UnityEngine.AndroidJavaObject>("getSystemService", "wifi"))
                         {
-                            multicastLock = wifiManager.Call<AndroidJavaObject>("createMulticastLock", "lock");
+                            multicastLock = wifiManager.Call<UnityEngine.AndroidJavaObject>("createMulticastLock", "lock");
                             multicastLock.Call("acquire");
                         }
                     }
