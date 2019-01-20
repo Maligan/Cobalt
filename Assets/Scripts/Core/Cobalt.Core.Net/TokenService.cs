@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Cobalt.Core.Net
 {
-    public class HttpService
+    public class TokenService
     {
         private HttpListener listener;
         private Shard shard;
@@ -12,7 +12,7 @@ namespace Cobalt.Core.Net
 
         public string Prefix { get; private set; }
 
-        public HttpService(int port, Shard shard)
+        public TokenService(int port, Shard shard)
         {
             this.port = port;
             this.shard = shard;
@@ -21,14 +21,14 @@ namespace Cobalt.Core.Net
 
         public void Stop()
         {
-            // listener.Prefixes.Clear();
             listener.Stop();
         }
 
         public async void Start()
         {
             listener.Prefixes.Clear();
-            foreach (var ip in SpotUtils.GetSupportedIPs())
+            
+            foreach (var ip in NetUtils.GetSupportedIPs())
             {
                 var prefix = string.Format("http://{0}:{1}/", ip, port);
                 listener.Prefixes.Add(prefix);
@@ -58,10 +58,6 @@ namespace Cobalt.Core.Net
             {
                 var tokenBytes = shard.GetToken();
                 var token = Convert.ToBase64String(tokenBytes);
-
-                // Construct a response.
-                // string responseString = token;
-                // byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
 
                 response.ContentLength64 = tokenBytes.Length;
                 response.OutputStream.Write(tokenBytes, 0, tokenBytes.Length);

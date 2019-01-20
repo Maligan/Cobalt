@@ -8,19 +8,19 @@ namespace Cobalt.Core.Net
 
         private Shard shard;
         private SpotService spot;
-        private HttpService join;
+        private TokenService token;
 
         public void Start(ShardOptions options)
         {
             Options = options;
-            Options.ips = SpotUtils.GetSupportedIPs().Select(ip => ip.Address).ToArray();
+            Options.ips = NetUtils.GetSupportedIPs().Select(ip => ip.Address).ToArray();
 
             shard = new Shard(Options);
-            join = new HttpService(8888, shard);
-            spot = new SpotService(1, 8888);
+            token = new TokenService(Const.PORT, shard);
+            spot = new SpotService(1, Const.PORT);
 
             shard.Start();
-            join.Start();
+            token.Start();
             spot.Start();
         }
 
@@ -36,11 +36,11 @@ namespace Cobalt.Core.Net
             {
                 shard.Stop();
                 spot.Stop();
-                join.Stop();
+                token.Stop();
 
                 shard = null;
                 spot = null;
-                join = null;
+                token = null;
             }
         }
 

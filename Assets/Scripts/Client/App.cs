@@ -26,8 +26,8 @@ public class App : MonoBehaviour
 
 	public void Start()
 	{
-		DoMenu();
-		// DoLocal();
+		// DoMenu();
+		DoLocal();
     }
 
 	public void Update()

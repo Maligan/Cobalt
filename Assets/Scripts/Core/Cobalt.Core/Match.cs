@@ -160,28 +160,6 @@ namespace Cobalt.Core
 
     public class UnitSystem : IMatchSystem
     {
-        private void Fix(Unit unit)
-        {
-            // unit.x = Mathf.RoundToInt(unit.x);
-            // unit.y = Mathf.RoundToInt(unit.y);
-
-            // switch (unit.moveDirection)
-            // {
-            //     case Unit.Direction.Top:    unit.y += unit.moveProgress; break;
-            //     case Unit.Direction.Bottom: unit.y -= unit.moveProgress; break;
-                
-            //     case Unit.Direction.Right:  unit.x += unit.moveProgress; break;
-            //     case Unit.Direction.Left:   unit.x -= unit.moveProgress; break;
-            // }
-        }
-
-        // public void Lerp(Unit.Direction direction, float ratio)
-        // {
-            
-        // }
-
-        
-
         private static Vec2f GetNext(Vec2f v, Unit.Direction direction)
         {
             switch (direction)
@@ -207,12 +185,7 @@ namespace Cobalt.Core
                 {
                     if (unitInput.move != Unit.Direction.None)
                     {
-                        unit.state = Unit.State.Move;
-
-                        unit.moveDirection = unitInput.move;
-                        unit.moveProgress = 0;
-                        unit.moveFrom = unit.pos;
-                        unit.moveTo = GetNext(unit.pos, unit.moveDirection);
+                        TryMoveTo(unit, unitInput.move, 0);
                     }
                 }
 
@@ -221,21 +194,48 @@ namespace Cobalt.Core
                 {
                     unit.moveProgress += unit.moveSpeed * sec;
 
-                    // Изменилось направление движения в процессе перемещения
-                    if (unit.moveProgress <= 0.5f && unit.moveDirection != unitInput.move)
-                    {
-                    }
                     // Дошли до следующей ячейки
-                    else if (unit.moveProgress >= 1f)
+                    if (unit.moveProgress >= 1f)
                     {
-                        unit.state = Unit.State.Idle;
-                        // unit.moveProgress = 0;
-                        // unit.moveDirection = Unit.Direction.None;
+                        if (unitInput.move == unit.moveDirection)
+                        {
+                            TryMoveTo(unit, unit.moveDirection, unit.moveProgress % 1);
+                        }
+                        else if (unitInput.move != unit.moveDirection)
+                        {
+                            unit.state = Unit.State.Idle;
+                            unit.moveProgress = 1;
+                        }
                     }
 
                     unit.pos = Vec2f.Lerp(unit.moveFrom, unit.moveTo, unit.moveProgress);
                 }
             }
+        }
+
+        public void TryMoveTo(Unit unit, Unit.Direction direction, float progress)
+        {
+            var from = Vec2f.Round(unit.pos);
+            var to = GetNext(from, direction);
+
+            var canPass = CanPassTo(unit, from, to);
+            if (canPass)
+            {
+                unit.state = Unit.State.Move;
+                unit.moveDirection = direction;
+                unit.moveFrom = Vec2f.Round(unit.pos);
+                unit.moveTo = GetNext(unit.moveFrom, direction);
+                unit.moveProgress = progress;
+            }
+            else
+            {
+                unit.state = Unit.State.Idle;
+            }
+        }
+
+        public bool CanPassTo(Unit unit, Vec2f from, Vec2f to)
+        {
+            return true;
         }
     }
 }

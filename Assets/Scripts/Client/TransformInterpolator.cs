@@ -43,7 +43,7 @@ public class TransformInterpolator : MonoBehaviour
             Debug.LogWarningFormat("[TransformInterpolator] Interpolation t-factor is out of range (0; 1): {0}", t);
 
         // Interpolate
-        transform.position = Vector2.LerpUnclamped(
+        transform.localPosition = Vector2.LerpUnclamped(
             new Vector2(t0.x, t0.y),
             new Vector2(t1.x, t1.y),
             t

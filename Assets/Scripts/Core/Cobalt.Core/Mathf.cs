@@ -24,6 +24,15 @@ namespace Cobalt.Core
             this.y = y;
         }
 
+        public static Vec2f Round(Vec2f v)
+        {
+            return new Vec2f
+            {
+                x = Mathf.RoundToInt(v.x),
+                y = Mathf.RoundToInt(v.y)
+            };
+        }
+
         public static Vec2f Lerp(Vec2f a, Vec2f b, float t)
         {
             return new Vec2f

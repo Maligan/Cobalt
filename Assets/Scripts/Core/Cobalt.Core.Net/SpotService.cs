@@ -13,7 +13,7 @@ namespace Cobalt.Core.Net
 {
     public class SpotService
     {
-        private const int frequency = 2;
+        private int frequency = Const.SPOT_FREQUENCY;
 
         private int version;
         private int port;
@@ -28,9 +28,9 @@ namespace Cobalt.Core.Net
 
         public void Start()
         {
-            Utils.Log("[SpotService] Starting...");
+            Utils.Log("[Spot] Starting...");
 
-            var ips = SpotUtils.GetSupportedIPs();
+            var ips = NetUtils.GetSupportedIPs();
             if (ips.Count == 0)
                 throw new Exception("There are no available network interfaces");
 
@@ -38,7 +38,7 @@ namespace Cobalt.Core.Net
                 StartService(ip);
         }
 
-        private async void StartService(SpotUtils.IP ip)
+        private async void StartService(NetUtils.IPInfo ip)
         {
             var broadcastStr = string.Format(Spot.MESSAGE_FORMAT, version);
             var broadcastBytes = Encoding.ASCII.GetBytes(broadcastStr);
@@ -69,27 +69,25 @@ namespace Cobalt.Core.Net
 
     public class SpotServiceFinder
     {
-        private const int timeout = 1500;
+        private int timeout = Const.SPOT_TIMEOUT;
 
-        public List<Spot> Spots => spots;
+        public List<Spot> Spots { get; private set; }
         public event Action Change;
 
         private int port;
         private UdpClient socket;
-        private List<Spot> spots;
         private CancellationTokenSource tokenSource;
 
         public SpotServiceFinder(int port)
         {
             this.port = port;
-            this.spots = new List<Spot>();
+            this.Spots = new List<Spot>();
         }
 
         public void Refresh()
         {
             Stop();
 
-            SpotUtils.ToggleWifiMulticast(true);
             tokenSource = new CancellationTokenSource();
             StartListener(tokenSource.Token);
             StartPurge(tokenSource.Token);
@@ -116,7 +114,7 @@ namespace Cobalt.Core.Net
             while (!token.IsCancellationRequested)
             {
                 var response = await socket.ReceiveAsyncOrNull();
-                if (response == SpotUtils.NULL) break;
+                if (response == NetUtils.NULL) break;
 
                 var responseString = Encoding.ASCII.GetString(response.Buffer);
                 var spot = Spot.Parse(responseString, response.RemoteEndPoint);
@@ -128,11 +126,11 @@ namespace Cobalt.Core.Net
         {
             var indexOf = -1;
 
-            lock (spots)
+            lock (Spots)
             {
-                indexOf = spots.IndexOf(spot);
-                if (indexOf == -1) spots.Add(spot);
-                else spots[indexOf] = spot;
+                indexOf = Spots.IndexOf(spot);
+                if (indexOf == -1) Spots.Add(spot);
+                else Spots[indexOf] = spot;
             }
 
             Purge(indexOf != -1);
@@ -140,18 +138,18 @@ namespace Cobalt.Core.Net
 
         private void Purge(bool changed)
         {
-            lock (spots)
+            lock (Spots)
             {
                 var now = DateTime.UtcNow;
-                var i = spots.Count;
+                var i = Spots.Count;
                 while (i --> 0)
                 {
-                    var spot = spots[i];
+                    var spot = Spots[i];
                     var span = (now - spot.Time).TotalMilliseconds;
 
                     if (span > timeout)
                     {
-                        spots.RemoveAt(i);
+                        Spots.RemoveAt(i);
                         changed = true;
                     }
                 }
@@ -163,7 +161,7 @@ namespace Cobalt.Core.Net
 
         public void Stop()
         {
-            // SpotUtils.ToggleWifiMulticast(false);
+            NetUtils.ToggleWifiMulticast(false);
 
             if (socket != null)
             {
@@ -216,18 +214,23 @@ namespace Cobalt.Core.Net
             return b1.SequenceEqual(b2);
         }
 
+        public override int GetHashCode()
+        {
+            return EndPoint.GetHashCode() ^ Version.GetHashCode();
+        }
+
         public IPEndPoint EndPoint;
         public int Version;
         public DateTime Time;
     }
 
-    internal static class SpotUtils
+    internal static class NetUtils
     {
         public static UdpReceiveResult NULL = new UdpReceiveResult();
 
-        public static List<IP> GetSupportedIPs()
+        public static List<IPInfo> GetSupportedIPs()
         {
-            var result = new List<IP>();
+            var result = new List<IPInfo>();
 
             foreach (var adapter in NetworkInterface.GetAllNetworkInterfaces())
             {
@@ -240,7 +243,7 @@ namespace Cobalt.Core.Net
                 var unicasts = adapter.GetIPProperties().UnicastAddresses;
                 foreach (var unicast in unicasts)
                     if (unicast.Address.AddressFamily == AddressFamily.InterNetwork)
-                        result.Add(new IP {
+                        result.Add(new IPInfo {
                             Address = unicast.Address,
                             Mask = unicast.IPv4Mask
                         });
@@ -286,7 +289,7 @@ namespace Cobalt.Core.Net
 
             result.AppendLine();
 
-            return string.Empty; // result.ToString();
+            return result.ToString();
         }
 
         public static async Task<UdpReceiveResult> ReceiveAsyncOrNull(this UdpClient socket)
@@ -295,15 +298,13 @@ namespace Cobalt.Core.Net
             catch { return NULL; }
         }
     
-        public class IP
+        public class IPInfo
         {
             public IPAddress Address;
             public IPAddress Mask;
 
             public IPAddress GetBroadcast()
             {
-                // return IPAddress.Parse("224.0.0.1")
-
                 if (IPAddress.IsLoopback(Address))
                     return Address;
 
@@ -322,46 +323,48 @@ namespace Cobalt.Core.Net
             } 
         }
 
-        #region Android WiFi-Multicast
-
-        #if UNITY_ANDROID //&& !UNITY_EDITOR
-
-        private static UnityEngine.AndroidJavaObject multicastLock;
+        private static WifiMulticastLock wifiMulticastLock;
 
         public static bool ToggleWifiMulticast(bool value)
         {
-            try
-            {
-                if (multicastLock == null)
-                {
-                    using (UnityEngine.AndroidJavaObject activity = new UnityEngine.AndroidJavaClass("com.unity3d.player.UnityPlayer").GetStatic<UnityEngine.AndroidJavaObject>("currentActivity"))
-                    {
-                        using (var wifiManager = activity.Call<UnityEngine.AndroidJavaObject>("getSystemService", "wifi"))
-                        {
-                            multicastLock = wifiManager.Call<UnityEngine.AndroidJavaObject>("createMulticastLock", "lock");
-                            multicastLock.Call("acquire");
-                        }
-                    }
-                }
+            if (wifiMulticastLock == null)
+                wifiMulticastLock = new WifiMulticastLock("COBALT");
 
-                return multicastLock.Call<bool>("isHeld");
-            }
-            catch (Exception e)
-            {
-                Utils.LogError(e);
-            }
+            if (value) wifiMulticastLock.Acquire();
+            else wifiMulticastLock.Release();
 
-            return false;
+            return wifiMulticastLock.IsHeld();
         }
 
-        #else
+        private class WifiMulticastLock
+        {
+            #if UNITY_ANDROID
+                private UnityEngine.AndroidJavaObject javaObject;
 
-        public static bool ToggleWifiMulticast(bool value) { return value; }
-
-        #endif
-
-
-
-        #endregion
+                public WifiMulticastLock(string key)
+                {
+                    try
+                    {
+                        using (UnityEngine.AndroidJavaObject activity = new UnityEngine.AndroidJavaClass("com.unity3d.player.UnityPlayer").GetStatic<UnityEngine.AndroidJavaObject>("currentActivity"))
+                            using (var wifiManager = activity.Call<UnityEngine.AndroidJavaObject>("getSystemService", "wifi"))
+                                javaObject = wifiManager.Call<UnityEngine.AndroidJavaObject>("createMulticastLock", "lock");
+                    }
+                    catch (Exception e)
+                    {
+                        Utils.LogWarning("[Spot] Can't createMulticastLock: {0}", e.Message);
+                    }
+                }
+                
+                public void Acquire() { if (javaObject != null) javaObject.Call("acquire"); }
+                public void Release() { if (javaObject != null) javaObject.Call("release"); }
+                public bool IsHeld() { return javaObject != null ? javaObject.Call<bool>("isHeld") : false; }
+            #else
+                public WifiMulticastLock(string key) { }
+                public void Acquire() { }
+                public void Release() { }
+                public bool IsHeld() { return true; }
+            #endif
+        }
     }
+
 }

@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using Cobalt.Core;
 using NetcodeIO.NET;
 using ProtoBuf;
+using Cobalt.Core;
 
 namespace Cobalt.Core
 {
@@ -64,8 +65,6 @@ namespace Cobalt.Core
             server.OnClientDisconnected += OnClientDisconnected;
             server.OnClientMessageReceived += OnClientMessageReceived;
             server.Start(false);
-
-            server.LogLevel = NetcodeLogLevel.Debug;
 
             match = new Match();
         }

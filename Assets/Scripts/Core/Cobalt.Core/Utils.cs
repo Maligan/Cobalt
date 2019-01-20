@@ -1,29 +1,17 @@
 using System;
 
-#if UNITY_EDITOR || UNITY_ANDROID
-using UnityEngine;
-#endif
-
 namespace Cobalt.Core
 {
     public static class Utils
     {
-        public static void Log(string format, params object[] args)
-        {
-            #if UNITY_EDITOR || UNITY_ANDROID
-                Debug.LogFormat(format, args);
-            #else
-                Console.WriteLine(format, args);
-            #endif
-        }
-
-        public static void LogError(Exception e)
-        {
-            #if UNITY_EDITOR || UNITY_ANDROID
-                Debug.LogError(e);
-            #else
-                Console.Error.WriteLine(e);
-            #endif
-        }
+        #if UNITY_EDITOR || UNITY_ANDROID
+            public static void Log(string format, params object[] args) { UnityEngine.Debug.LogFormat(format, args); }
+            public static void LogWarning(string format, params object[] args) { UnityEngine.Debug.LogWarningFormat(format, args); }
+            public static void LogError(Exception e) { UnityEngine.Debug.LogError(e); }
+        #else
+            public static void Log(string format, params object[] args) { Console.WriteLine(format, args); }
+            public static void LogWarning(string format, params object[] args) { Console.WriteLine(format, args); }
+            public static void LogError(Exception e) { Console.WriteLine(e); }
+        #endif
     }
-} 
+}
