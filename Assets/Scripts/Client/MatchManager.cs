@@ -7,8 +7,8 @@ using UnityEngine;
 
 public class MatchManager : MonoBehaviour
 {
-    [SerializeField]
-    private GameObject unit;
+    [SerializeField] private GameObject unit;
+    [SerializeField] private GameObject wall;
 
     private MatchTimeline timeline;
     private Client client;
@@ -23,6 +23,23 @@ public class MatchManager : MonoBehaviour
 		client.Connect(token, false);
 
 		unit.GetComponent<TransformInterpolator>().Timeline = timeline;
+
+		var data = MatchBuilder.Random(21, 19);
+
+		var w = data.GetLength(0);
+		var h = data.GetLength(1);
+		for (var x = 0; x < w; x++)
+		{
+			for (var y = 0; y < h; y++)
+			{
+				if (data[x, y])
+				{
+					var t = Instantiate(wall, unit.transform.parent);
+					t.transform.localPosition = new Vector2(x-w/2, y-h/2);
+				}
+			}
+		}
+
     }
 
 	private void Update()

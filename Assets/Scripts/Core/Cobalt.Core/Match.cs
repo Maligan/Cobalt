@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using ProtoBuf;
 using Cobalt.Core;
+using System.Collections;
 
 namespace Cobalt.Core
 {
@@ -12,6 +13,15 @@ namespace Cobalt.Core
 
         public Match()
         {
+            var cave = MatchBuilder.Random(21, 19);
+            var caveBits = new BitArray(cave.Length);
+            var caveW = cave.GetLength(0);
+            var caveH = cave.GetLength(1);
+
+            for (var x = 0; x < caveW; x++)
+                for (var y = 0; y < caveH; y++)
+                    caveBits[x * caveH + y] = cave[x, y];
+            
             Systems = new [] {
                 new UnitSystem(),
             };
@@ -19,7 +29,7 @@ namespace Cobalt.Core
             State = new MatchState {
                 inputs = new [] {
                     new UnitInput() {
-                        move = Unit.Direction.Right
+                        move = Unit.Direction.None
                     },
                 },
 
@@ -100,7 +110,21 @@ namespace Cobalt.Core
         [ProtoMember(2)]
         public Unit[] units;
         public UnitInput[] inputs;
+
+        // [ProtoMember(3)]
+        // public BitArray walls;
     }
+
+    /*
+    public class MatchStatePacket
+    {
+        public int index;
+
+        public     int[] create;
+        public     int[] remove;
+        public  object[] update;
+    }
+    */
 
     // Entities
 
