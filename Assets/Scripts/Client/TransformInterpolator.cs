@@ -57,9 +57,10 @@ public class TransformInterpolator : MonoBehaviour
             for (int i = 0; i < Timeline.Count; i++)
             {
                 var state = GetTransform(i);
-                var vector = new Vector2(state.x, state.y);
+                var localPos = new Vector2(state.x, state.y);
+                var globalPos = transform.parent.TransformPoint(localPos);
         		Gizmos.color = Color.magenta;
-                Gizmos.DrawCube(vector, Vector3.one * 1/10f);
+                Gizmos.DrawCube(globalPos, Vector3.one * 1/10f);
             }
         }
     }
