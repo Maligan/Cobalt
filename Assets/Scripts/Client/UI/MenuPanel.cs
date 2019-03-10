@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using System.Linq;
 using Cobalt.Core;
-using Cobalt.Core.Net;
+using Cobalt.Net;
 using Cobalt.UI;
 using TMPro;
 using UnityEngine;

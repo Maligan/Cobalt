@@ -1,6 +1,7 @@
 using System.Linq;
+using Cobalt.Core;
 
-namespace Cobalt.Core.Net
+namespace Cobalt.Net
 {
     public class ShardService
     {
@@ -16,8 +17,8 @@ namespace Cobalt.Core.Net
             Options.ips = NetUtils.GetSupportedIPs().Select(ip => ip.Address).ToArray();
 
             shard = new Shard(Options);
-            token = new TokenService(Const.PORT, shard);
-            spot = new SpotService(1, Const.PORT);
+            token = new TokenService(Constants.PORT, shard);
+            spot = new SpotService(1, Constants.PORT);
 
             shard.Start();
             token.Start();

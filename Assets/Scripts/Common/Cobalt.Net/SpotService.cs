@@ -8,12 +8,13 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Cobalt.Core;
 
-namespace Cobalt.Core.Net
+namespace Cobalt.Net
 {
     public class SpotService
     {
-        private int frequency = Const.SPOT_FREQUENCY;
+        private int frequency = Constants.SPOT_FREQUENCY;
 
         private int version;
         private int port;
@@ -28,7 +29,7 @@ namespace Cobalt.Core.Net
 
         public void Start()
         {
-            Utils.Log("[Spot] Starting...");
+            Log.Info("[Spot] Starting...");
 
             var ips = NetUtils.GetSupportedIPs();
             if (ips.Count == 0)
@@ -69,7 +70,7 @@ namespace Cobalt.Core.Net
 
     public class SpotServiceFinder
     {
-        private int timeout = Const.SPOT_TIMEOUT;
+        private int timeout = Constants.SPOT_TIMEOUT;
 
         public List<Spot> Spots { get; private set; }
         public event Action Change;
@@ -351,7 +352,7 @@ namespace Cobalt.Core.Net
                     }
                     catch (Exception e)
                     {
-                        Utils.LogWarning("[Spot] Can't createMulticastLock: {0}", e.Message);
+                        Log.Warning("[Spot] Can't createMulticastLock: {0}", e.Message);
                     }
                 }
                 

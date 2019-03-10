@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Cobalt.Core;
-using Cobalt.Core.Net;
+using Cobalt.Net;
 using Cobalt.UI;
 using NetcodeIO.NET;
 using ProtoBuf;
@@ -14,6 +14,7 @@ using UnityEngine.Networking;
 public class App : MonoBehaviour
 {
 	public static App Instance { get; private set; }
+	
 	public static UIManager UI { get { return Instance.GetComponent<UIManager>(); } }
 	public static MatchManager MatchManager { get { return Instance.GetComponent<MatchManager>(); } }
 	public static ShardService ShardService { get; private set; }
@@ -27,7 +28,7 @@ public class App : MonoBehaviour
 	public void Start()
 	{
 		// DoMenu();
-		DoLocal();
+		DoLocalGame();
     }
 
 	public void Update()
@@ -37,7 +38,7 @@ public class App : MonoBehaviour
 
 	#region Commands
 
-	public static void DoLocal()
+	public static void DoLocalGame()
 	{
 		ShardService.Start(new ShardOptions());
 		DoConnect(ShardService.GetToken());

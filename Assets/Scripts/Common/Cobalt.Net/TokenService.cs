@@ -1,8 +1,9 @@
 using System;
 using System.Net;
 using System.Threading.Tasks;
+using Cobalt.Core;
 
-namespace Cobalt.Core.Net
+namespace Cobalt.Net
 {
     public class TokenService
     {
@@ -39,7 +40,7 @@ namespace Cobalt.Core.Net
             while (listener.IsListening)
             {
                 try { await Process(); }
-                catch (Exception e) { Utils.LogError(e); }
+                catch (Exception e) { Log.Error(e); }
             }
         }
 

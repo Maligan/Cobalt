@@ -13,10 +13,8 @@ namespace Cobalt.Core
     [ProtoContract]
     public struct Vec2f
     {
-        [ProtoMember(1)]
-        public float x;
-        [ProtoMember(2)]
-        public float y;
+        [ProtoMember(1)] public float x;
+        [ProtoMember(2)] public float y;
 
         public Vec2f(float x, float y)
         {

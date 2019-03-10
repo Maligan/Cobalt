@@ -1,6 +1,6 @@
 namespace Cobalt.Core
 {
-    public static class Const
+    public static class Constants
     {
         public static int PORT = 8888;
 

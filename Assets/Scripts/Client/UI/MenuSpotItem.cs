@@ -1,5 +1,5 @@
 using System.Collections;
-using Cobalt.Core.Net;
+using Cobalt.Net;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Networking;

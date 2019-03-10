@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Cobalt.Core;
-using Cobalt.Core.Net;
+using Cobalt.Net;
 
 namespace Cobalt
 {

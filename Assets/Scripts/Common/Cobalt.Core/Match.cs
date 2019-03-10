@@ -81,7 +81,7 @@ namespace Cobalt.Core
             if (States.Count > Capacity)
             {
                 States.RemoveAt(0);
-    			Utils.Log("[MatchTimeline] Capacity overhead");
+    			Log.Warning("[MatchTimeline] Capacity overhead");
             }
 
             States.Sort(Sorter);
@@ -105,10 +105,8 @@ namespace Cobalt.Core
     [ProtoContract]
     public class MatchState
     {
-        [ProtoMember(1)]
-        public float timestamp;
-        [ProtoMember(2)]
-        public Unit[] units;
+        [ProtoMember(1)] public float timestamp;
+        [ProtoMember(2)] public Unit[] units;
         public UnitInput[] inputs;
 
         // [ProtoMember(3)]
@@ -126,7 +124,9 @@ namespace Cobalt.Core
     }
     */
 
+    //
     // Entities
+    //
 
     [ProtoContract]
     public class UnitInput
@@ -167,7 +167,9 @@ namespace Cobalt.Core
         public float moveSpeed;
     }
 
+    //
     // Components
+    //
 
     // public interface ITransform
     // {
@@ -175,7 +177,9 @@ namespace Cobalt.Core
     //     float y { get; set; }
     // }
 
+    //
     // Systems
+    //
 
     public interface IMatchSystem
     {

@@ -7,9 +7,8 @@ using System.Security.Cryptography;
 using Cobalt.Core;
 using NetcodeIO.NET;
 using ProtoBuf;
-using Cobalt.Core;
 
-namespace Cobalt.Core
+namespace Cobalt.Net
 {
     public class Shard
     {
@@ -109,7 +108,7 @@ namespace Cobalt.Core
 
         private void OnClientConnected(RemoteClient client)
         {
-            Utils.Log("[Shard] Client Connected #" + client.ClientID);
+            Log.Info("[Shard] Client Connected #" + client.ClientID);
 
             if (state != State.Lobby)
                 throw new Exception();
@@ -122,7 +121,7 @@ namespace Cobalt.Core
 
         private void OnClientDisconnected(RemoteClient client)
         {
-            Utils.Log("[Shard] Client Disconnected #" + client.ClientID);
+            Log.Info("[Shard] Client Disconnected #" + client.ClientID);
 
             if (state == State.Play)
                 Stop();
@@ -161,7 +160,7 @@ namespace Cobalt.Core
         public int          expiry      = int.MaxValue;
 
         public int          tps         = 20;
-        public float        spt        => 1f / tps;
+        public float        spt         => 1f / tps;
 
         internal static byte[] GetKey(string keyString)
         {
