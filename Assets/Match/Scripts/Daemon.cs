@@ -20,7 +20,7 @@ namespace Cobalt
             var daemon = new Daemon();
             daemon.Start();
             // Console.WriteLine("Start...");
-            Console.ReadLine();
+            // Console.ReadLine();
         }
 
         private void Start()

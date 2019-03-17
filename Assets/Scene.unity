@@ -303,6 +303,7 @@ GameObject:
   - component: {fileID: 1320859400}
   - component: {fileID: 1320859399}
   - component: {fileID: 1320859398}
+  - component: {fileID: 1320859402}
   m_Layer: 0
   m_Name: Global
   m_TagString: Untagged
@@ -407,6 +408,26 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
+--- !u!114 &1320859402
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1320859396}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e93e08f95dfcd874692ddc06b58610cf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Skin: {fileID: 11400000, guid: 45d6d60e883e34340b28b21ce6f12e5c, type: 2}
+  Close: {fileID: 2800000, guid: 536c10c3089640a439e7008651f39564, type: 3}
+  Trash: {fileID: 2800000, guid: 16aa4ad69f2ef5e47b2caa748800b9a9, type: 3}
+  Send: {fileID: 2800000, guid: 44ef4fa6721f04f45b6ce11b55b80f23, type: 3}
+  Next: {fileID: 2800000, guid: 99cf831c9797d584e8e2fdb98c0211d6, type: 3}
+  Next2: {fileID: 2800000, guid: fb49eaacee0a68e4eaca473975783553, type: 3}
+  Prev: {fileID: 2800000, guid: 2e1da52d7a1bb884c95419c92dee3242, type: 3}
+  Prev2: {fileID: 2800000, guid: 72071e58740e09741820de7d75671ddf, type: 3}
 --- !u!1 &1781834126
 GameObject:
   m_ObjectHideFlags: 0
@@ -1600,7 +1621,7 @@ Canvas:
   m_GameObject: {fileID: 4952173466708804632}
   m_Enabled: 1
   serializedVersion: 3
-  m_RenderMode: 1
+  m_RenderMode: 0
   m_Camera: {fileID: 0}
   m_PlaneDistance: 100
   m_PixelPerfect: 0
