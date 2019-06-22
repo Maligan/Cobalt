@@ -27,7 +27,7 @@ public class App : MonoBehaviour
 
     public void Start()
     {
-        // DoMenu();
+        DoMenu();
         // DoLocalGame();
     }
 
@@ -46,16 +46,17 @@ public class App : MonoBehaviour
 
     public static void DoConnect(byte[] token)
     {
-        App.UI.Get<MenuPanel>().Require(Instance, 0);
+        // App.UI.Get<MenuPanel>().Require(Instance, 0);
         App.MatchManager.Connect(token);
         App.Instance.transform.Find("Match").gameObject.SetActive(true);
 
     }
 
-    public static void DoMenu()
+    public static async void DoMenu()
     {
-        App.UI.Get<MenuPanel>().Require(Instance, +1);
-        App.Instance.transform.Find("Match").gameObject.SetActive(false);
+
+        // App.UI.Get<MenuPanel>().Require(Instance, +1);
+        // App.Instance.transform.Find("Match").gameObject.SetActive(false);
     }
 
     #endregion

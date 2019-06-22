@@ -2,17 +2,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace Cobalt.UI
 {
     public class UIManager : MonoBehaviour
     {
-        public Action<UIPopup> OnPopupShowing;
-        public Action<UIPopup> OnPopupShowed;
-        public Action<UIPopup> OnPopupHidding;
-        public Action<UIPopup> OnPopupHided;
-
         public Transform root;
         private Dictionary<Type, UIElement> elements;
         private List<UIPopup> queue;
@@ -122,10 +118,8 @@ namespace Cobalt.UI
                 topmost.gameObject.SetActive(true);
                 topmost.IsShow = true;
                 topmost.IsTransit = true;
-                if (OnPopupShowing != null) OnPopupShowing(topmost);
                 yield return topmost.Show();
                 topmost.IsTransit = false;
-                if (OnPopupShowed != null) OnPopupShowed(topmost);
 
                 // Await for Dequeue()
                 while (queue.IndexOf(topmost) != -1) yield return null;
@@ -133,11 +127,9 @@ namespace Cobalt.UI
                 // Hide
                 topmost.IsShow = false;
                 topmost.IsTransit = true;
-                if (OnPopupHidding != null) OnPopupHidding(topmost);
                 yield return topmost.Hide();
                 topmost.IsTransit = false;
                 topmost.gameObject.SetActive(false);
-                if (OnPopupHided != null) OnPopupHided(topmost);
 
                 // Unshade
                 if (shaded != null) shaded.ShadeOff();

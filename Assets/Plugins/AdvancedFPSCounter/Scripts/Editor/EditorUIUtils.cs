@@ -21,12 +21,12 @@ namespace CodeStage.AdvancedFPSCounter.Editor.UI
 
 		public static void Separator(int padding = 0)
 		{
-			if (padding != 0) GUILayout.Space(padding);
+			// if (padding != 0) GUILayout.Space(padding);
 
-			Rect position = EditorGUILayout.GetControlRect(false, 1f);
-			position = EditorGUI.PrefixLabel(position, GUIContent.none);
-			Rect texCoordinates = new Rect(0f, 1f, 1f, 1f - 1f / line.normal.background.height);
-			GUI.DrawTextureWithTexCoords(position, line.normal.background, texCoordinates);
+			// Rect position = EditorGUILayout.GetControlRect(false, 1f);
+			// position = EditorGUI.PrefixLabel(position, GUIContent.none);
+			// Rect texCoordinates = new Rect(0f, 1f, 1f, 1f - 1f / line.normal.background.height);
+			// GUI.DrawTextureWithTexCoords(position, line.normal.background, texCoordinates);
 
 			if (padding != 0) GUILayout.Space(padding);
 		}
