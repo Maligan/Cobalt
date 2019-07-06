@@ -1,6 +1,5 @@
 using UnityEngine;
 using Cobalt.Core;
-using System.Collections.Generic;
 
 namespace Cobalt.Unity
 {
@@ -25,6 +24,7 @@ namespace Cobalt.Unity
 
             // Ускорение по отставанию
             // TODO: ---
+
             // Нормальный просчёт
             Timeline.Time += Time.deltaTime;
             Timeline.Purge();

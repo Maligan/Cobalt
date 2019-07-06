@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -29,11 +28,11 @@ namespace Cobalt.Net
 
         public void Start()
         {
-            Log.Info("[Spot] Starting...");
+            Log.Info("[Spot] Start");
 
             var ips = NetUtils.GetSupportedIPs();
             if (ips.Count == 0)
-                throw new Exception("There are no available network interfaces");
+                throw new Exception("There are no available network interfaces\n" + NetUtils.GetInterfaceSummary());
 
             foreach (var ip in ips)
                 StartService(ip);
@@ -44,6 +43,8 @@ namespace Cobalt.Net
             var broadcastStr = string.Format(Spot.MESSAGE_FORMAT, version);
             var broadcastBytes = Encoding.ASCII.GetBytes(broadcastStr);
             var broadcastEndpoint = new IPEndPoint(ip.GetBroadcast(), port);
+
+            Log.Info("[Spot] Bind to {0}", broadcastEndpoint);
 
             var socketEndpoint = new IPEndPoint(ip.Address, port);
             var socket = new UdpClient();
@@ -61,6 +62,8 @@ namespace Cobalt.Net
 
         public void Stop()
         {
+            Log.Info("[Spot] Stop");
+
             foreach (var socket in sockets)
                 socket.Close();
 
@@ -68,7 +71,7 @@ namespace Cobalt.Net
         }
     }
 
-    public class SpotServiceFinder
+    public class SpotServiceFinder : IDisposable
     {
         private int timeout = Constants.SPOT_TIMEOUT;
 
@@ -77,7 +80,7 @@ namespace Cobalt.Net
 
         private int port;
         private UdpClient socket;
-        private CancellationTokenSource tokenSource;
+        private CancellationTokenSource cancel;
 
         public SpotServiceFinder(int port)
         {
@@ -87,11 +90,13 @@ namespace Cobalt.Net
 
         public void Refresh()
         {
+            Log.Info("[SpotServiceFinder] Refresh");
+
             Stop();
 
-            tokenSource = new CancellationTokenSource();
-            StartListener(tokenSource.Token);
-            StartPurge(tokenSource.Token);
+            cancel = new CancellationTokenSource();
+            StartListener(cancel.Token);
+            StartPurge(cancel.Token);
         }
 
         private async void StartPurge(CancellationToken token)
@@ -106,7 +111,6 @@ namespace Cobalt.Net
         private async void StartListener(CancellationToken token)
         {
             var socketEndpoint = new IPEndPoint(IPAddress.Any, port);
-            
             socket = new UdpClient();
             socket.EnableBroadcast = true;
             socket.ExclusiveAddressUse = false;
@@ -134,24 +138,25 @@ namespace Cobalt.Net
                 else Spots[indexOf] = spot;
             }
 
-            Purge(indexOf != -1);
+            Purge(indexOf == -1);
         }
 
         private void Purge(bool changed)
         {
             lock (Spots)
             {
-                var now = DateTime.UtcNow;
                 var i = Spots.Count;
+
                 while (i --> 0)
                 {
                     var spot = Spots[i];
-                    var span = (now - spot.Time).TotalMilliseconds;
+                    var span = (DateTime.UtcNow - spot.Time).TotalMilliseconds;
 
                     if (span > timeout)
                     {
                         Spots.RemoveAt(i);
                         changed = true;
+                        Log.Info("OLD");
                     }
                 }
 
@@ -162,22 +167,29 @@ namespace Cobalt.Net
 
         public void Stop()
         {
-            NetUtils.ToggleWifiMulticast(false);
+            // NetUtils.ToggleWifiMulticast(false);
 
             if (socket != null)
             {
+                Log.Info("[SpotServiceFinder] Stop");
+
                 socket.Close();
                 socket = null;
             }
 
-            if (tokenSource != null)
-                tokenSource.Cancel();
+            if (cancel != null)
+                cancel.Cancel();
+        }
+
+        public void Dispose()
+        {
+            Stop();
         }
     }
 
     public class Spot
     {
-        private static readonly string MESSAGE = "COBALT";
+        private static readonly string MESSAGE = "SPOT";
         private static readonly Regex MESSAGE_REGEX = new Regex("^" + MESSAGE + @"/(\d+)");
         internal static readonly string MESSAGE_FORMAT = MESSAGE + "/{0}";
 

@@ -53,21 +53,20 @@ namespace Cobalt.Net
                 result.AppendLine($"  Interface type .......................... : {adapter.NetworkInterfaceType}");
                 result.AppendLine($"  Operational status ...................... : {adapter.OperationalStatus}");
                 result.AppendLine($"  Supports multicast ...................... : {adapter.SupportsMulticast}");
-                string versions ="";
+                string versions = "";
 
                 // Create a display string for the supported IP versions.
                 if (adapter.Supports(NetworkInterfaceComponent.IPv4))
-                {
                     versions = "IPv4";
-                }
+
                 if (adapter.Supports(NetworkInterfaceComponent.IPv6))
                 {
                     if (versions.Length > 0)
-                    {
                         versions += " ";
-                    }
+
                     versions += "IPv6";
                 }
+
                 result.AppendLine($"  IP version .............................. : {versions}");
                 result.AppendLine();
             }
@@ -123,7 +122,7 @@ namespace Cobalt.Net
 
         private class WifiMulticastLock
         {
-            #if UNITY_ANDROID
+            #if UNITY_ANDROID && false
                 private UnityEngine.AndroidJavaObject javaObject;
 
                 public WifiMulticastLock(string key)
@@ -136,7 +135,7 @@ namespace Cobalt.Net
                     }
                     catch (Exception e)
                     {
-                        Log.Warning("[Spot] Can't createMulticastLock: {0}", e.Message);
+                        Log.Warning("[Spot] Can't perform Wifi Multicast Lock: {0}", e.Message);
                     }
                 }
                 

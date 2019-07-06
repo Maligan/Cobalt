@@ -22,22 +22,23 @@ namespace Cobalt.Net
         private Match match;
 
         private float time;
+        private float timeCursor;
 
         public Shard(ShardOptions options)
         {
             this.options = options;
             
             state = State.Stop;
-            tokens = new TokenFactory(options.version, ShardOptions.GetKey(options.key));
+            tokens = new TokenFactory(options.Version, options.Hash);
             clients = new List<RemoteClient>();
         }
 
         public byte[] GetToken()
         {
             return tokens.GenerateConnectToken(
-                options.ips.Select(ip => new IPEndPoint(ip, options.port)).ToArray(),
-                options.expiry,
-                options.timeout,
+                options.IPs.Select(ip => new IPEndPoint(ip, options.Port)).ToArray(),
+                options.TokenExpiry,
+                options.TokenTimeout,
                 0,
                 0,
                 new byte[0]
@@ -47,17 +48,20 @@ namespace Cobalt.Net
         public void Start()
         {
             if (state != State.Stop)
-                throw new Exception();
+                throw new InvalidOperationException();
+
+            Log.Info("[Shard] Start on {0} port", options.Port);
 
             time = 0;
             state = State.Lobby;
 
             server = new Server(
-                options.numPlayers,
-                IPAddress.Any.ToString(),
-                options.port,
-                options.version,
-                ShardOptions.GetKey(options.key)
+                options.NumPlayers,
+                //IPAddress.Any.ToString(),
+                options.IPs.First().ToString(),
+                options.Port,
+                options.Version,
+                options.Hash
             );
 
             server.OnClientConnected += OnClientConnected;
@@ -73,6 +77,8 @@ namespace Cobalt.Net
             if (state == State.Stop)
                 throw new Exception();
 
+            Log.Info("[Shard] Stop");
+
             state = State.Stop;
 
             clients.Clear();
@@ -86,20 +92,24 @@ namespace Cobalt.Net
             match = null;
         }
 
-        public void Tick(float sec)
+        public void Tick(float time)
         {
             if (state == State.Stop) return;
 
-            time += sec;
+            this.time = time;
             server.Tick(time);
 
             if (state != State.Play) return;
 
-            var tickIndexBefore = (int)((time - sec) / options.spt);
-            var tickIndexAfter = (int)(time / options.spt);
-            if (tickIndexBefore != tickIndexAfter)
+            if(timeCursor == 0) timeCursor = time;
+
+            var dt = options.SPT;
+            while (timeCursor + dt < time)
             {
-                match.Tick(options.spt);
+                timeCursor += dt;
+
+                Log.Info("Tick #" + (int)(timeCursor*options.TPS));
+                match.Tick(options.SPT);
                 clients.Send(match.State);
             }
         }
@@ -108,14 +118,14 @@ namespace Cobalt.Net
 
         private void OnClientConnected(RemoteClient client)
         {
-            Log.Info("[Shard] Client Connected #" + client.ClientID);
-
             if (state != State.Lobby)
-                throw new Exception();
+                throw new InvalidOperationException();
+
+            Log.Info("[Shard] Client Connected ({0}/{1})", clients.Count+1, options.NumPlayers);
 
             clients.Add(client);
 
-            if (clients.Count == options.numPlayers)
+            if (clients.Count == options.NumPlayers)
                 state = State.Play;
         }
 
@@ -140,29 +150,32 @@ namespace Cobalt.Net
 
         public bool IsRunning => state != State.Stop;
 
-        private enum State
-        {
-            Stop,
-            Lobby,
-            Play
-        }
+        private enum State { Stop, Lobby, Play }
     }
 
     public class ShardOptions
     {
-        public int          numPlayers  = 1;
-        public IPAddress[]  ips         = new [] { IPAddress.Loopback };
-        public int          port        = 8889;
-        public string       key         = "key";
-        public ulong        version     = 0;
+        /// Default IP port
+        public static int PORT = 4123;
 
-        public int          timeout     = int.MaxValue;
-        public int          expiry      = int.MaxValue;
+        public int          NumPlayers   = 1;
+        public IPAddress[]  IPs          = new [] { IPAddress.Loopback };
+        public int          Port         = PORT;
+        public string       Key          = "anonymous";
+        public ulong        Version      = 0;
 
-        public int          tps         = 20;
-        public float        spt         => 1f / tps;
+        public int          TokenTimeout = int.MaxValue;
+        public int          TokenExpiry  = int.MaxValue;
 
-        internal static byte[] GetKey(string keyString)
+        public int          TPS          = 60;
+        public float        SPT          => 1f / TPS;
+
+        public byte[] Hash
+        {
+            get { return GetKey(Key); }
+        }
+
+        private static byte[] GetKey(string keyString)
         {
             var hash = SHA256.Create();
             var keyBytes = System.Text.Encoding.ASCII.GetBytes(keyString);

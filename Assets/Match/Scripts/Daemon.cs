@@ -1,10 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Net.Sockets;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 using Cobalt.Core;
 using Cobalt.Net;
@@ -19,39 +13,29 @@ namespace Cobalt
         {
             var daemon = new Daemon();
             daemon.Start();
-            // Console.WriteLine("Start...");
-            // Console.ReadLine();
         }
 
         private void Start()
         {
             shard = new ShardService();
             shard.Start(new ShardOptions());
-
-            StartTick();
+            
+            Tick();
         }
 
-        private async void StartTick()
+        private async void Tick()
         {
+            var start = DateTime.Now;
+
             while (true)
             {
-                shard.Tick(1/30f);
-                await Task.Delay(1000/30);
+                var time = (float)(DateTime.Now - start).TotalSeconds;
+                shard.Tick(time);
+                await Task.Delay(1000/shard.Options.TPS);
             }
-        } 
+        }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
 
 /*
     GET /shards/

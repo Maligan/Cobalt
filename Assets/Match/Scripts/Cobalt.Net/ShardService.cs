@@ -1,5 +1,5 @@
+using System;
 using System.Linq;
-using Cobalt.Core;
 
 namespace Cobalt.Net
 {
@@ -14,7 +14,8 @@ namespace Cobalt.Net
         public void Start(ShardOptions options)
         {
             Options = options;
-            Options.ips = NetUtils.GetSupportedIPs().Select(ip => ip.Address).ToArray();
+            Options.IPs = NetUtils.GetSupportedIPs().Select(ip => ip.Address).ToArray();
+            Options.Key = "Key_" + new Random().Next();
 
             shard = new Shard(Options);
             token = new TokenService(Constants.PORT, shard);
@@ -25,10 +26,10 @@ namespace Cobalt.Net
             spot.Start();
         }
 
-        public void Tick(float sec)
+        public void Tick(float time)
         {
             if (shard != null)
-                shard.Tick(sec);
+                shard.Tick(time);
         }
 
         public void Stop()

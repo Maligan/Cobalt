@@ -20,8 +20,9 @@
 		<Reference Include="../Assets/Plugins/*.dll" />
 		<Compile Include="../Assets/Plugins/Netcode/**/*.cs" />
 
-		<Compile Include="../Assets/Scripts/Core/**/*.cs" />
-		<Compile Include="../Assets/Scripts/Daemon/**/*.cs" />
+		<Compile Include="../Assets/Match/Scripts/Daemon.cs" />
+		<Compile Include="../Assets/Match/Scripts/Cobalt.Core/**/*.cs" />
+		<Compile Include="../Assets/Match/Scripts/Cobalt.Net/**/*.cs" />
 	</ItemGroup>
 
 </Project>

@@ -9,6 +9,8 @@ using UnityEngine;
 
 public class MatchManager : MonoBehaviour
 {
+    public GameObject root;
+
     public GameObject unit;
     public GameObject wall;
 
@@ -17,6 +19,8 @@ public class MatchManager : MonoBehaviour
 
     public void Connect(byte[] token)
     {
+        root.SetActive(true);
+
         timeline = new MatchTimeline();
 
         client = new Client();
@@ -27,7 +31,6 @@ public class MatchManager : MonoBehaviour
         unit.GetComponent<TransformInterpolator>().Timeline = timeline;
 
         var data = MatchBuilder.Random(21, 19);
-
         var w = data.GetLength(0);
         var h = data.GetLength(1);
         for (var x = 0; x < w; x++)
@@ -37,7 +40,7 @@ public class MatchManager : MonoBehaviour
                 if (data[x, y])
                 {
                     var t = Instantiate(wall, unit.transform.parent);
-                    t.transform.localPosition = new Vector2(x - w / 2, y - h / 2);
+                    t.transform.localPosition = new Vector2(x - w/2, y - h/2);
                 }
             }
         }

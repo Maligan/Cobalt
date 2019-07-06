@@ -27,11 +27,14 @@ namespace Cobalt.Net
 
         public async void Start()
         {
+            Log.Info("[TokenService] Start");
+
             listener.Prefixes.Clear();
             
             foreach (var ip in NetUtils.GetSupportedIPs())
             {
-                var prefix = string.Format("http://{0}:{1}/", ip, port);
+                var prefix = string.Format("http://{0}:{1}/", ip.Address, port);
+                Log.Info("[TokenService] Prefix " + prefix);
                 listener.Prefixes.Add(prefix);
             }
 
@@ -55,7 +58,7 @@ namespace Cobalt.Net
             var response = context.Response;
 
             var path = request.Url.LocalPath;
-            if (path == "/join")
+            if (path == "/auth")
             {
                 var tokenBytes = shard.GetToken();
                 var token = Convert.ToBase64String(tokenBytes);

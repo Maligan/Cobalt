@@ -11,7 +11,6 @@ namespace Cobalt.UI
     {
         public Transform root;
         private Dictionary<Type, UIElement> elements;
-        private List<UIPopup> queue;
 
         private List<Relation> relations;
         private bool relationsIsDirty;
@@ -19,8 +18,17 @@ namespace Cobalt.UI
         public UIManager()
         {
             elements = new Dictionary<Type, UIElement>();
-            queue = new List<UIPopup>();
             relations = new List<Relation>();
+        }
+
+        public void Start()
+        {
+            var elements = root.GetComponentsInChildren<UIElement>();
+
+            // Disable all active objects            
+            foreach (var element in elements)
+                if (element.gameObject.activeSelf)
+                    element.gameObject.SetActive(false);
         }
 
         public T Get<T>() where T : UIElement
@@ -62,77 +70,6 @@ namespace Cobalt.UI
                 // Update exist relation
                 relationsIsDirty = true;
                 relation.state = state;
-            }
-        }
-
-        internal void Enqueue(UIPopup popup, bool enqueue)
-        {
-            if (queue.IndexOf(popup) == -1)
-            {
-                if (enqueue) queue.Add(popup);
-                else queue.Insert(0, popup);
-            }
-        }
-
-        internal void Dequeue(UIPopup popup)
-        {
-            var indexOf = queue.IndexOf(popup);
-            if (indexOf != -1) queue.RemoveAt(indexOf);
-        }
-
-        internal bool IsAwait(UIPopup popup)
-        {
-            return queue.IndexOf(popup) != -1   // Попап в очереди
-                || popup.IsShow == true         // или сейчас отображается
-                || popup.IsTransit == true;     // или сейчас проигрывается анимация закрытия
-        }
-
-        internal bool IsTopmost(UIPopup popup)
-        {
-            return queue.Count > 1
-                && queue[0] == popup;
-        }
-
-        private void Update()
-        {
-            if (queue.Count > 0)
-            {
-                var topmost = queue[0];
-                if (topmost.IsShow) return;
-                StartCoroutine(UpdateCoroutine());
-            }
-        }
-
-        private IEnumerator UpdateCoroutine()
-        {
-            if (queue.Count > 0)
-            {
-                var topmost = queue[0];
-                if (topmost.IsShow) yield break;
-
-                // Shade
-                var shaded = queue.Count > 1 && queue[1].IsShow ? queue[1] : null;
-                if (shaded != null) shaded.ShadeOn();
-
-                // Show
-                topmost.gameObject.SetActive(true);
-                topmost.IsShow = true;
-                topmost.IsTransit = true;
-                yield return topmost.Show();
-                topmost.IsTransit = false;
-
-                // Await for Dequeue()
-                while (queue.IndexOf(topmost) != -1) yield return null;
-
-                // Hide
-                topmost.IsShow = false;
-                topmost.IsTransit = true;
-                yield return topmost.Hide();
-                topmost.IsTransit = false;
-                topmost.gameObject.SetActive(false);
-
-                // Unshade
-                if (shaded != null) shaded.ShadeOff();
             }
         }
 
@@ -195,7 +132,7 @@ namespace Cobalt.UI
     }
 
     [RequireComponent(typeof(RectTransform))]
-    [RequireComponent(typeof(CanvasGroup))]
+    // [RequireComponent(typeof(CanvasGroup))]
     public class UIElement : MonoBehaviour
     {
         internal UIManager UIManager { get; set; }
@@ -204,24 +141,15 @@ namespace Cobalt.UI
 
         public bool IsShow { get; internal set; }
         public bool IsTransit { get; internal set; }
+
+        public void OnValidate() { gameObject.name = GetType().Name; }
     }
 
     public class UIPanel : UIElement
     {
         public void Require(object token, int state) { UIManager.Require(this, token, state); }
-    }
 
-    public class UIPopup : UIElement
-    {
-        public void Open(bool enqueue = false) { UIManager.Enqueue(this, enqueue); }
-        public void Close() { UIManager.Dequeue(this); }
-
-        public CustomYieldInstruction Await() { return new WaitWhile(AwaitPredicate); }
-        private bool AwaitPredicate() { return UIManager.IsAwait(this); }
-
-        internal protected virtual void ShadeOn() { }
-        internal protected virtual void ShadeOff() { }
-
-        public bool IsTopmost { get { return UIManager.IsTopmost(this); } }
+        public void Open() { UIManager.Require(this, this, 1); }
+        public void Close() { UIManager.Require(this, this, 0); }
     }
 }
