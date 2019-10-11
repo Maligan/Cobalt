@@ -5,7 +5,6 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
-using Cobalt.Core;
 
 namespace Cobalt.Net
 {
@@ -13,7 +12,7 @@ namespace Cobalt.Net
     {
         public static UdpReceiveResult NULL = new UdpReceiveResult();
 
-        public static List<IPInfo> GetSupportedIPs()
+        public static List<IPInfo> GetSupportedIPs(bool allowLoopback = true)
         {
             var result = new List<IPInfo>();
 
@@ -34,7 +33,7 @@ namespace Cobalt.Net
                         });
             }
 
-            if (result.Count > 1)
+            if (result.Count > 1 || !allowLoopback)
                 result.RemoveAll(ip => IPAddress.IsLoopback(ip.Address));
 
             return result;
@@ -107,22 +106,18 @@ namespace Cobalt.Net
             } 
         }
 
-        private static WifiMulticastLock wifiMulticastLock;
-
-        public static bool ToggleWifiMulticast(bool value)
+        public static bool SetWifiMulticast(bool value)
         {
-            if (wifiMulticastLock == null)
-                wifiMulticastLock = new WifiMulticastLock("COBALT");
-
-            if (value) wifiMulticastLock.Acquire();
-            else wifiMulticastLock.Release();
-
-            return wifiMulticastLock.IsHeld();
+            if (value) WifiMulticastLock.Instance.Acquire();
+            else WifiMulticastLock.Instance.Release();
+            return WifiMulticastLock.Instance.IsHeld();
         }
 
         private class WifiMulticastLock
         {
-            #if UNITY_ANDROID && false
+            public static WifiMulticastLock Instance = new WifiMulticastLock("Unity");
+
+            #if !UNITY_EDITOR && UNITY_ANDROID
                 private UnityEngine.AndroidJavaObject javaObject;
 
                 public WifiMulticastLock(string key)
@@ -130,12 +125,17 @@ namespace Cobalt.Net
                     try
                     {
                         using (UnityEngine.AndroidJavaObject activity = new UnityEngine.AndroidJavaClass("com.unity3d.player.UnityPlayer").GetStatic<UnityEngine.AndroidJavaObject>("currentActivity"))
+                        {
                             using (var wifiManager = activity.Call<UnityEngine.AndroidJavaObject>("getSystemService", "wifi"))
-                                javaObject = wifiManager.Call<UnityEngine.AndroidJavaObject>("createMulticastLock", "lock");
+                            {
+                                javaObject = wifiManager.Call<UnityEngine.AndroidJavaObject>("createMulticastLock", key);
+                                javaObject.Call("setReferenceCounted", false);
+                            }
+                        }
                     }
                     catch (Exception e)
                     {
-                        Log.Warning("[Spot] Can't perform Wifi Multicast Lock: {0}", e.Message);
+                        Log.Warning("[NetUtils] Can't perform Wifi Multicast Lock\n{0}", e.Message);
                     }
                 }
                 
@@ -143,10 +143,11 @@ namespace Cobalt.Net
                 public void Release() { if (javaObject != null) javaObject.Call("release"); }
                 public bool IsHeld() { return javaObject != null ? javaObject.Call<bool>("isHeld") : false; }
             #else
+                private bool locked = false;
                 public WifiMulticastLock(string key) { }
-                public void Acquire() { }
-                public void Release() { }
-                public bool IsHeld() { return true; }
+                public void Acquire() { locked = true; }
+                public void Release() { locked = false; }
+                public bool IsHeld() { return locked; }
             #endif
         }
     }

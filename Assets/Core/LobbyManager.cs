@@ -6,7 +6,7 @@ using Cobalt.UI;
 
 public class LobbyManager : MonoBehaviour
 {
-    private ShardService shard;
+    private LANServer shard;
 
     public void LocalScan()
     {
@@ -15,16 +15,16 @@ public class LobbyManager : MonoBehaviour
 
     private IEnumerator LocalScan_Coroutine()
     {
-        Spot spot = null;
+        SpotInfo spot = null;
 
-        using (var finder = new SpotServiceFinder(Constants.PORT))
+        using (var finder = new LANSpotFinder(Constants.PORT))
         {
             finder.Change += () => {
                 spot = finder.Spots[0];
                 finder.Stop();
             };
 
-            finder.Refresh();
+            finder.Start();
             yield return new WaitForSecondsRealtime(2);
         }
 
@@ -44,9 +44,9 @@ public class LobbyManager : MonoBehaviour
 
     public void LocalHost()
     {
-        shard = new ShardService();
+        shard = new LANServer();
         shard.Start(new ShardOptions());
-        App.MatchManager.Connect(shard.GetToken());
+        App.MatchManager.Connect(shard.Options.GetToken(0));
     }
 
     private void Update()

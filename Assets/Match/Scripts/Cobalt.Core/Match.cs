@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using ProtoBuf;
-using Cobalt.Core;
 using System.Collections;
 
 namespace Cobalt.Core

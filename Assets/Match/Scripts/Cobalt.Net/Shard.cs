@@ -12,8 +12,9 @@ namespace Cobalt.Net
 {
     public class Shard
     {
-        public ShardOptions options;
+        public ShardOptions Options { get; private set; }
 
+        private enum State { Stop, Lobby, Play }
         private State state;
 
         private TokenFactory tokens;
@@ -26,23 +27,11 @@ namespace Cobalt.Net
 
         public Shard(ShardOptions options)
         {
-            this.options = options;
+            Options = options;
             
             state = State.Stop;
-            tokens = new TokenFactory(options.Version, options.Hash);
+            tokens = new TokenFactory(options.Version, options.KeyHash);
             clients = new List<RemoteClient>();
-        }
-
-        public byte[] GetToken()
-        {
-            return tokens.GenerateConnectToken(
-                options.IPs.Select(ip => new IPEndPoint(ip, options.Port)).ToArray(),
-                options.TokenExpiry,
-                options.TokenTimeout,
-                0,
-                0,
-                new byte[0]
-            );
         }
 
         public void Start()
@@ -50,19 +39,20 @@ namespace Cobalt.Net
             if (state != State.Stop)
                 throw new InvalidOperationException();
 
-            Log.Info("[Shard] Start on {0} port", options.Port);
+            Log.Info("[Shard] Bind to {0}", Options.Port);
 
             time = 0;
             state = State.Lobby;
 
             server = new Server(
-                options.NumPlayers,
-                //IPAddress.Any.ToString(),
-                options.IPs.First().ToString(),
-                options.Port,
-                options.Version,
-                options.Hash
+                Options.NumPlayers,
+                IPAddress.Any.ToString(),
+                Options.Port,
+                Options.Version,
+                Options.KeyHash
             );
+
+            server.LogLevel = NetcodeLogLevel.Info;
 
             server.OnClientConnected += OnClientConnected;
             server.OnClientDisconnected += OnClientDisconnected;
@@ -74,8 +64,7 @@ namespace Cobalt.Net
 
         public void Stop()
         {
-            if (state == State.Stop)
-                throw new Exception();
+            if (state == State.Stop) throw new InvalidOperationException();
 
             Log.Info("[Shard] Stop");
 
@@ -101,15 +90,15 @@ namespace Cobalt.Net
 
             if (state != State.Play) return;
 
-            if(timeCursor == 0) timeCursor = time;
+            if (timeCursor == 0) timeCursor = time;
 
-            var dt = options.SPT;
+            var dt = Options.SPT;
             while (timeCursor + dt < time)
             {
                 timeCursor += dt;
 
-                Log.Info("Tick #" + (int)(timeCursor*options.TPS));
-                match.Tick(options.SPT);
+                Log.Info("Tick #" + (int)(timeCursor*Options.TPS));
+                match.Tick(Options.SPT);
                 clients.Send(match.State);
             }
         }
@@ -118,25 +107,22 @@ namespace Cobalt.Net
 
         private void OnClientConnected(RemoteClient client)
         {
-            if (state != State.Lobby)
-                throw new InvalidOperationException();
+            if (state != State.Lobby) throw new InvalidOperationException();
 
-            Log.Info("[Shard] Client Connected ({0}/{1})", clients.Count+1, options.NumPlayers);
+            Log.Info("[Shard] Client Connected #{0} ({1}/{2})", client.ClientID, clients.Count+1, Options.NumPlayers);
 
             clients.Add(client);
 
-            if (clients.Count == options.NumPlayers)
+            if (clients.Count == Options.NumPlayers)
                 state = State.Play;
         }
 
         private void OnClientDisconnected(RemoteClient client)
         {
-            Log.Info("[Shard] Client Disconnected #" + client.ClientID);
+            Log.Info("[Shard] Client Disconnected #{0} ({1}/{2})", client.ClientID, clients.Count-1, Options.NumPlayers);
 
-            if (state == State.Play)
-                Stop();
-            else
-                clients.Remove(client);
+            if (state == State.Play) Stop();
+            else clients.Remove(client);
         }
 
         private void OnClientMessageReceived(RemoteClient sender, byte[] payload, int payloadSize)
@@ -149,40 +135,56 @@ namespace Cobalt.Net
         #endregion
 
         public bool IsRunning => state != State.Stop;
-
-        private enum State { Stop, Lobby, Play }
     }
 
     public class ShardOptions
     {
-        /// Default IP port
-        public static int PORT = 4123;
+        public static int DEFAULT_PORT = 4123;
+        public static int DEFAULT_TPS  = 10;
 
         public int          NumPlayers   = 1;
-        public IPAddress[]  IPs          = new [] { IPAddress.Loopback };
-        public int          Port         = PORT;
-        public string       Key          = "anonymous";
+        public IPAddress[]  IPs          = null;
+        public int          Port         = DEFAULT_PORT;
+        public string       Key          = null;
+        public byte[]       KeyHash      => GetKey(Key);
         public ulong        Version      = 0;
 
-        public int          TokenTimeout = int.MaxValue;
+        // Таймаут соединения  между клиентом и сервером;
+        public int          TokenTimeout = 3; 
         public int          TokenExpiry  = int.MaxValue;
 
-        public int          TPS          = 60;
+        public int          TPS          = DEFAULT_TPS;
         public float        SPT          => 1f / TPS;
-
-        public byte[] Hash
-        {
-            get { return GetKey(Key); }
-        }
 
         private static byte[] GetKey(string keyString)
         {
+            if (keyString == null)
+                keyString = string.Empty;
+
             var hash = SHA256.Create();
             var keyBytes = System.Text.Encoding.ASCII.GetBytes(keyString);
             var keyHash = hash.ComputeHash(keyBytes);
             hash.Dispose();
 
             return keyHash;
+        }
+
+        public byte[] GetToken(ulong userId, byte[] userData = null)
+        {
+            var addresses = IPs == null ? NetUtils.GetSupportedIPs().Select(x => x.Address) : IPs;
+            var addressList = addresses.Select(addr => new IPEndPoint(addr, Port)).ToArray();
+
+            var tokenFactory = new TokenFactory(Version, KeyHash);
+            var tokenBytes = tokenFactory.GenerateConnectToken(
+                addressList,
+                TokenExpiry,
+                TokenTimeout,
+                0,
+                userId,
+                userData ?? new byte[0]
+            );
+
+            return tokenBytes;
         }
     }
 }

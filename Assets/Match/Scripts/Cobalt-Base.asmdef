@@ -1,0 +1,15 @@
+{
+    "name": "Cobalt-Base",
+    "references": [
+        "GUID:7485f490328ead943a50515e7798d49f"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}
