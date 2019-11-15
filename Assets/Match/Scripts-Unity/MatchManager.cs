@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using Cobalt;
 using Cobalt.Core;
 using Cobalt.Net;
 using Cobalt.Unity;
@@ -9,11 +10,13 @@ using UnityEngine;
 
 public class MatchManager : MonoBehaviour
 {
-    public GameObject root;
+    [SerializeField]
+    private GameObject root;
 
-    public GameObject unit;
-    public GameObject wall;
+    [SerializeField]
+    private Prefab prefab;
 
+    private GameObject unit;
     private MatchTimeline timeline;
     private Client client;
 
@@ -24,27 +27,27 @@ public class MatchManager : MonoBehaviour
         timeline = new MatchTimeline();
 
         client = new Client();
-        client.OnStateChanged += x => Debug.Log("[Client] " + x);
+        client.OnStateChanged += x => Log.Info(client, x.ToString());
         client.OnMessageReceived += OnMessageReceived;
         client.Connect(token, false);
 
+        // Юнит
+        unit = Instantiate(prefab.Unit, Vector3.zero, Quaternion.identity, root.transform);
         unit.GetComponent<TransformInterpolator>().Timeline = timeline;
 
+        // Стены (TODO: Получать список)
         var data = MatchBuilder.Random(21, 19);
         var w = data.GetLength(0);
         var h = data.GetLength(1);
-        for (var x = 0; x < w; x++)
-        {
-            for (var y = 0; y < h; y++)
-            {
-                if (data[x, y])
-                {
-                    var t = Instantiate(wall, unit.transform.parent);
-                    t.transform.localPosition = new Vector2(x - w/2, y - h/2);
-                }
-            }
-        }
 
+        for (var x = 0; x < w; x++)
+            for (var y = 0; y < h; y++)
+                if (data[x, y])
+                    Instantiate(
+                        prefab.Wall,
+                        new Vector2(x - w/2, y - h/2) * 0.5f,
+                        Quaternion.identity,
+                        root.transform);
     }
 
     private void Update()
@@ -79,5 +82,12 @@ public class MatchManager : MonoBehaviour
         {
             Debug.LogError(e);
         }
+    }
+
+    [Serializable]
+    public class Prefab
+    {
+        public GameObject Unit;
+        public GameObject Wall;
     }
 }

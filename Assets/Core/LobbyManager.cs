@@ -15,9 +15,9 @@ public class LobbyManager : MonoBehaviour
 
     private IEnumerator LocalScan_Coroutine()
     {
-        SpotInfo spot = null;
+        LANSpotInfo spot = null;
 
-        using (var finder = new LANSpotFinder(Constants.PORT))
+        using (var finder = new LANSpotFinder(LANServer.DEFAULT_PORT))
         {
             finder.Change += () => {
                 spot = finder.Spots[0];
@@ -52,6 +52,6 @@ public class LobbyManager : MonoBehaviour
     private void Update()
     {
         if (shard != null)
-            shard.Tick(Time.deltaTime);
+            shard.Tick(Time.time);
     }
 }

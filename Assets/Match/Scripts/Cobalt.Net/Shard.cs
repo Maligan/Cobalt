@@ -39,7 +39,7 @@ namespace Cobalt.Net
             if (state != State.Stop)
                 throw new InvalidOperationException();
 
-            Log.Info("[Shard] Bind to {0}", Options.Port);
+            Log.Info(this, "Bind to " + Options.Port);
 
             time = 0;
             state = State.Lobby;
@@ -52,7 +52,7 @@ namespace Cobalt.Net
                 Options.KeyHash
             );
 
-            server.LogLevel = NetcodeLogLevel.Info;
+            // server.LogLevel = NetcodeLogLevel.Info;
 
             server.OnClientConnected += OnClientConnected;
             server.OnClientDisconnected += OnClientDisconnected;
@@ -66,7 +66,7 @@ namespace Cobalt.Net
         {
             if (state == State.Stop) throw new InvalidOperationException();
 
-            Log.Info("[Shard] Stop");
+            Log.Info(this, "Stop");
 
             state = State.Stop;
 
@@ -97,7 +97,7 @@ namespace Cobalt.Net
             {
                 timeCursor += dt;
 
-                Log.Info("Tick #" + (int)(timeCursor*Options.TPS));
+                // Log.Info(this, "Tick #" + (int)(timeCursor*Options.TPS));
                 match.Tick(Options.SPT);
                 clients.Send(match.State);
             }
@@ -109,7 +109,7 @@ namespace Cobalt.Net
         {
             if (state != State.Lobby) throw new InvalidOperationException();
 
-            Log.Info("[Shard] Client Connected #{0} ({1}/{2})", client.ClientID, clients.Count+1, Options.NumPlayers);
+            Log.Info(this, $"Client Connected #{client.ClientID} ({clients.Count+1}/{Options.NumPlayers})");
 
             clients.Add(client);
 
@@ -119,7 +119,7 @@ namespace Cobalt.Net
 
         private void OnClientDisconnected(RemoteClient client)
         {
-            Log.Info("[Shard] Client Disconnected #{0} ({1}/{2})", client.ClientID, clients.Count-1, Options.NumPlayers);
+            Log.Info(this, $"Client Disconnected #{client.ClientID} ({clients.Count-1}/{Options.NumPlayers})");
 
             if (state == State.Play) Stop();
             else clients.Remove(client);

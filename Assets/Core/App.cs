@@ -23,7 +23,11 @@ public class App : MonoBehaviour
     {
         yield return null;
 
-        App.UI.Get<UILobby>().Open();
+        App.LobbyManager.LocalHost();
+
+        // App.UI.Get<UILobby>().Open();
+
+        // LANServer
 
         /*
         // Search

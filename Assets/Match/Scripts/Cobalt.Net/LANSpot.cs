@@ -27,7 +27,7 @@ namespace Cobalt.Net
 
         public void Start()
         {
-            Log.Info("[LANSpot] Start");
+            Log.Info(this, "Start");
 
             var ips = NetUtils.GetSupportedIPs();
             if (ips.Count == 0)
@@ -39,11 +39,11 @@ namespace Cobalt.Net
 
         private async void StartService(NetUtils.IPInfo ip)
         {
-            var broadcastStr = string.Format(SpotInfo.MESSAGE_FORMAT, version);
+            var broadcastStr = string.Format(LANSpotInfo.MESSAGE_FORMAT, version);
             var broadcastBytes = Encoding.ASCII.GetBytes(broadcastStr);
             var broadcastEndpoint = new IPEndPoint(ip.GetBroadcast(), port);
 
-            Log.Info("[LANSpot] Bind to {0}", broadcastEndpoint);
+            Log.Info(this, "Bind to " + broadcastEndpoint);
 
             var socketEndpoint = new IPEndPoint(ip.Address, port);
             var socket = new UdpClient();
@@ -61,7 +61,7 @@ namespace Cobalt.Net
 
         public void Stop()
         {
-            Log.Info("[LANSpot] Stop");
+            Log.Info(this, "Stop");
 
             foreach (var socket in sockets)
                 socket.Close();
@@ -74,7 +74,7 @@ namespace Cobalt.Net
     {
         private int timeout = 2000;
 
-        public List<SpotInfo> Spots { get; private set; }
+        public List<LANSpotInfo> Spots { get; private set; }
         public event Action Change;
 
         private int port;
@@ -84,7 +84,7 @@ namespace Cobalt.Net
         public LANSpotFinder(int port)
         {
             this.port = port;
-            this.Spots = new List<SpotInfo>();
+            this.Spots = new List<LANSpotInfo>();
         }
 
         public void Start()
@@ -92,11 +92,11 @@ namespace Cobalt.Net
             // Already running
             if (socket != null) return;
 
-            Log.Info("[LANSpotFinder] Start");
+            Log.Info(this, "Start");
 
             var locked = NetUtils.SetWifiMulticast(true);
             if (locked != true)
-                Log.Warning("[LANSpotFinder] WiFi multicast doesn't locked success");
+                Log.Warning(this, "WiFi multicast doesn't locked success");
 
             cancel = new CancellationTokenSource();
             StartListener(cancel.Token);
@@ -126,12 +126,12 @@ namespace Cobalt.Net
                 if (response == NetUtils.NULL) break;
 
                 var responseString = Encoding.ASCII.GetString(response.Buffer);
-                var spot = SpotInfo.Parse(responseString, response.RemoteEndPoint);
+                var spot = LANSpotInfo.Parse(responseString, response.RemoteEndPoint);
                 if (spot != null) Insert(spot);
             }
         }
 
-        private void Insert(SpotInfo spot)
+        private void Insert(LANSpotInfo spot)
         {
             var indexOf = -1;
 
@@ -172,7 +172,7 @@ namespace Cobalt.Net
         {
             if (socket != null)
             {
-                Log.Info("[LANSpotFinder] Stop");
+                Log.Info(this, "Stop");
 
                 NetUtils.SetWifiMulticast(false);
                 socket.Close();
@@ -189,18 +189,18 @@ namespace Cobalt.Net
         }
     }
 
-    public class SpotInfo
+    public class LANSpotInfo
     {
         private static readonly string MESSAGE = "SPOT";
         private static readonly Regex MESSAGE_REGEX = new Regex("^" + MESSAGE + @"/(\d+)");
         internal static readonly string MESSAGE_FORMAT = MESSAGE + "/{0}";
 
-        public static SpotInfo Parse(string response, IPEndPoint source)
+        public static LANSpotInfo Parse(string response, IPEndPoint source)
         {
             var match = MESSAGE_REGEX.Match(response);
             if (match.Success)
             {
-                return new SpotInfo
+                return new LANSpotInfo
                 {
                     EndPoint = source,
                     Version = int.Parse(match.Groups[1].Value),
@@ -218,7 +218,7 @@ namespace Cobalt.Net
 
         public override bool Equals(object obj)
         {
-            var other = obj as SpotInfo;
+            var other = obj as LANSpotInfo;
 
             if (other == null) return false;
             if (other.Version != Version) return false;

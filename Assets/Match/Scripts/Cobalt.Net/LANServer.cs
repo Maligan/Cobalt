@@ -5,6 +5,8 @@ namespace Cobalt.Net
 {
     public class LANServer
     {
+        public static int DEFAULT_PORT = 8888;
+
         public ShardOptions Options { get; private set; }
 
         private Shard shard;
@@ -16,8 +18,8 @@ namespace Cobalt.Net
             Options = options;
 
             shard = new Shard(Options);
-            auth = new LANAuth(Constants.PORT, this);
-            spot = new LANSpot(1, Constants.PORT);
+            auth = new LANAuth(DEFAULT_PORT, this);
+            spot = new LANSpot(1, DEFAULT_PORT);
 
             shard.Start();
             auth.Start();

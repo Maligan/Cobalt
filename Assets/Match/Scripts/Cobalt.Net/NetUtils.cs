@@ -135,7 +135,7 @@ namespace Cobalt.Net
                     }
                     catch (Exception e)
                     {
-                        Log.Warning("[NetUtils] Can't perform Wifi Multicast Lock\n{0}", e.Message);
+                        Log.Warning(this, "Can't perform Wifi Multicast Lock\n{0}", e.Message);
                     }
                 }
                 

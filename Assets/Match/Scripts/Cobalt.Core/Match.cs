@@ -80,7 +80,7 @@ namespace Cobalt.Core
             if (States.Count > Capacity)
             {
                 States.RemoveAt(0);
-    			Log.Warning("[MatchTimeline] Capacity overhead");
+    			Log.Warning(this, "Capacity overhead");
             }
 
             States.Sort(Sorter);

@@ -27,14 +27,14 @@ namespace Cobalt.Net
 
         public async void Start()
         {
-            Log.Info("[LANAuth] Start");
+            Log.Info(this, "Start");
 
             listener.Prefixes.Clear();
             
             foreach (var ip in NetUtils.GetSupportedIPs())
             {
                 var prefix = string.Format("http://{0}:{1}/", ip.Address, port);
-                Log.Info("[LANAuth] Prefix " + prefix);
+                Log.Info(this, "Prefix " + prefix);
                 listener.Prefixes.Add(prefix);
             }
 
