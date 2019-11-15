@@ -54,11 +54,11 @@ public class MatchManager : MonoBehaviour
     {
         UnitInput input = null;
 
-        if (Input.GetKeyDown(KeyCode.Space)) input = new UnitInput { move = Unit.Direction.None };
-        if (Input.GetKeyDown(KeyCode.W)) input = new UnitInput { move = Unit.Direction.Top };
-        if (Input.GetKeyDown(KeyCode.S)) input = new UnitInput { move = Unit.Direction.Bottom };
-        if (Input.GetKeyDown(KeyCode.D)) input = new UnitInput { move = Unit.Direction.Right };
-        if (Input.GetKeyDown(KeyCode.A)) input = new UnitInput { move = Unit.Direction.Left };
+        if (Input.GetKeyDown(KeyCode.Space)) input = new UnitInput { move = Direction.None };
+        if (Input.GetKeyDown(KeyCode.W)) input = new UnitInput { move = Direction.Top };
+        if (Input.GetKeyDown(KeyCode.S)) input = new UnitInput { move = Direction.Bottom };
+        if (Input.GetKeyDown(KeyCode.D)) input = new UnitInput { move = Direction.Right };
+        if (Input.GetKeyDown(KeyCode.A)) input = new UnitInput { move = Direction.Left };
 
         if (client != null)
         {
