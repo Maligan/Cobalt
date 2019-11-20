@@ -88,7 +88,7 @@ namespace Cobalt.Net
             this.Spots = new List<LANSpotInfo>();
         }
 
-        public void Start()
+        public void Start(int timeout = 8000)
         {
             // Already running
             if (socket != null) return;
@@ -100,6 +100,7 @@ namespace Cobalt.Net
                 Log.Warning(this, "WiFi multicast doesn't locked success");
 
             cancel = new CancellationTokenSource();
+            cancel.CancelAfter(timeout);
             StartListener(cancel.Token);
             StartPurge(cancel.Token);
         }

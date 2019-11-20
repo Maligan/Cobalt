@@ -53,7 +53,7 @@ namespace Cobalt.Net
                 Options.KeyHash
             );
 
-            // server.LogLevel = NetcodeLogLevel.Info;
+            // server.LogLevel = NetcodeLogLevel.Debug;
 
             server.OnClientConnected += OnClientConnected;
             server.OnClientDisconnected += OnClientDisconnected;
@@ -104,13 +104,7 @@ namespace Cobalt.Net
 
         public byte[] GetToken()
         {
-            var userData = new ShardUserData();
-            userData.index = clients.Count;
-            userData.x = 0;
-            userData.y = 0;
-            userData.seed = 3;
-
-            return Options.GetToken(0, ShardUserData.ToBytes(ref userData));
+            return Options.GetToken((ulong)clients.Count, null);
         }
 
         #region Netcode Events

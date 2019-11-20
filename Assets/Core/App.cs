@@ -26,16 +26,17 @@ public class App : MonoBehaviour
         yield return null;
         // App.UI.Get<UILobby>().Open();
 
-        /*
+        //*
         App.LobbyManager.LocalHost(true);
         /*/
         // Search
-        App.LobbyManager.LocalHost(false);
+        // App.LobbyManager.LocalHost(false);
         
         var finder = new LANSpotFinder(Constants.PORT);
         finder.Start();
         yield return new WaitForSeconds(1f);
         var spot = finder.Spots[0];
+        finder.Stop();
 
         Log.Info(this, "Find " + spot);
 
