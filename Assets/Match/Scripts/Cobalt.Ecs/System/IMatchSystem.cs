@@ -1,4 +1,4 @@
-namespace Cobalt.Core
+namespace Cobalt.Ecs
 {
     public interface IMatchSystem
     {

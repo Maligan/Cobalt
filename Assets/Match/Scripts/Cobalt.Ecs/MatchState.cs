@@ -1,6 +1,6 @@
 using ProtoBuf;
 
-namespace Cobalt.Core
+namespace Cobalt.Ecs
 {
     [ProtoContract]
     public class MatchState

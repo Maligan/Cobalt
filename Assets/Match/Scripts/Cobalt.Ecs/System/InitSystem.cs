@@ -1,6 +1,6 @@
 using System.Collections;
 
-namespace Cobalt.Core
+namespace Cobalt.Ecs
 {
     public class InitSystem : IMatchSystem
     {
@@ -12,7 +12,7 @@ namespace Cobalt.Core
 
             inited = true;
 
-            var cave = MatchBuilder.Random(21, 19);
+            var cave = CellularAutomata.Random(21, 19);
             var caveBits = new BitArray(cave.Length);
             var caveW = cave.GetLength(0);
             var caveH = cave.GetLength(1);

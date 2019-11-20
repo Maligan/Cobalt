@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
-using Cobalt.Core;
+using Cobalt.Ecs;
 using NetcodeIO.NET;
 using ProtoBuf;
 

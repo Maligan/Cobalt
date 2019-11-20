@@ -1,4 +1,4 @@
-namespace Cobalt.Core
+namespace Cobalt.Ecs
 {
     /// Движение юнитов (контроллирумые игроками)
     public class UnitMoveSystem : IMatchSystem

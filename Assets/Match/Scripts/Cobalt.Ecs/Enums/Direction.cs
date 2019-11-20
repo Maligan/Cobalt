@@ -1,6 +1,6 @@
 using System;
 
-namespace Cobalt.Core
+namespace Cobalt.Ecs
 {
     // 3-bit direction enum
     public enum Direction

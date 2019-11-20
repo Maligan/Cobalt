@@ -1,8 +1,8 @@
 using System;
 
-namespace Cobalt.Core
+namespace Cobalt.Ecs
 {
-    public class MatchBuilder
+    public class CellularAutomata
     {
         public static bool[,] Random(int width, int height, int seed = 0)
         {

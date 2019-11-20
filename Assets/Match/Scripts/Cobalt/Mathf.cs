@@ -39,5 +39,10 @@ namespace Cobalt
                 y = Mathf.Lerp(a.y, b.y, t),
             };
         }
+
+        #if UNITY_ENGINE
+        public static implicit operator UnityEngine.Vector2(Vec2f v) => new UnityEngine.Vector2(v.x, v.y);
+        public static implicit operator UnityEngine.Vector3(Vec2f v) => new UnityEngine.Vector3(v.x, v.y, 0);
+        #endif
     }
 }
