@@ -60,7 +60,7 @@ namespace Cobalt.Net
             var path = request.Url.LocalPath;
             if (path == "/auth")
             {
-                var tokenBytes = shard.Options.GetToken(0);
+                var tokenBytes = shard.GetToken();
                 response.ContentLength64 = tokenBytes.Length;
                 response.OutputStream.Write(tokenBytes, 0, tokenBytes.Length);
             }

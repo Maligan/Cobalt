@@ -46,6 +46,7 @@ namespace Cobalt.Net
             }
         }
 
+        public byte[] GetToken() => shard.GetToken();
         public bool IsRunning => shard.IsRunning;
     }
 }

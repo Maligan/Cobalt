@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 3148598023161061101}
   - component: {fileID: 3148598023161061100}
   m_Layer: 0
-  m_Name: MatchWall
+  m_Name: Wall
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

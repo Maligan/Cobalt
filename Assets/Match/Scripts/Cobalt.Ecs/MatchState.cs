@@ -16,6 +16,9 @@ namespace Cobalt.Ecs
     {
         [ProtoMember(1)]
         public Direction move;
+
+        [ProtoMember(2)] // TODO: Без него пакет с Direction.None не передаётся т.к. там 0 
+        public bool flag = true;
     }
 
     [ProtoContract]

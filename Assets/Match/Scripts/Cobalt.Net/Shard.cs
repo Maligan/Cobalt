@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Cobalt.Ecs;
 using NetcodeIO.NET;
@@ -96,11 +97,20 @@ namespace Cobalt.Net
             while (timeCursor + dt < time)
             {
                 timeCursor += dt;
-
-                // Log.Info(this, "Tick #" + (int)(timeCursor*Options.TPS));
                 match.Tick(Options.SPT);
                 clients.Send(match.State);
             }
+        }
+
+        public byte[] GetToken()
+        {
+            var userData = new ShardUserData();
+            userData.index = clients.Count;
+            userData.x = 0;
+            userData.y = 0;
+            userData.seed = 3;
+
+            return Options.GetToken(0, ShardUserData.ToBytes(ref userData));
         }
 
         #region Netcode Events
@@ -129,7 +139,7 @@ namespace Cobalt.Net
         {
             var stream = new MemoryStream(payload, 0, payloadSize);
             var input = Serializer.Deserialize<UnitInput>(stream);
-            match.State.inputs[0] = input;
+            match.State.inputs[sender.ClientID] = input;
         }
 
         #endregion
@@ -142,7 +152,7 @@ namespace Cobalt.Net
         public static int DEFAULT_PORT = 4123;
         public static int DEFAULT_TPS  = 10;
 
-        public int          NumPlayers   = 1;
+        public int          NumPlayers   = 2;
         public IPAddress[]  IPs          = null;
         public int          Port         = DEFAULT_PORT;
         public string       Key          = null;
@@ -150,7 +160,7 @@ namespace Cobalt.Net
         public ulong        Version      = 0;
 
         // Таймаут соединения  между клиентом и сервером;
-        public int          TokenTimeout = 3; 
+        public int          TokenTimeout = 10; 
         public int          TokenExpiry  = int.MaxValue;
 
         public int          TPS          = DEFAULT_TPS;
@@ -185,6 +195,41 @@ namespace Cobalt.Net
             );
 
             return tokenBytes;
+        }
+    }
+
+    public struct ShardUserData
+    {
+        public int index;
+        public int x;
+        public int y;
+        public int seed;
+
+        public static byte[] ToBytes(ref ShardUserData data)
+        {
+            int size = Marshal.SizeOf(data);
+            byte[] arr = new byte[size];
+
+            IntPtr ptr = Marshal.AllocHGlobal(size);
+            Marshal.StructureToPtr(data, ptr, true);
+            Marshal.Copy(ptr, arr, 0, size);
+            Marshal.FreeHGlobal(ptr);
+
+            return arr;
+        }
+
+        public static ShardUserData FromBytes(byte[] arr)
+        {
+            ShardUserData data = new ShardUserData();
+
+            int size = Marshal.SizeOf(data);
+            IntPtr ptr = Marshal.AllocHGlobal(size);
+
+            Marshal.Copy(arr, 0, ptr, size);
+            data = (ShardUserData)Marshal.PtrToStructure(ptr, data.GetType());
+            Marshal.FreeHGlobal(ptr);
+
+            return data;
         }
     }
 }

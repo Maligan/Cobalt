@@ -5,7 +5,6 @@ using Cobalt.Ecs;
 using Cobalt.Net;
 using Cobalt.Unity;
 using NetcodeIO.NET;
-using ProtoBuf;
 using UnityEngine;
 
 public class MatchManager : MonoBehaviour
@@ -14,9 +13,8 @@ public class MatchManager : MonoBehaviour
     private GameObject root;
 
     [SerializeField]
-    private Prefab prefab;
+    private Prefabs prefabs;
 
-    private GameObject unit;
     private MatchTimeline timeline;
     private Client client;
 
@@ -33,35 +31,44 @@ public class MatchManager : MonoBehaviour
         client.OnMessageReceived += OnMessageReceived;
         client.Connect(token, false);
 
-        // Юнит
-        unit = Instantiate(prefab.Unit, Vector3.zero, Quaternion.identity, root.transform);
-        unit.GetComponent<TransformInterpolator>().Timeline = timeline;
-        unit.GetComponent<TransformInterpolator>().UnitIndex = 0;
-
         input = new UnitInput() { move = Direction.None };
+    }
+
+    private void Init()
+    {
+        // Юнит
+        for (int i = 0; i < timeline.NumUnits; i++)
+        {
+            var unit = Instantiate(prefabs.Unit, Vector3.zero, Quaternion.identity, root.transform);
+            unit.GetComponent<MatchUnitSync>().Timeline = timeline;
+            unit.GetComponent<MatchUnitSync>().UnitIndex = i;   
+        }
 
         // Стены (TODO: Получать список)
-        var data = CellularAutomata.Random(21, 19);
+        var data = CellularAutomata.Random(21, 19, 256);
         var w = data.GetLength(0);
         var h = data.GetLength(1);
 
         for (var x = 0; x < w; x++)
             for (var y = 0; y < h; y++)
                 if (data[x, y])
-                    Instantiate(prefab.Wall, new Vector2(x - w/2, y - h/2) * 0.5f, Quaternion.identity, root.transform);
+                    Instantiate(prefabs.Wall, new Vector2(x - w/2, y - h/2) * 0.5f, Quaternion.identity, root.transform);
     }
 
     private void Update()
     {
-        if (timeline == null) return;
+        if (timeline != null)
+        {
+            var started = timeline.IsStarted;
+            timeline.AdvanceTime(Time.unscaledDeltaTime);
+            if (started != timeline.IsStarted) Init();
 
-        timeline.AdvanceTime(Time.unscaledDeltaTime);
-
-        if (Input.GetKeyDown(KeyCode.Space)) input.move = Direction.None;
-        if (Input.GetKeyDown(KeyCode.W)) input.move = Direction.Top;
-        if (Input.GetKeyDown(KeyCode.S)) input.move = Direction.Bottom;
-        if (Input.GetKeyDown(KeyCode.D)) input.move = Direction.Right;
-        if (Input.GetKeyDown(KeyCode.A)) input.move = Direction.Left;
+            if (Input.GetKeyDown(KeyCode.Space)) input.move = Direction.None;
+            if (Input.GetKeyDown(KeyCode.W)) input.move = Direction.Top;
+            if (Input.GetKeyDown(KeyCode.S)) input.move = Direction.Bottom;
+            if (Input.GetKeyDown(KeyCode.D)) input.move = Direction.Right;
+            if (Input.GetKeyDown(KeyCode.A)) input.move = Direction.Left;
+        }
 
         if (client != null)
         {
@@ -76,19 +83,17 @@ public class MatchManager : MonoBehaviour
     {
         try
         {
-            // var rnd = new System.Random();
-            // if (rnd.Next(0, 100) > 95) return;
-
-            timeline.Add(NetcodeUtils.Read<MatchState>(payload, payloadSize));
+            var state = NetcodeUtils.Read<MatchState>(payload, payloadSize);
+            timeline.Add(state);
         }
         catch (Exception e)
         {
-            Debug.LogError(e);
+            Log.Error(e);
         }
     }
 
     [Serializable]
-    public class Prefab
+    public class Prefabs
     {
         public GameObject Unit;
         public GameObject Wall;

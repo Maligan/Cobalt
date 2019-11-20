@@ -9,9 +9,9 @@ namespace Cobalt
             public static void Warning(object tag, string message) { UnityEngine.Debug.LogWarning($"[{tag.GetType().Name}] {message}"); }
             public static void Error(Exception e) { UnityEngine.Debug.LogError(e); }
         #else
-            public static void Info(object tag, string message) { Console.WriteLine.Log($"[{tag.GetType().Name}] {message}"); }
-            public static void Warning(object tag, string message) { Console.WriteLine.LogWarning($"[{tag.GetType().Name}] {message}"); }
-            public static void Error(Exception e) { Console.LogError(e); }
+            public static void Info(object tag, string message) { Console.WriteLine($"[{tag.GetType().Name}] {message}"); }
+            public static void Warning(object tag, string message) { Console.WriteLine($"[{tag.GetType().Name}] {message}"); }
+            public static void Error(Exception e) { Console.Error.WriteLine(e); }
         #endif
     }
 }

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections;
+using System.Net;
+using Cobalt;
 using Cobalt.Net;
 using Cobalt.UI;
 using UnityEngine;
@@ -22,19 +24,19 @@ public class App : MonoBehaviour
     public IEnumerator Start()
     {
         yield return null;
-
-        App.LobbyManager.LocalHost();
-
         // App.UI.Get<UILobby>().Open();
 
-        // LANServer
-
         /*
+        App.LobbyManager.LocalHost();
+        /*/
         // Search
-        var finder = new LANSpotFinder(Constants.PORT);
-        finder.Start();
-        yield return new WaitForSeconds(1f);
-        var spot = finder.Spots[0];
+                // var finder = new LANSpotFinder(Constants.PORT);
+                // finder.Start();
+                // yield return new WaitForSeconds(1f);
+                // var spot = finder.Spots[0];
+        var spot = new LANSpotInfo();
+        spot.EndPoint = new System.Net.IPEndPoint(IPAddress.Parse("192.168.1.134"), 8888);
+        spot.Version = 1;
 
         // Auth
         var request = UnityWebRequest.Get("http://" + spot.EndPoint + "/auth");
@@ -42,7 +44,7 @@ public class App : MonoBehaviour
 
         // Connect
         MatchManager.Connect(request.downloadHandler.data);
-        */
+        //*/
     }
 
     public void Update()

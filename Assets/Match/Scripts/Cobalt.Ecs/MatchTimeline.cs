@@ -7,18 +7,16 @@ namespace Cobalt.Ecs
 
     public class MatchTimeline
     {
-        private List<MatchState> buffer;
+        private SortedList<float, MatchState> states = new SortedList<float, MatchState>();
         private float time;
-        private float t;
+        private float tfactor;
 
-        public MatchTimeline()
-        {
-            buffer = new List<MatchState>();
-        }
-
-        public bool IsEmpty => buffer.Count == 0;
+        /// Проигрывание было начато (т.е. AdvanceTime() перемещает внутренний курсор времени)
         public bool IsStarted => time != 0;
-        public float Latency => buffer.Count > 0 ? (buffer[buffer.Count-1].timestamp - time) : 0;
+        /// Запас времени от текущего момента (time) до самого последнего полученного кадра 
+        public float Latency => states.Count > 0 ? (states.Keys[states.Count-1] - time) : 0;
+        /// Максимальный запас времени (при превышении данного порога необходимо ускорить проигрывание)
+        public float LatencyValue => 0.1f;
 
         public void AdvanceTime(float delta)
         {
@@ -30,68 +28,71 @@ namespace Cobalt.Ecs
             else
             {
                 // Интерполяцию и проигрывание начинается только когда накопим хотя бы 2 кадра
-                if (buffer.Count < 2) return;
+                if (states.Count < 2) return;
                 // Набор буффера перед началом проигрывания
-                if (Latency < 0.1f) return;
+                if (Latency < LatencyValue) return;
             }
 
             // Движение времени
             if (IsStarted)  time = time + delta;
-            else            time = buffer[0].timestamp;
+            else            time = states.Keys[0];
             Purge();
         }
 
         public void Add(MatchState state)
         {
-            buffer.Add(state);
-            buffer.Sort(Sorter);
+            states.Add(state.timestamp, state);
             Purge();
-
-            // $"{buffer.Count-1}k/{(int)(Lag*1000)}ms"
-        }
-
-        private int Sorter(MatchState s1, MatchState s2)
-        {
-            var delta = s1.timestamp - s2.timestamp;
-            if (delta > 0) return +1;
-            if (delta < 0) return -1;
-            return 0;
         }
 
         private void Purge()
         {
-            const int historySize = 1;
-            if (buffer.Count < historySize + 1) return;
+            if (states.Count < 2) return;
 
-            while (buffer.Count > historySize+1 && time > buffer[historySize].timestamp)
-                buffer.RemoveAt(0);
+            while (states.Count > 2 && time > states.Keys[1])
+                states.RemoveAt(0);
 
             if (IsStarted)
             {
-                var total = buffer[1].timestamp - buffer[0].timestamp;
-                var delta = time                - buffer[0].timestamp;
-                t = delta / total;
+                var total = states.Keys[1] - states.Keys[0];
+                var delta = time           - states.Keys[0];
+                tfactor = delta / total;
 
-                if (t < 0 || t > 1)
-                    Log.Warning(this, $"Interpolation t-factor is out of range (0; 1): {t}");
+                if (tfactor < 0 || tfactor > 1)
+                    Log.Warning(this, $"Interpolation t-factor is out of range (0; 1): {tfactor}");
             }
+
+            // Output
+            // Log.Info(this, $"{states.Count-1}k/{(int)(Latency*1000)}ms");
         }
 
         //
         // Interpolators
         //
 
+        public int NumUnits => states.Values[0].units.Length;
+
         public Vec2f GetPosition(int unitIndex)
         {
-            if (IsEmpty)
-                throw new InvalidOperationException("Timeline is empty");
+            if (!IsStarted)
+                throw new InvalidOperationException();
             
-            if (buffer.Count == 1)
-                return buffer[0].units[unitIndex].pos;
+            var prevPos = states.Values[0].units[unitIndex].pos;
+            var nextPos = states.Values[1].units[unitIndex].pos;
+            return Vec2f.Lerp(prevPos, nextPos, tfactor);
+        }
 
-            var prevPos = buffer[0].units[unitIndex].pos;
-            var nextPos = buffer[1].units[unitIndex].pos;
-            return Vec2f.Lerp(prevPos, nextPos, t);
+        public Vec2f[] GetPositions(int unitIndex)
+        {
+            if (!IsStarted)
+                throw new InvalidOperationException();
+            
+            var result = new List<Vec2f>();
+
+            foreach (var state in states.Values)
+                result.Add(state.units[unitIndex].pos);
+
+            return result.ToArray();
         }
     }
 }

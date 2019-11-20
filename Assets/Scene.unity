@@ -1030,7 +1030,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   root: {fileID: 3930912179779247872}
-  prefab:
+  prefabs:
     Unit: {fileID: 4620623485096930859, guid: bef27dffab0efa9458abb21f8f63bf0e, type: 3}
     Wall: {fileID: 3148598023161061106, guid: a819fb83ef7b8034691da52872fbf3a8, type: 3}
 --- !u!114 &1320859399
