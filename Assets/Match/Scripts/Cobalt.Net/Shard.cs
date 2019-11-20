@@ -152,7 +152,7 @@ namespace Cobalt.Net
         public static int DEFAULT_PORT = 4123;
         public static int DEFAULT_TPS  = 10;
 
-        public int          NumPlayers   = 2;
+        public int          NumPlayers   = 1;
         public IPAddress[]  IPs          = null;
         public int          Port         = DEFAULT_PORT;
         public string       Key          = null;

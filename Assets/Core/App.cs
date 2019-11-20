@@ -27,16 +27,17 @@ public class App : MonoBehaviour
         // App.UI.Get<UILobby>().Open();
 
         /*
-        App.LobbyManager.LocalHost();
+        App.LobbyManager.LocalHost(true);
         /*/
         // Search
-                // var finder = new LANSpotFinder(Constants.PORT);
-                // finder.Start();
-                // yield return new WaitForSeconds(1f);
-                // var spot = finder.Spots[0];
-        var spot = new LANSpotInfo();
-        spot.EndPoint = new System.Net.IPEndPoint(IPAddress.Parse("192.168.1.134"), 8888);
-        spot.Version = 1;
+        App.LobbyManager.LocalHost(false);
+        
+        var finder = new LANSpotFinder(Constants.PORT);
+        finder.Start();
+        yield return new WaitForSeconds(1f);
+        var spot = finder.Spots[0];
+
+        Log.Info(this, "Find " + spot);
 
         // Auth
         var request = UnityWebRequest.Get("http://" + spot.EndPoint + "/auth");

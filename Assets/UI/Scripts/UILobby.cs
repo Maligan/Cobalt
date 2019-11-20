@@ -23,7 +23,7 @@ namespace Cobalt.UI
                 // Button.GetComponentInChildren<TextMeshProUGUI>().text = "Scan...";
                 // App.LobbyManager.LocalScan();
 
-                App.LobbyManager.LocalHost();
+                App.LobbyManager.LocalHost(true);
                 Close();
             });
 

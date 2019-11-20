@@ -17,7 +17,7 @@ public class LobbyManager : MonoBehaviour
     {
         LANSpotInfo spot = null;
 
-        using (var finder = new LANSpotFinder(LANServer.DEFAULT_PORT))
+        using (var finder = new LANSpotFinder(LANServer.DEFAULT_SPOT_PORT))
         {
             finder.Change += () => {
                 spot = finder.Spots[0];
@@ -42,11 +42,11 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    public void LocalHost()
+    public void LocalHost(bool autoConnect)
     {
         shard = new LANServer();
         shard.Start(new ShardOptions());
-        App.MatchManager.Connect(shard.Options.GetToken(0));
+        if (autoConnect) App.MatchManager.Connect(shard.Options.GetToken(0));
     }
 
     private void Update()

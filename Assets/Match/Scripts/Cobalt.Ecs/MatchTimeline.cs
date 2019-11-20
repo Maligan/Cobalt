@@ -36,6 +36,9 @@ namespace Cobalt.Ecs
             // Движение времени
             if (IsStarted)  time = time + delta;
             else            time = states.Keys[0];
+
+            if (Latency > 0.1f) time += (Latency - 0.1f);
+
             Purge();
         }
 

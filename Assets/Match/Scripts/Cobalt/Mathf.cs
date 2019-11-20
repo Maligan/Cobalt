@@ -40,7 +40,7 @@ namespace Cobalt
             };
         }
 
-        #if UNITY_ENGINE
+        #if UNITY_ANDROID || UNITY_IOS || UNITY_STANDALONE
         public static implicit operator UnityEngine.Vector2(Vec2f v) => new UnityEngine.Vector2(v.x, v.y);
         public static implicit operator UnityEngine.Vector3(Vec2f v) => new UnityEngine.Vector3(v.x, v.y, 0);
         #endif

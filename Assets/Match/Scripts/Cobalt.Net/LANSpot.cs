@@ -15,13 +15,15 @@ namespace Cobalt.Net
         private int frequency = 2;
 
         private int version;
-        private int port;
+        private int broadcastPort;
+        private int authPort;
         private List<UdpClient> sockets;
 
-        public LANSpot(int version, int port)
+        public LANSpot(int version, int broadcastPort, int authPort)
         {
             this.version = version;
-            this.port = port;
+            this.broadcastPort = broadcastPort;
+            this.authPort = authPort;
             sockets = new List<UdpClient>();
         }
 
@@ -39,13 +41,12 @@ namespace Cobalt.Net
 
         private async void StartService(NetUtils.IPInfo ip)
         {
-            var broadcastStr = string.Format(LANSpotInfo.MESSAGE_FORMAT, version);
+            var broadcastStr = string.Format(LANSpotInfo.MESSAGE_FORMAT, version, authPort);
             var broadcastBytes = Encoding.ASCII.GetBytes(broadcastStr);
-            var broadcastEndpoint = new IPEndPoint(ip.GetBroadcast(), port);
+            var broadcastEndpoint = new IPEndPoint(ip.GetBroadcast(), broadcastPort);
 
-            Log.Info(this, "Bind to " + broadcastEndpoint);
-
-            var socketEndpoint = new IPEndPoint(ip.Address, port);
+            Log.Info(this, "Broadcast on " + broadcastEndpoint);
+            var socketEndpoint = new IPEndPoint(ip.Address, 0);
             var socket = new UdpClient();
             socket.EnableBroadcast = true;
             socket.ExclusiveAddressUse = false;
@@ -192,17 +193,18 @@ namespace Cobalt.Net
     public class LANSpotInfo
     {
         private static readonly string MESSAGE = "SPOT";
-        private static readonly Regex MESSAGE_REGEX = new Regex("^" + MESSAGE + @"/(\d+)");
-        internal static readonly string MESSAGE_FORMAT = MESSAGE + "/{0}";
+        private static readonly Regex MESSAGE_REGEX = new Regex("^" + MESSAGE + @"/(\d+) (\d+)");
+        internal static readonly string MESSAGE_FORMAT = MESSAGE + "/{0} {1}";
 
         public static LANSpotInfo Parse(string response, IPEndPoint source)
         {
             var match = MESSAGE_REGEX.Match(response);
             if (match.Success)
             {
-                return new LANSpotInfo
+                var valid = int.TryParse(match.Groups[2].Value, out int port);
+                if (valid) return new LANSpotInfo
                 {
-                    EndPoint = source,
+                    EndPoint = new IPEndPoint(source.Address, port),
                     Version = int.Parse(match.Groups[1].Value),
                     Time = DateTime.UtcNow
                 };
