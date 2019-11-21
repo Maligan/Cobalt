@@ -11,17 +11,18 @@ namespace Cobalt.Ecs
         {            
             Systems = new IMatchSystem[] {
                 new InitSystem(),
+                new UnitAISystem(),
                 new UnitMoveSystem(),
             };
 
             State = new MatchState {
                 inputs = new [] {
                     new UnitInput() { move = Direction.None },
-                    new UnitInput() { move = Direction.None }
+                    new UnitInput() { move = Direction.None, flag = false }
                 },
                 units = new [] {
                     new Unit() { moveSpeed = 3f },
-                    new Unit() { moveSpeed = 3f }
+                    new Unit() { moveSpeed = 3f}
                 },
             };
         }

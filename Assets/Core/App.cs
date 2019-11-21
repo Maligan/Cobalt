@@ -24,32 +24,8 @@ public class App : MonoBehaviour
     public IEnumerator Start()
     {
         yield return null;
-        // App.UI.Get<UILobby>().Open();
 
 
-       var tree = new BTree(); 
-       tree.Do(1)
-           .If(() => true)
-                .Do(2)
-                .If(() => true)
-                    .Do(3)
-                    .Do(4)
-                    .Do(5)
-                    .End()
-                .Do(6)
-                .End()
-           .While(() => Time.unscaledTime < 4.0f)
-                .Do(7)
-                .End()
-           .Do(8);
-
-        for (int i = 0; i < 1000; i++)
-        {
-            tree.Tick();
-            yield return null; // new WaitForSecondsRealtime(0.1f);
-        }
-        
-        yield break;
 
         //*
         App.LobbyManager.LocalHost(true);
