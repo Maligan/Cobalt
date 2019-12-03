@@ -23,8 +23,8 @@ namespace Cobalt.Net
         private List<RemoteClient> clients;
         private Match match;
 
-        private float time;
-        private float timeCursor;
+        private float timeForNetcode;
+        private float timeForMatch;
 
         public Shard(ShardOptions options)
         {
@@ -42,7 +42,7 @@ namespace Cobalt.Net
 
             Log.Info(this, "Bind to " + Options.Port);
 
-            time = 0;
+            timeForNetcode = 0;
             state = State.Lobby;
 
             server = new Server(
@@ -65,7 +65,7 @@ namespace Cobalt.Net
 
         public void Stop()
         {
-            if (state == State.Stop) throw new InvalidOperationException();
+            if (state == State.Stop) return;
 
             Log.Info(this, "Stop");
 
@@ -86,19 +86,20 @@ namespace Cobalt.Net
         {
             if (state == State.Stop) return;
 
-            this.time = time;
+            this.timeForNetcode = time;
             server.Tick(time);
 
-            if (state != State.Play) return;
-
-            if (timeCursor == 0) timeCursor = time;
-
-            var dt = Options.SPT;
-            while (timeCursor + dt < time)
+            if (state == State.Play)
             {
-                timeCursor += dt;
-                match.Tick(Options.SPT);
-                clients.Send(match.State);
+                if (timeForMatch == 0)
+                    timeForMatch = time;
+
+                while (timeForMatch + Options.SPT < time)
+                {
+                    timeForMatch += Options.SPT;
+                    match.Tick(Options.SPT);
+                    clients.Send(match.State);
+                }
             }
         }
 

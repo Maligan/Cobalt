@@ -6,7 +6,7 @@ using Cobalt.UI;
 
 public class LobbyManager : MonoBehaviour
 {
-    private LANServer shard;
+    private LANServer local;
 
     public void LocalScan()
     {
@@ -44,14 +44,20 @@ public class LobbyManager : MonoBehaviour
 
     public void LocalHost(bool autoConnect)
     {
-        shard = new LANServer();
-        shard.Start(new ShardOptions());
-        if (autoConnect) App.MatchManager.Connect(shard.Options.GetToken(0));
+        local = new LANServer();
+        local.Start(new ShardOptions());
+        if (autoConnect) App.MatchManager.Connect(local.Options.GetToken(0));
     }
 
     private void Update()
     {
-        if (shard != null)
-            shard.Tick(Time.time);
+        if (local != null)
+            local.Tick(Time.time);
+    }
+
+    private void OnDestroy()
+    {
+        if (local != null)
+            local.Stop();
     }
 }

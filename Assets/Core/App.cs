@@ -20,39 +20,15 @@ public class App : MonoBehaviour
         Instance = this;
     }
 
-    private LANServer server;
     public IEnumerator Start()
     {
         yield return null;
 
-
-
-        //*
+        /*
         App.LobbyManager.LocalHost(true);
         /*/
         // Search
-        // App.LobbyManager.LocalHost(false);
-        
-        var finder = new LANSpotFinder(Constants.PORT);
-        finder.Start();
-        yield return new WaitForSeconds(1f);
-        var spot = finder.Spots[0];
-        finder.Stop();
-
-        Log.Info(this, "Find " + spot);
-
-        // Auth
-        var request = UnityWebRequest.Get("http://" + spot.EndPoint + "/auth");
-        yield return request.SendWebRequest();
-
-        // Connect
-        MatchManager.Connect(request.downloadHandler.data);
+        App.LobbyManager.LocalScan();
         //*/
-    }
-
-    public void Update()
-    {
-        if (server != null)
-            server.Tick(Time.time);
     }
 }

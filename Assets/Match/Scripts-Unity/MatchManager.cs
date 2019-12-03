@@ -88,7 +88,7 @@ public class MatchManager : MonoBehaviour
         }
         catch (Exception e)
         {
-            Log.Error(e);
+            Log.Error(this, e);
         }
     }
 

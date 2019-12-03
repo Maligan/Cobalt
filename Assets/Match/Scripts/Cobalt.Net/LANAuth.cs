@@ -43,7 +43,7 @@ namespace Cobalt.Net
             while (listener.IsListening)
             {
                 try { await ProcessRequest(); }
-                catch (Exception e) { Log.Error(e); }
+                catch (Exception e) { Log.Error(this, e); }
             }
         }
 
