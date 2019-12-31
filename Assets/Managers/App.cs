@@ -18,6 +18,9 @@ public class App : MonoBehaviour
 
     public IEnumerator Start()
     {
+        App.UI<UILobby>().Open();
+        yield break;
+
         //*
         App.LobbyManager.LocalHost(true);
         /*/
