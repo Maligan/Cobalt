@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Cobalt.Net
 {
-    public class LANSpot
+    public class LanSpot
     {
         private int frequency = 2;
 
@@ -19,7 +19,7 @@ namespace Cobalt.Net
         private int authPort;
         private List<UdpClient> sockets;
 
-        public LANSpot(int version, int broadcastPort, int authPort)
+        public LanSpot(int version, int broadcastPort, int authPort)
         {
             this.version = version;
             this.broadcastPort = broadcastPort;
@@ -41,7 +41,7 @@ namespace Cobalt.Net
 
         private async void StartService(NetUtils.IPInfo ip)
         {
-            var broadcastStr = string.Format(LANSpotInfo.MESSAGE_FORMAT, version, authPort);
+            var broadcastStr = string.Format(LanSpotInfo.MESSAGE_FORMAT, version, authPort);
             var broadcastBytes = Encoding.ASCII.GetBytes(broadcastStr);
             var broadcastEndpoint = new IPEndPoint(ip.GetBroadcast(), broadcastPort);
 
@@ -71,20 +71,20 @@ namespace Cobalt.Net
         }
     }
 
-    public class LANSpotFinder : IDisposable
+    public class LanSpotFinder : IDisposable
     {
         private int timeout = 2000;
 
-        public List<LANSpotInfo> Spots { get; private set; }
+        public List<LanSpotInfo> Spots { get; private set; }
         public event Action Change;
 
         private int port;
         private UdpClient socket;
 
-        public LANSpotFinder(int port)
+        public LanSpotFinder(int port)
         {
             this.port = port;
-            this.Spots = new List<LANSpotInfo>();
+            this.Spots = new List<LanSpotInfo>();
         }
 
         public void Start(int timeout = 8000)
@@ -132,12 +132,12 @@ namespace Cobalt.Net
                 if (response == NetUtils.NULL) break;
 
                 var responseString = Encoding.ASCII.GetString(response.Buffer);
-                var spot = LANSpotInfo.Parse(responseString, response.RemoteEndPoint);
+                var spot = LanSpotInfo.Parse(responseString, response.RemoteEndPoint);
                 if (spot != null) Insert(spot);
             }
         }
 
-        private void Insert(LANSpotInfo spot)
+        private void Insert(LanSpotInfo spot)
         {
             var indexOf = -1;
 
@@ -192,19 +192,19 @@ namespace Cobalt.Net
         }
     }
 
-    public class LANSpotInfo
+    public class LanSpotInfo
     {
         private static readonly string MESSAGE = "SPOT";
         private static readonly Regex MESSAGE_REGEX = new Regex("^" + MESSAGE + @"/(\d+) (\d+)");
         internal static readonly string MESSAGE_FORMAT = MESSAGE + "/{0} {1}";
 
-        public static LANSpotInfo Parse(string response, IPEndPoint source)
+        public static LanSpotInfo Parse(string response, IPEndPoint source)
         {
             var match = MESSAGE_REGEX.Match(response);
             if (match.Success)
             {
                 var valid = int.TryParse(match.Groups[2].Value, out int port);
-                if (valid) return new LANSpotInfo
+                if (valid) return new LanSpotInfo
                 {
                     EndPoint = new IPEndPoint(source.Address, port),
                     Version = int.Parse(match.Groups[1].Value),
@@ -222,7 +222,7 @@ namespace Cobalt.Net
 
         public override bool Equals(object obj)
         {
-            var other = obj as LANSpotInfo;
+            var other = obj as LanSpotInfo;
 
             if (other == null) return false;
             if (other.Version != Version) return false;

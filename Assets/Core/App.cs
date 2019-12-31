@@ -8,8 +8,9 @@ public class App : MonoBehaviour
 
     public static T UI<T>() where T : UIElement => Instance.GetComponent<UIManager>().Get<T>();
     public static HookManager Hook = new HookManager();
-    public static MatchManager MatchManager { get { return Instance.GetComponent<MatchManager>(); } }
-    public static LobbyManager LobbyManager { get { return Instance.GetComponent<LobbyManager>(); } }
+    public static DataManager Data = new DataManager();
+    public static MatchManager Match => Instance.GetComponent<MatchManager>();
+    public static LobbyManager Lobby => Instance.GetComponent<LobbyManager>();
 
     public App()
     {
@@ -21,11 +22,12 @@ public class App : MonoBehaviour
         App.UI<UILobby>().Open();
         yield break;
 
+        // App.Hook.OnLobbyChange.Invoke();
+
         //*
-        App.LobbyManager.LocalHost(true);
+        App.Lobby.Host(true);
         /*/
-        // Search
-        App.LobbyManager.LocalScan();
+        App.Lobby.Scan();
         //*/
 
         yield break;

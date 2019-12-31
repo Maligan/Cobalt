@@ -5,15 +5,15 @@ using System.Threading.Tasks;
 namespace Cobalt.Net
 {
     /// Simple HTTP server which response any valid /auth request with connection token for specified shard 
-    public class LANAuth
+    public class LanAuth
     {
         private HttpListener listener;
-        private LANServer shard;
+        private LanServer shard;
         private int port;
 
         public string Prefix { get; private set; }
 
-        public LANAuth(int port, LANServer shard)
+        public LanAuth(int port, LanServer shard)
         {
             this.port = port;
             this.shard = shard;

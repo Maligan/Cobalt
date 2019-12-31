@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace Cobalt.Net
 {
-    public class LANServer
+    public class LanServer
     {
         public static int DEFAULT_SPOT_PORT = 8888;
         public static int DEFAULT_AUTH_PORT = 8889;
@@ -11,16 +11,16 @@ namespace Cobalt.Net
         public ShardOptions Options { get; private set; }
 
         private Shard shard;
-        private LANSpot spot;
-        private LANAuth auth;
+        private LanSpot spot;
+        private LanAuth auth;
 
         public void Start(ShardOptions options)
         {
             Options = options;
 
             shard = new Shard(Options);
-            auth = new LANAuth(DEFAULT_AUTH_PORT, this);
-            spot = new LANSpot(1, DEFAULT_SPOT_PORT, DEFAULT_AUTH_PORT);
+            auth = new LanAuth(DEFAULT_AUTH_PORT, this);
+            spot = new LanSpot(1, DEFAULT_SPOT_PORT, DEFAULT_AUTH_PORT);
 
             shard.Start();
             auth.Start();

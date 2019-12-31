@@ -1,10 +1,10 @@
 using System;
 using Cobalt;
-using UnityEngine;
 
 public class HookManager
 {
-    public Hook<float> OnProgress;
+    public Hook<float> OnProgressChange;
+    public Hook OnLobbyChange;
 }
 
 #region Hooks

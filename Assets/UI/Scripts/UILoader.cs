@@ -15,8 +15,8 @@ namespace Cobalt.UI
         private new void OnValidate() => Refresh();
         #endif
 
-        private void OnEnable() { App.Hook.OnProgress += OnProgress; }
-        private void OnDisable() { App.Hook.OnProgress += OnProgress; }
+        private void OnEnable() { App.Hook.OnProgressChange += OnProgress; }
+        private void OnDisable() { App.Hook.OnProgressChange += OnProgress; }
 
         private void OnProgress(float value)
         {

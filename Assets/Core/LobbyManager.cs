@@ -4,11 +4,15 @@ using System.Collections;
 using UnityEngine.Networking;
 using Cobalt.UI;
 using Cobalt;
+using System.Collections.Generic;
 
 public class LobbyManager : MonoBehaviour
 {
-    private LobbyManagerState state;
-    private LANServer local;
+    private LobbyManagerState state = LobbyManagerState.None;
+    private List<LanSpotInfo> spots = new List<LanSpotInfo>();
+    
+    private LanServer local;
+    private LanSpotFinder finder = new LanSpotFinder(LanServer.DEFAULT_SPOT_PORT);
 
     public LobbyManagerState State
     {
@@ -23,14 +27,33 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    public void LocalScan() { StartCoroutine(LocalScan_Coroutine()); }
-    private IEnumerator LocalScan_Coroutine()
+    public LobbyManager()
+    {
+        finder = new LanSpotFinder(LanServer.DEFAULT_SPOT_PORT);
+        finder.Change += () => {
+            // if (state != LobbyManagerState.Scan)
+            // {
+            //     Log.Warning(this, "LanSpotFinder.Change while not in Scanning");
+            //     return;
+            // }
+
+            spots = finder.Spots;
+            // state = finder.IsRunning ? LobbyManagerState.Scan : LobbyManagerState.None;
+        };
+    }
+
+    public void Scan()
+    {
+        finder.Start();
+    }
+
+    private IEnumerator Scan_Coroutine()
     {
         State = LobbyManagerState.Scan;
 
-        LANSpotInfo spot = null;
+        LanSpotInfo spot = null;
 
-        using (var finder = new LANSpotFinder(LANServer.DEFAULT_SPOT_PORT))
+        using (var finder = new LanSpotFinder(LanServer.DEFAULT_SPOT_PORT))
         {
             finder.Change += () => {
                 spot = finder.Spots[0];
@@ -52,19 +75,19 @@ public class LobbyManager : MonoBehaviour
 
                 var bytes = request.downloadHandler.data;
                 App.UI<UILobby>().Close();
-                App.MatchManager.Connect(bytes);
+                App.Match.Connect(bytes);
                 
                 State = LobbyManagerState.None;
             }
         }
     }
 
-    public void LocalHost(bool autoConnect)
+    public void Host(bool autoConnect)
     {
         State = LobbyManagerState.AwaitAsServer;
-        local = new LANServer();
+        local = new LanServer();
         local.Start(new ShardOptions());
-        if (autoConnect) App.MatchManager.Connect(local.Options.GetToken(0));
+        if (autoConnect) App.Match.Connect(local.Options.GetToken(0));
         State = LobbyManagerState.None;
     }
 
