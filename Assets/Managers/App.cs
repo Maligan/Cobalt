@@ -1,17 +1,13 @@
-﻿using System;
-using System.Collections;
-using System.Net;
-using Cobalt;
-using Cobalt.Net;
+﻿using System.Collections;
 using Cobalt.UI;
 using UnityEngine;
-using UnityEngine.Networking;
 
 public class App : MonoBehaviour
 {
     public static App Instance { get; private set; }
 
-    public static UIManager UI { get { return Instance.GetComponent<UIManager>(); } }
+    public static T UI<T>() where T : UIElement => Instance.GetComponent<UIManager>().Get<T>();
+    public static HookManager Hook = new HookManager();
     public static MatchManager MatchManager { get { return Instance.GetComponent<MatchManager>(); } }
     public static LobbyManager LobbyManager { get { return Instance.GetComponent<LobbyManager>(); } }
 
@@ -22,13 +18,13 @@ public class App : MonoBehaviour
 
     public IEnumerator Start()
     {
-        yield return null;
-
-        /*
+        //*
         App.LobbyManager.LocalHost(true);
         /*/
         // Search
         App.LobbyManager.LocalScan();
         //*/
+
+        yield break;
     }
 }

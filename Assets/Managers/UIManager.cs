@@ -132,7 +132,6 @@ namespace Cobalt.UI
     }
 
     [RequireComponent(typeof(RectTransform))]
-    // [RequireComponent(typeof(CanvasGroup))]
     public class UIElement : MonoBehaviour
     {
         internal UIManager UIManager { get; set; }

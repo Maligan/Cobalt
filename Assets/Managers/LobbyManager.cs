@@ -36,7 +36,7 @@ public class LobbyManager : MonoBehaviour
             if (request.responseCode == 200)
             {
                 var bytes = request.downloadHandler.data;
-                App.UI.Get<UILobby>().Close();
+                App.UI<UILobby>().Close();
                 App.MatchManager.Connect(bytes);
             }
         }
