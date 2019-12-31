@@ -80,7 +80,6 @@ namespace Cobalt.Net
 
         private int port;
         private UdpClient socket;
-        private CancellationTokenSource cancel;
 
         public LANSpotFinder(int port)
         {
@@ -99,22 +98,27 @@ namespace Cobalt.Net
             if (locked != true)
                 Log.Warning(this, "WiFi multicast doesn't locked success");
 
-            cancel = new CancellationTokenSource();
-            cancel.CancelAfter(timeout);
-            StartListener(cancel.Token);
-            StartPurge(cancel.Token);
+            StartListener();
+            StartPurge();
+            StartTimeout(timeout);
         }
 
-        private async void StartPurge(CancellationToken token)
+        private async void StartTimeout(int timeout)
         {
-            while (!token.IsCancellationRequested)
+            await Task.Delay(timeout);
+            Stop();
+        }
+
+        private async void StartPurge()
+        {
+            while (socket != null)
             {
                 Purge(false);
                 await Task.Delay(100);
             }
         }
 
-        private async void StartListener(CancellationToken token)
+        private async void StartListener()
         {
             var socketEndpoint = new IPEndPoint(IPAddress.Any, port);
             socket = new UdpClient();
@@ -122,7 +126,7 @@ namespace Cobalt.Net
             socket.ExclusiveAddressUse = false;
             socket.Client.Bind(socketEndpoint);
 
-            while (!token.IsCancellationRequested)
+            while (socket != null)
             {
                 var response = await socket.ReceiveAsyncOrNull();
                 if (response == NetUtils.NULL) break;
@@ -180,9 +184,6 @@ namespace Cobalt.Net
                 socket.Close();
                 socket = null;
             }
-
-            if (cancel != null)
-                cancel.Cancel();
         }
 
         public void Dispose()
