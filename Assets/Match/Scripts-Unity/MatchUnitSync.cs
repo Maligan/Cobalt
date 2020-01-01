@@ -6,12 +6,14 @@ namespace Cobalt.Unity
     public class MatchUnitSync : MonoBehaviour
     {
         public MatchTimeline Timeline { get; set; }
+        public Color[] Colors;
         public int UnitIndex;
 
         private void Update()
         {
             if (!Timeline.IsStarted) return;
 
+            GetComponent<SpriteRenderer>().color = Colors[UnitIndex];
             transform.localPosition = Timeline.GetPosition(UnitIndex);
         }
 

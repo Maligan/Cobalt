@@ -57,6 +57,7 @@ SpriteRenderer:
   m_ProbeAnchor: {fileID: 0}
   m_LightProbeVolumeOverride: {fileID: 0}
   m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
   m_PreserveUVs: 0
   m_IgnoreNormalsForChartDetection: 0
   m_ImportantGI: 0
@@ -92,4 +93,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cebfc6cbddc3fea448e57aba7fe63fdd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Colors:
+  - {r: 0.83137256, g: 0.4509804, b: 0.3254902, a: 1}
+  - {r: 0.32549018, g: 0.83137256, b: 0.43509805, a: 1}
+  - {r: 0.32549018, g: 0.5615686, b: 0.83137256, a: 1}
+  - {r: 0.83137256, g: 0.73862743, b: 0.32549018, a: 1}
   UnitIndex: 0

@@ -29,6 +29,7 @@ namespace Cobalt.Ecs
         {
             Idle,
             Move,
+            Dig,
             Die,
         }
 
@@ -37,9 +38,12 @@ namespace Cobalt.Ecs
         public State state;
 
         public Direction moveDirection;
-        public float moveSpeed;
+        public float moveSpeed = 3;
         public Vec2f moveFrom;
         public Vec2f moveTo;
         public float moveProgress;
+
+        public float digSpeed = 2;
+        public float digProgress;
     }    
 }

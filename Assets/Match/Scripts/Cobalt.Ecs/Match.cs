@@ -17,12 +17,12 @@ namespace Cobalt.Ecs
 
             State = new MatchState {
                 inputs = new [] {
-                    new UnitInput() { move = Direction.None },
-                    new UnitInput() { move = Direction.None, flag = false }
+                    new UnitInput(),
+                    new UnitInput() { flag = false }
                 },
                 units = new [] {
-                    new Unit() { moveSpeed = 3f },
-                    new Unit() { moveSpeed = 3f }
+                    new Unit(),
+                    new Unit()
                 },
             };
         }

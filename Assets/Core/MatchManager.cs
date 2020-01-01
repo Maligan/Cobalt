@@ -61,6 +61,7 @@ public class MatchManager : MonoBehaviour
         {
             var started = timeline.IsStarted;
             timeline.AdvanceTime(Time.unscaledDeltaTime);
+            // timeline.AdvanceTime(Time.deltaTime);
             if (started != timeline.IsStarted) Init();
 
             if (Input.GetKeyDown(KeyCode.Space)) input.move = Direction.None;

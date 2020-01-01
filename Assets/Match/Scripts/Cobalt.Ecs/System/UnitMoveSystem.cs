@@ -37,13 +37,28 @@ namespace Cobalt.Ecs
                         }
                         else if (unitInput.move != unit.moveDirection)
                         {
-                            unit.state = Unit.State.Idle;
-                            unit.moveProgress = 1;
+                            TryMoveTo(unit, unitInput.move, 0);
                         }
                     }
-
-                    unit.pos = Vec2f.Lerp(unit.moveFrom, unit.moveTo, unit.moveProgress);
                 }
+
+                // Tick [Dig]
+                if (unit.state == Unit.State.Dig)
+                {
+                    unit.digProgress += sec * unit.digSpeed;
+
+                    // Прокопали
+                    if (unit.digProgress >= 1)
+                    {
+                        var tx = (int)unit.moveTo.x + match.State.walls.GetLength(0)/2;
+                        var ty = (int)unit.moveTo.y + match.State.walls.GetLength(1)/2;
+                        match.State.walls[tx, ty] = false;
+                        unit.state = Unit.State.Idle;
+                    }
+                }
+
+                // Calc new position
+                unit.pos = Vec2f.Lerp(unit.moveFrom, unit.moveTo, unit.moveProgress);
             }
         }
 
@@ -52,14 +67,23 @@ namespace Cobalt.Ecs
             var from = Vec2f.Round(unit.pos);
             var to = from.GetNext(direction);
 
-            var canPass = CanPassTo(unit, from, to);
-            if (canPass)
+            if (CanPassTo(unit, to))
             {
                 unit.state = Unit.State.Move;
                 unit.moveDirection = direction;
                 unit.moveFrom = from;
                 unit.moveTo = to;
                 unit.moveProgress = progress;
+            }
+            else if (CanDigTo(unit, to))
+            {
+                unit.state = Unit.State.Dig;
+                unit.moveDirection = direction;
+                unit.moveFrom = from;
+                unit.moveTo = to;
+                unit.moveProgress = 0;
+
+                unit.digProgress = 0;
             }
             else
             {
@@ -68,25 +92,63 @@ namespace Cobalt.Ecs
                 unit.moveFrom = from;
                 unit.moveTo = from;
                 unit.moveProgress = 0;
-
-                unit.pos = from;
             }
         }
 
-        public bool CanPassTo(Unit unit, Vec2f from, Vec2f to)
+        public bool CanPassTo(Unit unit, Vec2f to)
         {
+            // Walls
             var width = match.State.walls.GetLength(0);
             var height = match.State.walls.GetLength(1);
             
-            // TODO: walls index vs unit pos
-            var x = width/2 + (int)(to.x);
-            var y = height/2 + (int)(to.y);
+            var x = width/2 + (int)to.x;
+            var y = height/2 + (int)to.y;
 
             if (x < 0 || x >= width) return false;
             if (y < 0 || y >= height) return false;
 
-            return !match.State.walls[x, y];
+            var hasWall = match.State.walls[x, y];
+            if (hasWall) return false;
+
+            // Objects
+            foreach (var u in match.State.units)
+            {
+                if (u != unit)
+                {
+                    var tx = (int)to.x;
+                    var ty = (int)to.y;
+
+                    var ufx = (int)u.moveFrom.x;
+                    var ufy = (int)u.moveFrom.y;
+                    if (tx == ufx && ty == ufy) return false;
+
+                    var utx = (int)u.moveTo.x;
+                    var uty = (int)u.moveTo.y;
+                    if (tx == utx && ty == uty) return false;
+                }
+            }
+
+            // Way is free
+            return true;
+        }
+    
+        public bool CanPushTo(Unit unit, Vec2f to)
+        {
+            return false;
+        }
+
+        public bool CanDigTo(Unit unit, Vec2f to)
+        {
+            var width = match.State.walls.GetLength(0);
+            var height = match.State.walls.GetLength(1);
+            
+            var x = width/2 + (int)to.x;
+            var y = height/2 + (int)to.y;
+
+            if (x < 0 || x >= width) return false;
+            if (y < 0 || y >= height) return false;
+
+            return match.State.walls[x, y];
         }
     }
-    
 }
