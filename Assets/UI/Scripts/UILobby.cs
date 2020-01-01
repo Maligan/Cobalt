@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine.UI;
@@ -7,6 +8,10 @@ namespace Cobalt.UI
 {
     public class UILobby : UIPanel
     {
+        private const string HINT_0 = "Collect all <#ffff00>coins</color> before <#ff0000>enemies</color>";
+        private const string HINT_1 = "Tap Play for connect to <#ffff00>{0}</color>";
+        private const string HINT_2 = "Tap Play for host new game";
+
         private const string EVENT_CLICK = "EVENT_CLICK";
         private const string EVENT_UPDATE = "EVENT_UPDATE";
 
@@ -15,16 +20,20 @@ namespace Cobalt.UI
 
         private FSM<UILobbyState> fsm = new FSM<UILobbyState>(UILobbyState.None);
 
+        protected override IEnumerator Show()
+        {
+            App.Lobby.Scan();
+            yield break;
+        }
+
         private void Start()
         {
             fsm.On(UILobbyState.None, EVENT_CLICK, () => {
-                // fsm.To(UILobbyState.Scan);
-                // Button.GetComponentInChildren<TextMeshProUGUI>().text = "Scan...";
-                // App.LobbyManager.LocalScan();
 
-                // App.Lobby.Host(true);
-                App.Lobby.Scan();
+                if (App.Lobby.Spots.Count > 0) App.Lobby.Connect(App.Lobby.Spots[0]);
+                else                           App.Lobby.Host(true);
                 Close();
+                
             });
 
             fsm.On(UILobbyState.Scan, EVENT_CLICK, () => {
@@ -40,6 +49,10 @@ namespace Cobalt.UI
 
         public void Update()
         {
+            Hint.text = App.Lobby.Spots.Count > 0
+                ? string.Format(HINT_1, App.Lobby.Spots[0].EndPoint)
+                : HINT_2;
+
             fsm.Do(EVENT_UPDATE);
         }
 

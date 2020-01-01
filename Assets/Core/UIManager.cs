@@ -10,20 +10,20 @@ namespace Cobalt.UI
     public class UIManager : MonoBehaviour
     {
         public Transform root;
-        private Dictionary<Type, UIElement> elements;
+        private Dictionary<Type, UIPanel> elements;
 
         private List<Relation> relations;
         private bool relationsIsDirty;
 
         public UIManager()
         {
-            elements = new Dictionary<Type, UIElement>();
+            elements = new Dictionary<Type, UIPanel>();
             relations = new List<Relation>();
         }
 
         public void Start()
         {
-            var elements = root.GetComponentsInChildren<UIElement>();
+            var elements = root.GetComponentsInChildren<UIPanel>();
 
             // Disable all active objects            
             foreach (var element in elements)
@@ -31,7 +31,7 @@ namespace Cobalt.UI
                     element.gameObject.SetActive(false);
         }
 
-        public T Get<T>() where T : UIElement
+        public T Get<T>() where T : UIPanel
         {
             var key = typeof(T);
 
@@ -108,14 +108,14 @@ namespace Cobalt.UI
                     panel.gameObject.SetActive(true);
                     panel.IsShow = true;
                     panel.IsTransit = true;
-                    yield return panel.Show();
+                    yield return panel.ShowInternal();
                     panel.IsTransit = false;
                 }
                 else if (state <= 0 && panel.IsShow)
                 {
                     panel.IsShow = false;
                     panel.IsTransit = true;
-                    yield return panel.Hide();
+                    yield return panel.HideInternal();
                     panel.IsTransit = false;
                     panel.gameObject.SetActive(false);
                 }
@@ -132,23 +132,25 @@ namespace Cobalt.UI
     }
 
     [RequireComponent(typeof(RectTransform))]
-    public class UIElement : MonoBehaviour
+    public class UIPanel : MonoBehaviour
     {
+        // Internal API
         internal UIManager UIManager { get; set; }
-        internal protected virtual IEnumerator Show() { yield break; }
-        internal protected virtual IEnumerator Hide() { yield break; }
+        internal IEnumerator ShowInternal() { yield return Show(); }
+        internal IEnumerator HideInternal() { yield return Hide(); }
+
+        // Show/Hide Routines
+        protected virtual IEnumerator Show() { yield break; }
+        protected virtual IEnumerator Hide() { yield break; }
+
+        // Open/Close
+        public void Require(object token, int state) { UIManager.Require(this, token, state); }
+        public void Open() { UIManager.Require(this, this, 1); }
+        public void Close() { UIManager.Require(this, this, 0); }
 
         public bool IsShow { get; internal set; }
         public bool IsTransit { get; internal set; }
 
         public void OnValidate() { gameObject.name = GetType().Name; }
-    }
-
-    public class UIPanel : UIElement
-    {
-        public void Require(object token, int state) { UIManager.Require(this, token, state); }
-
-        public void Open() { UIManager.Require(this, this, 1); }
-        public void Close() { UIManager.Require(this, this, 0); }
     }
 }

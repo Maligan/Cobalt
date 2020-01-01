@@ -9,10 +9,10 @@ using System.Collections.Generic;
 public class LobbyManager : MonoBehaviour
 {
     private LobbyManagerState state = LobbyManagerState.None;
-    private List<LanSpotInfo> spots = new List<LanSpotInfo>();
-    
     private LanServer local;
     private LanSpotFinder finder = new LanSpotFinder(LanServer.DEFAULT_SPOT_PORT);
+
+    public List<LanSpotInfo> Spots => finder.Spots;
 
     public LobbyManagerState State
     {
@@ -30,65 +30,45 @@ public class LobbyManager : MonoBehaviour
     public LobbyManager()
     {
         finder = new LanSpotFinder(LanServer.DEFAULT_SPOT_PORT);
-        finder.Change += () => {
-            // if (state != LobbyManagerState.Scan)
-            // {
-            //     Log.Warning(this, "LanSpotFinder.Change while not in Scanning");
-            //     return;
-            // }
-
-            spots = finder.Spots;
-            // state = finder.IsRunning ? LobbyManagerState.Scan : LobbyManagerState.None;
-        };
     }
 
     public void Scan()
     {
-        finder.Start();
+        // 10 minutes
+        finder.Start(60 * 10 * 1000);
     }
 
-    private IEnumerator Scan_Coroutine()
+    public LobbyConnectToken Connect(LanSpotInfo spotInfo)
     {
-        State = LobbyManagerState.Scan;
+        var token = new LobbyConnectToken();
+        StartCoroutine(Connect_Coroutine(spotInfo, token));
+        return token;
+    }
 
-        LanSpotInfo spot = null;
+    private IEnumerator Connect_Coroutine(LanSpotInfo spotInfo, LobbyConnectToken token)
+    {
+        var authUrl = $"http://{spotInfo.EndPoint}/auth";
+        var authRequest = UnityWebRequest.Get(authUrl);
 
-        using (var finder = new LanSpotFinder(LanServer.DEFAULT_SPOT_PORT))
+        yield return authRequest.SendWebRequest();
+        
+        if (authRequest.responseCode == 200)
         {
-            finder.Change += () => {
-                spot = finder.Spots[0];
-                finder.Stop();
-            };
-
-            finder.Start();
-            yield return new WaitForSecondsRealtime(2);
+            Log.Info(this, "Connecting by token");
+            App.Match.Connect(authRequest.downloadHandler.data);
+            token.Code = LobbyConnectCode.Success;
         }
-
-        if (spot != null)
+        else
         {
-            var request = UnityWebRequest.Get($"http://{spot.EndPoint}/auth");
-            yield return request.SendWebRequest();
-
-            if (request.responseCode == 200)
-            {
-                State = LobbyManagerState.AwaitAsClient;
-
-                var bytes = request.downloadHandler.data;
-                App.UI<UILobby>().Close();
-                App.Match.Connect(bytes);
-                
-                State = LobbyManagerState.None;
-            }
+            token.Code = LobbyConnectCode.Fail_Auth + (int)authRequest.responseCode;
         }
     }
 
     public void Host(bool autoConnect)
     {
-        State = LobbyManagerState.AwaitAsServer;
         local = new LanServer();
         local.Start(new ShardOptions());
         if (autoConnect) App.Match.Connect(local.Options.GetToken(0));
-        State = LobbyManagerState.None;
     }
 
     private void Update()
@@ -103,6 +83,22 @@ public class LobbyManager : MonoBehaviour
             local.Stop();
     }
 }
+
+public class LobbyConnectToken : CustomYieldInstruction
+{
+    public LobbyConnectCode Code;
+
+    public override bool keepWaiting => Code == LobbyConnectCode.Unknown;
+}
+
+public enum LobbyConnectCode : int
+{
+    Unknown = -1,
+    Success =  0,
+    Fail_Auth = 1000,
+    Fail_Connect = 2000
+}
+
 
 public enum LobbyManagerState
 {

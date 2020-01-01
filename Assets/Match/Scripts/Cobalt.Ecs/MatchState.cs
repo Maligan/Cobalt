@@ -9,6 +9,7 @@ namespace Cobalt.Ecs
         [ProtoMember(2)] public Unit[] units;
         public UnitInput[] inputs;
         // public BitArray walls;
+        public bool[,] walls;
     }
 
     [ProtoContract]

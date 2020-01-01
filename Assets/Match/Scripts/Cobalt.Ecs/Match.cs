@@ -22,7 +22,7 @@ namespace Cobalt.Ecs
                 },
                 units = new [] {
                     new Unit() { moveSpeed = 3f },
-                    new Unit() { moveSpeed = 3f}
+                    new Unit() { moveSpeed = 3f }
                 },
             };
         }

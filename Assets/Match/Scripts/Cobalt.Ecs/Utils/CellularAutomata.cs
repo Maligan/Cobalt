@@ -4,6 +4,8 @@ namespace Cobalt.Ecs
 {
     public class CellularAutomata
     {
+        public static bool[,] Cave_1 = Random(21, 19, 256);
+
         public static bool[,] Random(int width, int height, int seed = 0)
         {
             var rnd = seed > 0 ? new Random(seed) : new Random();

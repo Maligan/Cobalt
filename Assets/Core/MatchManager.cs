@@ -45,7 +45,7 @@ public class MatchManager : MonoBehaviour
         }
 
         // Стены (TODO: Получать список)
-        var data = CellularAutomata.Random(21, 19, 256);
+        var data = CellularAutomata.Cave_1;
         var w = data.GetLength(0);
         var h = data.GetLength(1);
 
