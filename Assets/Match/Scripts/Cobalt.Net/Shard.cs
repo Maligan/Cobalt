@@ -1,13 +1,10 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Cobalt.Ecs;
 using NetcodeIO.NET;
-using ProtoBuf;
 
 namespace Cobalt.Net
 {
@@ -19,8 +16,7 @@ namespace Cobalt.Net
         private State state;
 
         private TokenFactory tokens;
-        private Server server;
-        private List<RemoteClient> clients;
+        private NetcodeServer server;
         private Match match;
 
         private float timeForNetcode;
@@ -32,7 +28,6 @@ namespace Cobalt.Net
             
             state = State.Stop;
             tokens = new TokenFactory(options.Version, options.KeyHash);
-            clients = new List<RemoteClient>();
         }
 
         public void Start()
@@ -45,20 +40,17 @@ namespace Cobalt.Net
             timeForNetcode = 0;
             state = State.Lobby;
 
-            server = new Server(
+            server = new NetcodeServer(
                 Options.NumPlayers,
-                IPAddress.Any.ToString(),
                 Options.Port,
-                Options.Version,
+                (int)Options.Version,
                 Options.KeyHash
             );
 
-            // server.LogLevel = NetcodeLogLevel.Debug;
-
-            server.OnClientConnected += OnClientConnected;
-            server.OnClientDisconnected += OnClientDisconnected;
-            server.OnClientMessageReceived += OnClientMessageReceived;
-            server.Start(false);
+            server.OnClientAdded += OnClientConnected;
+            server.OnClientRemoved += OnClientDisconnected;
+            server.OnClientMessage += OnClientMessage;
+            server.Start();
 
             match = new Match();
         }
@@ -71,11 +63,9 @@ namespace Cobalt.Net
 
             state = State.Stop;
 
-            clients.Clear();
-            
-            server.OnClientConnected -= OnClientConnected;
-            server.OnClientDisconnected -= OnClientDisconnected;
-            server.OnClientMessageReceived -= OnClientMessageReceived;
+            server.OnClientAdded -= OnClientConnected;
+            server.OnClientRemoved -= OnClientDisconnected;
+            server.OnClientMessage -= OnClientMessage;
             server.Stop();
             server = null;
 
@@ -87,7 +77,7 @@ namespace Cobalt.Net
             if (state == State.Stop) return;
 
             this.timeForNetcode = time;
-            server.Tick(time);
+            server.Update(time);
 
             if (state == State.Play)
             {
@@ -98,43 +88,36 @@ namespace Cobalt.Net
                 {
                     timeForMatch += Options.SPT;
                     match.Tick(Options.SPT);
-                    clients.Send(match.State);
+                    server.Send(new NetcodeMessageState() { state = match.State });
                 }
             }
         }
 
         public byte[] GetToken()
         {
-            return Options.GetToken((ulong)clients.Count, null);
+            return Options.GetToken((ulong)server.NumClients, null);
         }
 
         #region Netcode Events
 
-        private void OnClientConnected(RemoteClient client)
+        private void OnClientConnected(int clientId)
         {
             if (state != State.Lobby) throw new InvalidOperationException();
 
-            Log.Info(this, $"Client Connected #{client.ClientID} ({clients.Count+1}/{Options.NumPlayers})");
-
-            clients.Add(client);
-
-            if (clients.Count == Options.NumPlayers)
+            if (server.NumClients == Options.NumPlayers)
                 state = State.Play;
         }
 
-        private void OnClientDisconnected(RemoteClient client)
+        private void OnClientDisconnected(int clientId)
         {
-            Log.Info(this, $"Client Disconnected #{client.ClientID} ({clients.Count-1}/{Options.NumPlayers})");
-
-            if (state == State.Play) Stop();
-            else clients.Remove(client);
+            if (state == State.Play)
+                Stop();
         }
 
-        private void OnClientMessageReceived(RemoteClient sender, byte[] payload, int payloadSize)
+        private void OnClientMessage(int clientId, NetcodeMessage message)
         {
-            var stream = new MemoryStream(payload, 0, payloadSize);
-            var input = Serializer.Deserialize<UnitInput>(stream);
-            match.State.inputs[sender.ClientID] = input;
+            var input = (NetcodeMessageInput)message;
+            match.State.inputs[clientId] = input.input;
         }
 
         #endregion

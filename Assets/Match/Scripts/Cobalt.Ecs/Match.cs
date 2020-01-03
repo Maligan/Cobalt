@@ -13,6 +13,8 @@ namespace Cobalt.Ecs
                 new InitSystem(),
                 new UnitAISystem(),
                 new UnitMoveSystem(),
+
+                new NetcodeSystem()
             };
 
             State = new MatchState {

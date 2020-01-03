@@ -23,12 +23,13 @@ namespace Cobalt.Unity
 
             var poses = Timeline.GetPositions(UnitIndex);
 
-            for (int i = 0; i < poses.Length; i++)
+            for (int i = 1; i < poses.Length; i++)
             {
-                var position = transform.parent.TransformPoint(poses[i]);
+                var from = transform.parent.TransformPoint(poses[i-1]);
+                var to = transform.parent.TransformPoint(poses[i]);
 
                 Gizmos.color = Color.magenta;
-                Gizmos.DrawSphere(position, 1/10f);
+                Gizmos.DrawLine(from, to);
             }
         }
     }

@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Cobalt;
 using Cobalt.Ecs;
 using Cobalt.Net;
@@ -16,7 +15,7 @@ public class MatchManager : MonoBehaviour
     private Prefabs prefabs;
 
     private MatchTimeline timeline;
-    private Client client;
+    private NetcodeClient client;
 
     private UnitInput input;
 
@@ -26,10 +25,9 @@ public class MatchManager : MonoBehaviour
 
         timeline = new MatchTimeline();
 
-        client = new Client();
-        client.OnStateChanged += x => Log.Info(client, x.ToString());
-        client.OnMessageReceived += OnMessageReceived;
-        client.Connect(token, false);
+        client = new NetcodeClient(token);
+        client.OnMessage += OnMessage;
+        client.Connect();
 
         input = new UnitInput() { move = Direction.None };
     }
@@ -64,33 +62,29 @@ public class MatchManager : MonoBehaviour
             // timeline.AdvanceTime(Time.deltaTime);
             if (started != timeline.IsStarted) Init();
 
+            var h = Input.GetAxisRaw("Horizontal");
+            var v = Input.GetAxisRaw("Vertical");
+
+            if (v > 0) input.move = Direction.Top;
+            if (v < 0) input.move = Direction.Bottom;
+            if (h > 0) input.move = Direction.Right;
+            if (h < 0) input.move = Direction.Left;
             if (Input.GetKeyDown(KeyCode.Space)) input.move = Direction.None;
-            if (Input.GetKeyDown(KeyCode.W)) input.move = Direction.Top;
-            if (Input.GetKeyDown(KeyCode.S)) input.move = Direction.Bottom;
-            if (Input.GetKeyDown(KeyCode.D)) input.move = Direction.Right;
-            if (Input.GetKeyDown(KeyCode.A)) input.move = Direction.Left;
         }
 
         if (client != null)
         {
-            if (client.State == ClientState.Connected)
-                client.Send(input);
-
-            client.Tick(Time.time);
+            if (client.IsConnected)
+                client.Send(new NetcodeMessageInput() { input = input });
+            
+            client.Update(Time.time);
         }
     }
 
-    private void OnMessageReceived(byte[] payload, int payloadSize)
+    private void OnMessage(NetcodeMessage message)
     {
-        try
-        {
-            var state = NetcodeUtils.Read<MatchState>(payload, payloadSize);
-            timeline.Add(state);
-        }
-        catch (Exception e)
-        {
-            Log.Error(this, e);
-        }
+        var state = (NetcodeMessageState)message;
+        timeline.Add(state.state);
     }
 
     [Serializable]
