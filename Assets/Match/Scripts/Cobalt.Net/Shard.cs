@@ -114,7 +114,7 @@ namespace Cobalt.Net
                 Stop();
         }
 
-        private void OnClientMessage(int clientId, NetcodeMessage message)
+        private void OnClientMessage(int clientId, object message)
         {
             var input = (NetcodeMessageInput)message;
             match.State.inputs[clientId] = input.input;

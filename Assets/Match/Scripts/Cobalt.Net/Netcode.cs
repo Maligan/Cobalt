@@ -16,7 +16,7 @@ namespace Cobalt.Net
     {
         public event Action<int> OnClientAdded;
         public event Action<int> OnClientRemoved;
-        public event Action<int, NetcodeMessage> OnClientMessage;
+        public event Action<int, object> OnClientMessage;
 
         public bool IsRunning { get; private set; }
         public int NumClients => clients.Count;
@@ -38,9 +38,9 @@ namespace Cobalt.Net
         public void Stop() { IsRunning = false; server.Stop(); }
         public void Update(double totalTime) { server.Tick(totalTime); }
 
-        public void Send(NetcodeMessage message, QoS qos = QoS.Reliable)
+        public void Send(object message, QoS qos = QoS.Reliable)
         {
-            NetcodeMessage.Serialize(message, out byte[] data, out int dataLength);
+            NetcodeSerializer.Serialize(message, out byte[] data, out int dataLength);
 
             foreach (var client in clients)
                 server.SendPayload(client, data, dataLength);
@@ -70,7 +70,7 @@ namespace Cobalt.Net
 
         private void OnClientMessageReceived(RemoteClient sender, byte[] payload, int payloadSize)
         {
-            var message = NetcodeMessage.Deserialize(payload, payloadSize);
+            var message = NetcodeSerializer.Deserialize(payload, payloadSize);
 
             if (OnClientMessage != null)
                 OnClientMessage((int)sender.ClientID, message);
@@ -81,7 +81,7 @@ namespace Cobalt.Net
 
     public class NetcodeClient
     {
-        public event Action<NetcodeMessage> OnMessage;
+        public event Action<object> OnMessage;
 
         public bool IsConnected => client.State == ClientState.Connected;
 
@@ -101,9 +101,9 @@ namespace Cobalt.Net
             client.Connect(clientToken, false);
         }
 
-        public void Send(NetcodeMessage message, QoS qos = QoS.Reliable)
+        public void Send(object message, QoS qos = QoS.Reliable)
         {
-            NetcodeMessage.Serialize(message, out byte[] data, out int dataLength);
+            NetcodeSerializer.Serialize(message, out byte[] data, out int dataLength);
 
             client.Send(data, dataLength);   
         }
@@ -122,7 +122,7 @@ namespace Cobalt.Net
 
         private void OnMessageReceived(byte[] payload, int payloadSize)
         {
-            var message = NetcodeMessage.Deserialize(payload, payloadSize);
+            var message = NetcodeSerializer.Deserialize(payload, payloadSize);
 
             if (OnMessage != null)
                 OnMessage(message);
@@ -141,12 +141,19 @@ namespace Cobalt.Net
 		UnreliableOrdered = 2
     }
 
-    public abstract class NetcodeMessage
+    // Help
+    public static class NetcodeSerializer
     {
         private static Dictionary<Type, byte> types = new Dictionary<Type, byte>();
         private static Dictionary<byte, Type> codes = new Dictionary<byte, Type>();
 
-        public static void Register<T>() where T : NetcodeMessage
+        static NetcodeSerializer()
+        {
+            Register<NetcodeMessageState>();
+            Register<NetcodeMessageInput>();
+        }
+
+        private static void Register<T>()
         {
             var type = typeof(T);
             var code = (byte)types.Count;
@@ -154,7 +161,7 @@ namespace Cobalt.Net
             codes[code] = type;
         }
 
-        public static void Serialize(NetcodeMessage message, out byte[] data, out int dataLength)
+        public static void Serialize(object message, out byte[] data, out int dataLength)
         {
             var type = message.GetType();
             var typeCode = types[type];
@@ -167,33 +174,27 @@ namespace Cobalt.Net
             dataLength = (int)stream.Position;
         }
 
-        public static NetcodeMessage Deserialize(byte[] data, int dataLength)
+        public static object Deserialize(byte[] data, int dataLength)
         {
             var stream = new MemoryStream(data, 0, dataLength);
 
             var typeCode = (byte)stream.ReadByte();
             var type = codes[typeCode];
-            var message = (NetcodeMessage)Serializer.Deserialize(type, stream);
+            var message = Serializer.Deserialize(type, stream);
 
             return message;
-        }
-
-        static NetcodeMessage()
-        {
-            Register<NetcodeMessageState>();
-            Register<NetcodeMessageInput>();
         }
     }
 
     [ProtoContract]
-    public class NetcodeMessageState : NetcodeMessage
+    public class NetcodeMessageState
     {
         [ProtoMember(1)]
         public MatchState state;
     }
 
     [ProtoContract]
-    public class NetcodeMessageInput : NetcodeMessage
+    public class NetcodeMessageInput
     {
         [ProtoMember(1)]
         public UnitInput input;

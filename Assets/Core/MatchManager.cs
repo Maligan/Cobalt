@@ -81,7 +81,7 @@ public class MatchManager : MonoBehaviour
         }
     }
 
-    private void OnMessage(NetcodeMessage message)
+    private void OnMessage(object message)
     {
         var state = (NetcodeMessageState)message;
         timeline.Add(state.state);
