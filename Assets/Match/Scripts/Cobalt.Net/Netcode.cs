@@ -84,6 +84,9 @@ namespace Cobalt.Net
 
         private void OnClientMessageReceived(RemoteClient sender, byte[] payload, int payloadSize)
         {
+            if (clients.ContainsKey(sender) == false)
+                Log.Info(this, "How?");
+
             clients[sender].ReceivePacket(payload, payloadSize);
         }
 
@@ -140,14 +143,16 @@ namespace Cobalt.Net
 
         public void Send(object message, QoS qos = QoS.Reliable)
         {
-            NetcodeSerializer.Serialize(message, out byte[] data, out int dataLength);
+            if (IsConnected == false)
+                throw new InvalidOperationException();
 
+            NetcodeSerializer.Serialize(message, out byte[] data, out int dataLength);
             clientEndpoint.SendMessage(data, dataLength, (QosType)qos);
         }
 
         public void Update(double totalTime)
         {
-            if (client.State == ClientState.Connected)
+            if (IsConnected)
                 clientEndpoint.Update(totalTime);
             
             client.Tick(totalTime);

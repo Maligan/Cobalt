@@ -519,6 +519,21 @@ namespace NetcodeIO.NET
 			var clientIndex = encryptionManager.GetClientID(cryptIdx);
 			var client = clientSlots[clientIndex];
 
+			if (!client.Confirmed)
+			{
+				// trigger callback
+				if (OnClientConnected != null)
+					OnClientConnected(client);
+
+				log("Client {0} connected", NetcodeLogLevel.Info, client.RemoteEndpoint);
+
+				client.Confirmed = true;
+				client.Touch(time);
+				
+				int idx = encryptionManager.FindEncryptionMapping(client.RemoteEndpoint, time);
+				encryptionManager.Touch(idx, client.RemoteEndpoint, time);
+			}
+
 			// trigger callback
 			if (OnClientMessageReceived != null)
 				OnClientMessageReceived(client, payloadPacket.Payload, payloadPacket.Length);
