@@ -1,7 +1,6 @@
 {
-    "name": "Netcode",
+    "name": "Netcode.IO",
     "references": [],
-    "optionalUnityReferences": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

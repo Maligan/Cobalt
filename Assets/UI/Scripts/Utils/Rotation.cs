@@ -4,7 +4,7 @@ public class Rotation : MonoBehaviour
 {
     [Tooltip("Angles per second")]
     [SerializeField]
-    private Vector3 angularVelocity;
+    public Vector3 angularVelocity;
 
     private void Update()
     {

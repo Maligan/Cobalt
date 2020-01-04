@@ -5,6 +5,7 @@ using System.Net;
 using Cobalt.Ecs;
 using NetcodeIO.NET;
 using ProtoBuf;
+using ReliableNetcode;
 
 //
 // This is adapter classes for all netcode libraries used (Netcode, Reliable, ProtoBuf)
@@ -22,11 +23,11 @@ namespace Cobalt.Net
         public int NumClients => clients.Count;
 
         private Server server;
-        private List<RemoteClient> clients;
+        private Dictionary<RemoteClient, ReliableEndpoint> clients;
 
         public NetcodeServer(int numPlayer, int port, int version, byte[] key)
         {
-            clients = new List<RemoteClient>();
+            clients = new Dictionary<RemoteClient, ReliableEndpoint>();
 
             server = new Server(numPlayer, IPAddress.Any.ToString(), port, (ulong)version, key);
             server.OnClientConnected += OnClientConnected;
@@ -36,23 +37,36 @@ namespace Cobalt.Net
 
         public void Start() { IsRunning = true; server.Start(false); }
         public void Stop() { IsRunning = false; server.Stop(); }
-        public void Update(double totalTime) { server.Tick(totalTime); }
+        
+        public void Update(double totalTime)
+        {
+            foreach (var endpoint in clients.Values)
+                endpoint.Update(totalTime);
+
+            server.Tick(totalTime);
+        }
 
         public void Send(object message, QoS qos = QoS.Reliable)
         {
             NetcodeSerializer.Serialize(message, out byte[] data, out int dataLength);
 
-            foreach (var client in clients)
-                server.SendPayload(client, data, dataLength);
+            foreach (var client in clients.Values)
+                client.SendMessage(data, dataLength, (QosType)qos);
         }
 
-        #region Netcode.IO
+        #region Netcode.IO / Reliable.IO
         
         private void OnClientConnected(RemoteClient client)
         {
             Log.Info(this, $"Connect #{client.ClientID} (now {clients.Count+1} clients)");
-            
-            clients.Add(client);
+
+            var clientId = client.ClientID;
+            var clientEndpoint = new ReliableEndpoint((uint)clientId);
+
+            clientEndpoint.TransmitExtendedCallback += OnReliableTransmit;
+            clientEndpoint.ReceiveExtendedCallback += OnReliableReceive;
+
+            clients.Add(client, clientEndpoint);
 
             if (OnClientAdded != null)
                 OnClientAdded((int)client.ClientID);
@@ -70,10 +84,27 @@ namespace Cobalt.Net
 
         private void OnClientMessageReceived(RemoteClient sender, byte[] payload, int payloadSize)
         {
+            clients[sender].ReceivePacket(payload, payloadSize);
+        }
+
+        private void OnReliableTransmit(uint clientId, byte[] payload, int payloadSize)
+        {
+            foreach (var client in clients.Keys)
+            {
+                if (client.ClientID == clientId)
+                {
+                    server.SendPayload(client, payload, payloadSize);
+                    break;             
+                }
+            }
+        }
+
+        private void OnReliableReceive(uint clientId, byte[] payload, int payloadSize)
+        {
             var message = NetcodeSerializer.Deserialize(payload, payloadSize);
 
             if (OnClientMessage != null)
-                OnClientMessage((int)sender.ClientID, message);
+                OnClientMessage((int)clientId, message);
         }
 
         #endregion
@@ -87,13 +118,19 @@ namespace Cobalt.Net
 
         private Client client;
         private byte[] clientToken;
+        private ReliableEndpoint clientEndpoint;
 
         public NetcodeClient(byte[] token)
         {
             clientToken = token;
+            
             client = new Client();
             client.OnStateChanged += OnStateChanged;
             client.OnMessageReceived += OnMessageReceived;
+
+            clientEndpoint = new ReliableEndpoint();
+            clientEndpoint.TransmitCallback += OnReliableTransmit;
+            clientEndpoint.ReceiveCallback += OnReliableReceive;
         }
 
         public void Connect()
@@ -105,15 +142,18 @@ namespace Cobalt.Net
         {
             NetcodeSerializer.Serialize(message, out byte[] data, out int dataLength);
 
-            client.Send(data, dataLength);   
+            clientEndpoint.SendMessage(data, dataLength, (QosType)qos);
         }
 
         public void Update(double totalTime)
         {
+            if (client.State == ClientState.Connected)
+                clientEndpoint.Update(totalTime);
+            
             client.Tick(totalTime);
         }
 
-        #region Netcode.IO
+        #region Netcode.IO / Reliable.IO
         
         private void OnStateChanged(ClientState state)
         {
@@ -121,6 +161,16 @@ namespace Cobalt.Net
         }
 
         private void OnMessageReceived(byte[] payload, int payloadSize)
+        {
+            clientEndpoint.ReceivePacket(payload, payloadSize);
+        }
+
+        private void OnReliableTransmit(byte[] payload, int payloadSize)
+        {
+            client.Send(payload, payloadSize);
+        }
+
+        private void OnReliableReceive(byte[] payload, int payloadSize)
         {
             var message = NetcodeSerializer.Deserialize(payload, payloadSize);
 
@@ -141,7 +191,6 @@ namespace Cobalt.Net
 		UnreliableOrdered = 2
     }
 
-    // Help
     public static class NetcodeSerializer
     {
         private static Dictionary<Type, byte> types = new Dictionary<Type, byte>();

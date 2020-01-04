@@ -1,9 +1,9 @@
 {
     "name": "Cobalt",
     "references": [
-        "GUID:7485f490328ead943a50515e7798d49f"
+        "GUID:7485f490328ead943a50515e7798d49f",
+        "GUID:3d651a00bf92b8b42935a52c31a41325"
     ],
-    "optionalUnityReferences": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

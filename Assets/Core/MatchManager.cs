@@ -1,18 +1,13 @@
 using System;
-using Cobalt;
 using Cobalt.Ecs;
 using Cobalt.Net;
 using Cobalt.Unity;
-using NetcodeIO.NET;
 using UnityEngine;
 
 public class MatchManager : MonoBehaviour
 {
-    [SerializeField]
-    private GameObject root;
-
-    [SerializeField]
-    private Prefabs prefabs;
+    public GameObject root;
+    public Prefabs prefabs;
 
     private MatchTimeline timeline;
     private NetcodeClient client;
