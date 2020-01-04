@@ -53,6 +53,7 @@ namespace Cobalt.Net
             server.Start();
 
             match = new Match();
+            match.Add(new NetcodeSystem(server));
         }
 
         public void Stop()
@@ -88,7 +89,6 @@ namespace Cobalt.Net
                 {
                     timeForMatch += Options.SPT;
                     match.Tick(Options.SPT);
-                    server.Send(new NetcodeMessageState() { state = match.State });
                 }
             }
         }

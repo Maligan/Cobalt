@@ -1,20 +1,19 @@
 using System;
+using System.Collections.Generic;
 
 namespace Cobalt.Ecs
 {
     public class Match
     {
         public MatchState State;
-        public IMatchSystem[] Systems;
+        public List<IMatchSystem> Systems;
 
         public Match()
         {            
-            Systems = new IMatchSystem[] {
+            Systems = new List<IMatchSystem> {
                 new InitSystem(),
                 new UnitAISystem(),
                 new UnitMoveSystem(),
-
-                new NetcodeSystem()
             };
 
             State = new MatchState {
@@ -36,6 +35,11 @@ namespace Cobalt.Ecs
                     return (T)system;
                 
             throw new Exception();
+        }
+
+        public void Add(IMatchSystem system)
+        {
+            Systems.Add(system);
         }
 
         public void Tick(float sec)

@@ -213,6 +213,7 @@ namespace Cobalt.Net
         public static void Serialize(object message, out byte[] data, out int dataLength)
         {
             var type = message.GetType();
+            if (types.ContainsKey(type) == false) throw new ArgumentException($"Type '{type.Name}' not registered for transmit");
             var typeCode = types[type];
 
             var stream = new MemoryStream();
@@ -228,6 +229,7 @@ namespace Cobalt.Net
             var stream = new MemoryStream(data, 0, dataLength);
 
             var typeCode = (byte)stream.ReadByte();
+            if (codes.ContainsKey(typeCode) == false) throw new ArgumentException($"TypeCode '{typeCode}' not registered for transmit");
             var type = codes[typeCode];
             var message = Serializer.Deserialize(type, stream);
 
