@@ -306,7 +306,7 @@ namespace CodeStage.AdvancedFPSCounter.CountersData
 					text.Append("N/A");
 				}
 
-#if !UNITY_5
+#if UNITY_5
 				text.Append(", FR: ");
 				int fillRate = SystemInfo.graphicsPixelFillrate;
 				if (fillRate > 0)

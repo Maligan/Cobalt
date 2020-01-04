@@ -159,14 +159,14 @@ namespace CodeStage.AdvancedFPSCounter.CountersData
 		/// </summary>
 		/// In megabytes if #Precise is false, in bytes otherwise.
 		/// @see Total
-		public uint LastTotalValue { get; private set; }
+		public long LastTotalValue { get; private set; }
 
 		/// <summary>
 		/// Last allocated memory readout.
 		/// </summary>
 		/// In megabytes if #Precise is false, in bytes otherwise.
 		/// @see Allocated
-		public uint LastAllocatedValue { get; private set; }
+		public long LastAllocatedValue { get; private set; }
 
 		/// <summary>
 		/// Last Mono memory readout.
@@ -298,8 +298,8 @@ namespace CodeStage.AdvancedFPSCounter.CountersData
 
 			if (total)
 			{
-				uint value = UnityEngine.Profiling.Profiler.GetTotalReservedMemory();
-				uint divisionResult = 0;
+				long value = UnityEngine.Profiling.Profiler.GetTotalReservedMemoryLong();
+				long divisionResult = 0;
 
 				bool newValue;
 				if (precise)
@@ -321,8 +321,8 @@ namespace CodeStage.AdvancedFPSCounter.CountersData
 
 			if (allocated)
 			{
-				uint value = UnityEngine.Profiling.Profiler.GetTotalAllocatedMemory();
-				uint divisionResult = 0;
+				long value = UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong();
+				long divisionResult = 0;
 
 				bool newValue;
 				if (precise)
