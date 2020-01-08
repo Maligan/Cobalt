@@ -73,7 +73,7 @@ namespace Cobalt.UI
             }
         }
 
-        private void LateUpdate()
+        private void Update()
         {
             if (relationsIsDirty)
             {
@@ -152,5 +152,19 @@ namespace Cobalt.UI
         public bool IsTransit { get; internal set; }
 
         public void OnValidate() { gameObject.name = GetType().Name; }
+
+        // Tools
+        protected IEnumerator PlayAndAwait(string state)
+        {
+            var animator = GetComponent<Animator>();
+            if (animator != null && animator.enabled)
+            {
+                animator.Play(state);
+
+                var layer = animator.GetCurrentAnimatorStateInfo(0);
+                while (layer.IsName(state) && layer.normalizedTime <= 1)
+                    yield return null;
+            }
+        }
     }
 }

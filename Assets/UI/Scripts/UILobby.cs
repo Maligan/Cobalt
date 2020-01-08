@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace Cobalt.UI
@@ -30,21 +31,23 @@ namespace Cobalt.UI
         {
             fsm.On(UILobbyState.None, EVENT_CLICK, () => {
 
+                // fsm.To(UILobbyState.Await);
+                // GetComponent<Animator>().Play("Await");
                 if (App.Lobby.Spots.Count > 0) App.Lobby.Connect(App.Lobby.Spots[0]);
                 else                           App.Lobby.Host(true);
                 Close();
                 
             });
 
-            fsm.On(UILobbyState.Scan, EVENT_CLICK, () => {
-                Button.GetComponentInChildren<TextMeshProUGUI>().text = "Connect";
+            fsm.On(UILobbyState.Await, EVENT_CLICK, () => {
                 fsm.To(UILobbyState.None);
+                GetComponent<Animator>().Play("AwaitToNone");
             });
 
-            fsm.On(UILobbyState.AwaitAsServer, EVENT_CLICK, () => {
-                // if (NumPlayers > 1) fsm.To(State.Countdown);
-                // else Hold On...
-            });
+            // fsm.On(UILobbyState.Scan, EVENT_CLICK, () => {
+            //     Button.GetComponentInChildren<TextMeshProUGUI>().text = "Connect";
+            //     fsm.To(UILobbyState.None);
+            // });
         }
 
         public void Update()
@@ -60,15 +63,18 @@ namespace Cobalt.UI
         {
             fsm.Do(EVENT_CLICK);
         }
+
+        public void OnSettingsClick()
+        {
+            App.UI<UISettings>().Open();
+        }
     }    
 }
 
 public enum UILobbyState
 {
     None = 0,
-    Scan,
-    AwaitAsClient,
-    AwaitAsServer,
+    Await,
     Countdown
 }
 
