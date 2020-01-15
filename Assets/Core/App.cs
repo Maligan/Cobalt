@@ -1,5 +1,8 @@
 ﻿using System.Collections;
 using Cobalt.UI;
+using GestureKit;
+using GestureKit.Core;
+using GestureKit.Unity;
 using UnityEngine;
 
 public class App : MonoBehaviour
@@ -19,7 +22,10 @@ public class App : MonoBehaviour
 
     public IEnumerator Start()
     {
-        // App.Lobby.Host(true);
+        GestureManager.AddHierarhy(new UnityHierarhy());
+        GestureManager.AddHitTester(new UnityHitTester());
+        GestureManager.AddTouchInput(new UnityTouchInput());
+
         App.UI<UILobby>().Open();
         yield break;
     }

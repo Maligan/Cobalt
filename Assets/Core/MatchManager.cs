@@ -2,6 +2,7 @@ using System;
 using Cobalt.Ecs;
 using Cobalt.Net;
 using Cobalt.Unity;
+using GestureKit;
 using UnityEngine;
 
 public class MatchManager : MonoBehaviour
@@ -14,6 +15,9 @@ public class MatchManager : MonoBehaviour
 
     private UnitInput input;
 
+    private TapGesture tap;
+    private SwipeGesture swipe;
+
     public void Connect(byte[] token)
     {
         root.SetActive(true);
@@ -25,6 +29,30 @@ public class MatchManager : MonoBehaviour
         client.Connect();
 
         input = new UnitInput() { move = Direction.None };
+
+        tap = new TapGesture();
+        tap.Recognized += OnTap;
+
+        swipe = new SwipeGesture();
+        swipe.Recognized += OnSwipe;
+    }
+
+    private void OnTap(Gesture tap)
+    {
+        input.move = Direction.None;
+    }
+
+    private void OnSwipe(Gesture swipe)
+    {
+        var swipeGesture = (SwipeGesture)swipe;
+
+        switch (swipeGesture.Direction)
+        {
+            case SwipeGestureDirection.Up: input.move = Direction.Top; break;
+            case SwipeGestureDirection.Right: input.move = Direction.Right; break;
+            case SwipeGestureDirection.Down: input.move = Direction.Bottom; break;
+            case SwipeGestureDirection.Left: input.move = Direction.Left; break;
+        }
     }
 
     private void Init()
