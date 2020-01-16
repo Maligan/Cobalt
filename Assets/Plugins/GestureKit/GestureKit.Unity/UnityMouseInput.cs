@@ -1,22 +1,22 @@
 using System;
-using GestureKit.Core;
+using GestureKit.Input;
 using UnityEngine;
-using Touch = GestureKit.Core.Touch;
-using TouchPhase = GestureKit.Core.TouchPhase;
+using Touch = GestureKit.Input.Touch;
+using TouchPhase = GestureKit.Input.TouchPhase;
 
 namespace GestureKit.Unity
 {
-    public class UnityTouchInput : ITouchInput
+    public class UnityMouseInput : ITouchInput
     {
         public event Action<Touch> Touch;
 
         private GameObject gameObject;
 
-        public UnityTouchInput()
+        public UnityMouseInput()
         {
             gameObject = new GameObject(GetType().Name);
             gameObject.hideFlags = UnityEngine.HideFlags.HideAndDontSave;
-            gameObject.AddComponent<UnityTouchInputBehaviour>().Touch += OnTouch;
+            gameObject.AddComponent<UnityMouseInputBehaviour>().Touch += OnTouch;
             GameObject.DontDestroyOnLoad(gameObject);
         }
 
@@ -26,13 +26,13 @@ namespace GestureKit.Unity
                 Touch(t);
         }
 
-        ~UnityTouchInput()
+        ~UnityMouseInput()
         {
             GameObject.DestroyImmediate(gameObject);
         }
     }
 
-    internal class UnityTouchInputBehaviour : MonoBehaviour
+    internal class UnityMouseInputBehaviour : MonoBehaviour
     {
         public event Action<Touch> Touch;
 
@@ -40,9 +40,9 @@ namespace GestureKit.Unity
 
         private void Update()
         {
-            var isMouseButtonDown = Input.GetMouseButtonDown(0);
-            var isMouseButtonUp = Input.GetMouseButtonUp(0);
-            var isMouseButton = Input.GetMouseButton(0);
+            var isMouseButtonDown = UnityEngine.Input.GetMouseButtonDown(0);
+            var isMouseButtonUp = UnityEngine.Input.GetMouseButtonUp(0);
+            var isMouseButton = UnityEngine.Input.GetMouseButton(0);
 
             var hasTouch = isMouseButtonDown || isMouseButtonUp || isMouseButton;
             if (hasTouch)
@@ -50,8 +50,8 @@ namespace GestureKit.Unity
                 var oldX = touch.X;
                 var oldY = touch.Y;
 
-                var newX = Input.mousePosition.x;
-                var newY = Input.mousePosition.y;
+                var newX = UnityEngine.Input.mousePosition.x;
+                var newY = UnityEngine.Input.mousePosition.y;
 
                 if (isMouseButtonUp)
                 {
@@ -63,6 +63,8 @@ namespace GestureKit.Unity
                     oldY = newY;
 
                     touch.Phase = TouchPhase.Began;
+                    touch.BeginX = newX;
+                    touch.BeginY = newX;
                 }
                 else if (isMouseButton)
                 {
@@ -76,6 +78,8 @@ namespace GestureKit.Unity
                 touch.PrevY = oldY;
                 touch.X = newX;
                 touch.Y = newY;
+
+                // UnityEngine.Touch
 
                 Touch(touch);
             }

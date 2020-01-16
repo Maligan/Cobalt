@@ -1,4 +1,4 @@
-namespace GestureKit.Core
+namespace GestureKit.Input
 {
     public enum TouchPhase
     {

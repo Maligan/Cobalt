@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using Cobalt.UI;
 using GestureKit;
-using GestureKit.Core;
 using GestureKit.Unity;
 using UnityEngine;
 
@@ -22,11 +21,18 @@ public class App : MonoBehaviour
 
     public IEnumerator Start()
     {
-        GestureManager.AddHierarhy(new UnityHierarhy());
-        GestureManager.AddHitTester(new UnityHitTester());
-        GestureManager.AddTouchInput(new UnityTouchInput());
+        Gesture.Dpi = (int)Screen.dpi;
+        Gesture.Add(new UnityRaycasterHitTester());
+        Gesture.Add(new UnityMouseInput());
 
-        App.UI<UILobby>().Open();
+        var sprite = GameObject.Find("Sprite_2");
+        var tap = new TapGesture(sprite);
+        tap.Recognized += _ => Debug.Log("Recognized #2");
+
+        sprite = GameObject.Find("Sprite_1");
+        var swipe = new SwipeGesture(sprite);
+        swipe.Recognized += _ => Debug.Log("Recognized #1");
+
         yield break;
     }
 }

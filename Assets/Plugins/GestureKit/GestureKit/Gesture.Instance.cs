@@ -1,9 +1,9 @@
 using System;
-using GestureKit.Core;
+using GestureKit.Input;
 
 namespace GestureKit
 {
-    public abstract class Gesture : IDisposable
+    public abstract partial class Gesture
     {
         public event Action<Gesture> Change;
         public event Action<Gesture> Recognized;
@@ -24,14 +24,21 @@ namespace GestureKit
             }
         }
 
-        public Gesture()
+        public object Target { get; private set; }
+
+        public Gesture(object target = null)
         {
-            GestureManager.Register(this);
+            Register(this);
+            Target = target;
         }
 
         ~Gesture()
         {
-            GestureManager.Unregister(this);
+            Unregister(this);
+
+            // var handlers = Change.GetInvocationList();
+            // foreach (var handler in handlers)
+                // Change -= (Action<Gesture>)handler;
         }
 
         public abstract void OnTouch(Touch touch);
@@ -39,15 +46,6 @@ namespace GestureKit
         public virtual void Reset()
         {
             State = GestureState.Idle;
-        }
-
-        public void Dispose()
-        {
-            GestureManager.Unregister(this);
-
-            var handlers = Change.GetInvocationList();
-            foreach (var handler in handlers)
-                Change -= (Action<Gesture>)handler;
         }
     }
 }

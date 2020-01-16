@@ -1,11 +1,13 @@
 using System;
-using GestureKit.Core;
+using GestureKit.Input;
 
 namespace GestureKit
 {
     public class SwipeGesture : Gesture
     {
         public SwipeGestureDirection Direction { get; set; }
+
+        public SwipeGesture(object target = null) : base(target) { }
 
         public override void OnTouch(Touch touch)
         {
@@ -16,9 +18,10 @@ namespace GestureKit
             {
                 var dx = touch.X-touch.PrevX;
                 var dy = touch.Y-touch.PrevY;
+                // var sqrDistance = Math.Sqrt(dx*dx + dy*dy);
 
-                var byX = Math.Abs(dx) > 7;
-                var byY = Math.Abs(dy) > 7;
+                var byX = Math.Abs(dx) > Slop>>1;
+                var byY = Math.Abs(dy) > Slop>>1;
 
                 if (byX || byY)
                 {

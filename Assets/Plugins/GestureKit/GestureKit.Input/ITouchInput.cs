@@ -1,6 +1,6 @@
 using System;
 
-namespace GestureKit.Core
+namespace GestureKit.Input
 {
     public interface ITouchInput
     {

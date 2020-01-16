@@ -1,10 +1,12 @@
-using GestureKit.Core;
+using GestureKit.Input;
 
 namespace GestureKit
 {
     public class TapGesture : Gesture
     {
-        public float Slop { get; set; }
+        public TapGesture(object target = null) : base(target) { }
+
+        public new float Slop { get; set; } = Gesture.Slop << 2; // iOS has 45px for 132 dpi screen
 
         public override void OnTouch(Touch touch)
         {
@@ -12,10 +14,19 @@ namespace GestureKit
                 State = GestureState.Possible;
 
             if (State == GestureState.Possible && touch.Phase == TouchPhase.Moved)
-                State = GestureState.Failed;
+            {
+                var dx = touch.X - touch.BeginX;
+                var dy = touch.Y - touch.BeginY;
+                var sqrDistance = (float)System.Math.Sqrt(dx*dx + dy*dy);
+                if (sqrDistance > Slop*Slop)
+                    State = GestureState.Failed;
+            }
             
             if (State == GestureState.Possible && touch.Phase == TouchPhase.Ended)
                 State = GestureState.Recognized;
+            
+            if (State != GestureState.Idle && touch.Phase == TouchPhase.Canceled)
+                State = GestureState.Failed;
         }
     }
 }
