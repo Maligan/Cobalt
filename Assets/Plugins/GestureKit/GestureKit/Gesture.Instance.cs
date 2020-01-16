@@ -24,6 +24,7 @@ namespace GestureKit
             }
         }
 
+        public bool IsActive { get; set; } = true;
         public object Target { get; private set; }
 
         public Gesture(object target = null)

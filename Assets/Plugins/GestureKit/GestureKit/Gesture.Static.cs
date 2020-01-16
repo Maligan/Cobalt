@@ -42,9 +42,10 @@ namespace GestureKit
             //       Решение с gesture.State != IDLE в этой проверке тоже спорное
             foreach (var target in targets)
                 foreach (var gesture in gestures)
-                    if (gesture.Target == target || gesture.Target == null || gesture.State != GestureState.Idle)
-                        yield return gesture;
-        }
+                    if (gesture.IsActive)
+                        if (gesture.Target == target || gesture.Target == null || gesture.State != GestureState.Idle)
+                            yield return gesture;
+            }
 
         #endregion
 
@@ -64,6 +65,7 @@ namespace GestureKit
 
         private static void OnInputTouch(Touch touch)
         {
+            // TODO: Can be catch gestures on root
             if (hitTester == null)
                 return;
 
@@ -72,13 +74,7 @@ namespace GestureKit
                 if (gesture.State == GestureState.Recognized || gesture.State == GestureState.Failed)
                     gesture.Reset();
 
-            // TODO: Sorting by depth (deeper has more priority) & recently added
             var hitTargets = hitTester.HitTest(touch.X, touch.Y);
-            
-            // if (touch.Phase == TouchPhase.Began)
-            //     foreach (var target in hitTargets)
-            //         UnityEngine.Debug.Log(((UnityEngine.GameObject)target).name);
-            
             var hitGestures = GetGesturesFor(hitTargets);
             foreach (var gesture in hitGestures)
                 gesture.OnTouch(touch);

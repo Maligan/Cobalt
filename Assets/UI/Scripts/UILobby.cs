@@ -31,8 +31,8 @@ namespace Cobalt.UI
 
         private void Start()
         {
-            new TapGesture(Button.gameObject).Recognized += _ => OnPlayTap();
-            new LongPressGesture(Button.gameObject).Recognized += _ => OnPlayLongPress();
+            var tap = new TapGesture(Button.gameObject); tap.Recognized += _ => OnPlayTap();
+            var longPress = new LongPressGesture(Button.gameObject); longPress.Recognized += _ => OnPlayLongPress();
 
             fsm.On(UILobbyState.None, EVENT_CLICK, () => {
 
@@ -42,6 +42,7 @@ namespace Cobalt.UI
 
                 fsm.To(UILobbyState.Await);
                 GetComponent<Animator>().Play("Await");
+                longPress.IsActive = false;
                 // if (App.Lobby.Spots.Count > 0) App.Lobby.Connect(App.Lobby.Spots[0]);
                 // else                           App.Lobby.Host(true);
                 // Close();
@@ -50,6 +51,7 @@ namespace Cobalt.UI
             fsm.On(UILobbyState.Await, EVENT_CLICK, () => {
                 fsm.To(UILobbyState.None);
                 GetComponent<Animator>().Play("AwaitToNone");
+                longPress.IsActive = true;
             });
 
             // fsm.On(UILobbyState.Scan, EVENT_CLICK, () => {
