@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using GestureKit;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,6 +19,7 @@ namespace Cobalt.UI
 
         public TextMeshProUGUI Hint;
         public Button Button;
+        public List<GameObject> Slots;
 
         private FSM<UILobbyState> fsm = new FSM<UILobbyState>(UILobbyState.None);
 
@@ -29,14 +31,20 @@ namespace Cobalt.UI
 
         private void Start()
         {
+            new TapGesture(Button.gameObject).Recognized += _ => OnPlayTap();
+            new LongPressGesture(Button.gameObject).Recognized += _ => OnPlayLongPress();
+
             fsm.On(UILobbyState.None, EVENT_CLICK, () => {
 
-                // fsm.To(UILobbyState.Await);
-                // GetComponent<Animator>().Play("Await");
-                if (App.Lobby.Spots.Count > 0) App.Lobby.Connect(App.Lobby.Spots[0]);
-                else                           App.Lobby.Host(true);
-                Close();
-                
+                var numPlayers = App.UI<UISettings>().NumPlayers;
+                for (var i = 0; i < Slots.Count; i++)
+                    Slots[i].SetActive(i < numPlayers);
+
+                fsm.To(UILobbyState.Await);
+                GetComponent<Animator>().Play("Await");
+                // if (App.Lobby.Spots.Count > 0) App.Lobby.Connect(App.Lobby.Spots[0]);
+                // else                           App.Lobby.Host(true);
+                // Close();
             });
 
             fsm.On(UILobbyState.Await, EVENT_CLICK, () => {
@@ -59,12 +67,12 @@ namespace Cobalt.UI
             fsm.Do(EVENT_UPDATE);
         }
 
-        public void OnButtonClick()
+        private void OnPlayTap()
         {
             fsm.Do(EVENT_CLICK);
         }
 
-        public void OnSettingsClick()
+        private void OnPlayLongPress()
         {
             App.UI<UISettings>().Open();
         }

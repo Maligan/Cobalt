@@ -21,18 +21,13 @@ public class App : MonoBehaviour
 
     public IEnumerator Start()
     {
+        // Initialize
         Gesture.Dpi = (int)Screen.dpi;
         Gesture.Add(new UnityRaycasterHitTester());
         Gesture.Add(new UnityMouseInput());
 
-        var sprite = GameObject.Find("Sprite_2");
-        var tap = new TapGesture(sprite);
-        tap.Recognized += _ => Debug.Log("Recognized #2");
-
-        sprite = GameObject.Find("Sprite_1");
-        var swipe = new SwipeGesture(sprite);
-        swipe.Recognized += _ => Debug.Log("Recognized #1");
-
+        // Start
+        App.UI<UILobby>().Open();
         yield break;
     }
 }

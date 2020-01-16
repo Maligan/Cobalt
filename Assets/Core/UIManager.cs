@@ -160,10 +160,11 @@ namespace Cobalt.UI
             if (animator != null && animator.enabled)
             {
                 animator.Play(state);
+                yield return null;
 
                 var layer = animator.GetCurrentAnimatorStateInfo(0);
-                while (layer.IsName(state) && layer.normalizedTime <= 1)
-                    yield return null;
+                var layerTime = layer.length;
+                yield return new WaitForSeconds(layerTime);
             }
         }
     }
