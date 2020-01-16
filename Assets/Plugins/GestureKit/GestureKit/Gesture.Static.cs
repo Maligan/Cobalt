@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using GestureKit.Input;
@@ -14,6 +15,13 @@ namespace GestureKit
         {
             if (gestures.Contains(gesture))
                 return;
+            
+            if (gesture.Target != null)
+            {
+                var hasHitTester = hitTester != null && hitTester.Type.IsInstanceOfType(gesture.Target);
+                if (hasHitTester == false)
+                    throw new ArgumentException($"HitTester for type '{gesture.Target.GetType().Name}' doesn't added");
+            }
 
             gestures.Add(gesture);
             gesture.Change += OnGestureStateChange;
@@ -56,6 +64,9 @@ namespace GestureKit
 
         private static void OnInputTouch(Touch touch)
         {
+            if (hitTester == null)
+                return;
+
             // TODO: Reset only on touch time change (next frame?)
             foreach (var gesture in gestures)
                 if (gesture.State == GestureState.Recognized || gesture.State == GestureState.Failed)
@@ -63,6 +74,11 @@ namespace GestureKit
 
             // TODO: Sorting by depth (deeper has more priority) & recently added
             var hitTargets = hitTester.HitTest(touch.X, touch.Y);
+            
+            // if (touch.Phase == TouchPhase.Began)
+            //     foreach (var target in hitTargets)
+            //         UnityEngine.Debug.Log(((UnityEngine.GameObject)target).name);
+            
             var hitGestures = GetGesturesFor(hitTargets);
             foreach (var gesture in hitGestures)
                 gesture.OnTouch(touch);
@@ -74,9 +90,14 @@ namespace GestureKit
                 OnGestureRecognized(gesture);
         }
 
+        // TODO: Может быть вызывать это нужно ДО Recognized
+        // TODO: Непонятно из BEGAN и CHANGED можно ли в Fail Пересылать, или нужно в END
         private static void OnGestureRecognized(Gesture gesture)
         {
-            // Break other
+            foreach (var g in gestures)
+                if (g != gesture && g.Target == gesture.Target)
+                    if (g.State == GestureState.Possible || g.State == GestureState.Began || g.state == GestureState.Changed)
+                        g.State = GestureState.Failed;
         }
     }
 }

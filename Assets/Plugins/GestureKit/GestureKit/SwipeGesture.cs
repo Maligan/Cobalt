@@ -9,7 +9,7 @@ namespace GestureKit
 
         public SwipeGesture(object target = null) : base(target) { }
 
-        public override void OnTouch(Touch touch)
+        protected override void OnTouch(Touch touch)
         {
             if (State == GestureState.Idle && touch.Phase == TouchPhase.Began)
                 State = GestureState.Possible;
@@ -36,7 +36,7 @@ namespace GestureKit
                 State = GestureState.Failed;
         }
 
-        public override void Reset()
+        protected override void Reset()
         {
             Direction = SwipeGestureDirection.None;
             base.Reset();

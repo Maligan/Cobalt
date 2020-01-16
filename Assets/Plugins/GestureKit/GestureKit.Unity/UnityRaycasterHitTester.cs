@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using GestureKit.Input;
@@ -11,6 +12,8 @@ namespace GestureKit.Unity
         private BaseRaycaster raycaster;
         private PointerEventData raycastData;
         private List<RaycastResult> raycastResult;
+
+        public Type Type => typeof(GameObject);
 
         public UnityRaycasterHitTester(BaseRaycaster raycaster = null, EventSystem eventSystem = null)
         {
@@ -32,9 +35,27 @@ namespace GestureKit.Unity
             raycaster.Raycast(raycastData, raycastResult);
 
             // TODO: Sort raycastResult by depth/layers etc.
+            //       Maybe GetDepth() doesn't good for 2d/3d world
 
-            foreach (var result in raycastResult)
-                yield return result.gameObject;
+            var depth = -1;
+            foreach (var raycast in raycastResult)
+            {
+                var raycastDepth = GetDepth(raycast.gameObject);
+
+                if (depth == -1) depth = raycastDepth;
+                else if (depth >= raycastDepth) depth = raycastDepth;
+                else yield break;
+
+                yield return raycast.gameObject;
+            }
+        }
+
+        private int GetDepth(GameObject gameObject)
+        {
+            if (gameObject.transform.parent == null)
+                return 0;
+
+            return 1 + GetDepth(gameObject.transform.parent.gameObject);
         }
     }
 }

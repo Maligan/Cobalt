@@ -47,9 +47,11 @@ namespace GestureKit.Unity
             var hasTouch = isMouseButtonDown || isMouseButtonUp || isMouseButton;
             if (hasTouch)
             {
+                var oldTime = touch.Time;
                 var oldX = touch.X;
                 var oldY = touch.Y;
 
+                var newTime = Time.unscaledTime;
                 var newX = UnityEngine.Input.mousePosition.x;
                 var newY = UnityEngine.Input.mousePosition.y;
 
@@ -59,10 +61,12 @@ namespace GestureKit.Unity
                 }
                 else if (isMouseButtonDown)
                 {
+                    oldTime = newTime;
                     oldX = newX;
                     oldY = newY;
 
                     touch.Phase = TouchPhase.Began;
+                    touch.BeginTime = newTime;
                     touch.BeginX = newX;
                     touch.BeginY = newX;
                 }
@@ -74,12 +78,13 @@ namespace GestureKit.Unity
                     touch.Phase = idle ? TouchPhase.Stationary : TouchPhase.Moved;
                 }
 
+                touch.PrevTime = oldTime;
                 touch.PrevX = oldX;
                 touch.PrevY = oldY;
+
+                touch.Time = newTime;
                 touch.X = newX;
                 touch.Y = newY;
-
-                // UnityEngine.Touch
 
                 Touch(touch);
             }

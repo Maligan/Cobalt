@@ -2,11 +2,11 @@ using GestureKit.Input;
 
 namespace GestureKit
 {
-    public class TapGesture : Gesture
+    public class LongPressGesture : Gesture
     {
-        public TapGesture(object target = null) : base(target) { }
+        public float Delay { get; set; } = 0.5f;
 
-        public new float Slop { get; set; } = Gesture.Slop << 2; // iOS has 45px for 132 dpi screen
+        public LongPressGesture(object target) : base(target) { }
 
         protected override void OnTouch(Touch touch)
         {
@@ -21,12 +21,16 @@ namespace GestureKit
                 if (sqrDistance > Slop*Slop)
                     State = GestureState.Failed;
             }
-            
+
             if (State == GestureState.Possible && touch.Phase == TouchPhase.Ended)
-                State = GestureState.Recognized;
-            
-            if (State != GestureState.Idle && touch.Phase == TouchPhase.Canceled)
                 State = GestureState.Failed;
-        }
+
+            if (State == GestureState.Possible && touch.Phase == TouchPhase.Canceled)
+                State = GestureState.Failed;
+
+            if (State == GestureState.Possible)
+                if (touch.Time - touch.BeginTime > Delay)
+                    State = GestureState.Recognized;
+        }        
     }
 }

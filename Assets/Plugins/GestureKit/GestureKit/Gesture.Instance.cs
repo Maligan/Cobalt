@@ -28,8 +28,8 @@ namespace GestureKit
 
         public Gesture(object target = null)
         {
-            Register(this);
             Target = target;
+            Register(this);
         }
 
         ~Gesture()
@@ -41,9 +41,9 @@ namespace GestureKit
                 // Change -= (Action<Gesture>)handler;
         }
 
-        public abstract void OnTouch(Touch touch);
+        protected abstract void OnTouch(Touch touch);
 
-        public virtual void Reset()
+        protected virtual void Reset()
         {
             State = GestureState.Idle;
         }
