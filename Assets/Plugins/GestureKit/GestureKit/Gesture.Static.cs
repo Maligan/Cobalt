@@ -56,7 +56,7 @@ namespace GestureKit
         public static void Add(IHitTester hitTester) { Gesture.hitTester = hitTester; }
         public static void Add(ITouchInput input) { input.Touch += OnInputTouch; }
 
-        /// Default DPI for PC screen
+        /// Screen DPI
         public static int Dpi { get; set; } = 120;
         /// Threshold for touch movement (based on 20 pixels on a 252ppi device.)
         public static int Slop => (int)(20 * Dpi/252f + 0.5f);
