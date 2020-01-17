@@ -14,6 +14,9 @@ namespace Netouch
             if (State == GestureState.Idle && touch.Phase == TouchPhase.Began)
                 State = GestureState.Possible;
 
+            if (State == GestureState.Idle && touch.Phase == TouchPhase.Moved)
+                State = GestureState.Possible;
+
             if (State == GestureState.Possible && touch.Phase == TouchPhase.Moved)
             {
                 var dx = touch.X-touch.PrevX;
