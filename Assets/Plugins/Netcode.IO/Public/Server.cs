@@ -1043,10 +1043,9 @@ namespace NetcodeIO.NET
 
 			#if UNITY_EDITOR
 				UnityEngine.Debug.Log(log);
-				return;
+			#else
+				Console.WriteLine(log);
 			#endif
-
-			Console.WriteLine(log);
 		}
 
 		private void log(string log, NetcodeLogLevel logLevel, params object[] args)
@@ -1056,10 +1055,10 @@ namespace NetcodeIO.NET
 
 			#if UNITY_EDITOR
 				UnityEngine.Debug.LogFormat(log, args);
-				return;
+			#else
+				Console.WriteLine(string.Format(log, args));
 			#endif
 			
-			Console.WriteLine(string.Format(log, args));
 		}
 
 		#endregion

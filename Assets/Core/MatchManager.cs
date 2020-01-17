@@ -57,8 +57,6 @@ public class MatchManager : MonoBehaviour
 
     private void Init()
     {
-        Update();
-
         // Юнит
         for (int i = 0; i < timeline.NumUnits; i++)
         {
@@ -121,7 +119,7 @@ public class MatchManager : MonoBehaviour
             if (client.IsConnected)
                 client.Send(new NetcodeMessageInput() { input = tmp });
             
-            client.Update(Time.time);
+            client.Update(Time.unscaledTime);
         }
     }
 
