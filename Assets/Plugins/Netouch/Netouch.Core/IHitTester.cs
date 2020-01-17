@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
 
-namespace Netouch.Input
+namespace Netouch.Core
 {
     public interface IHitTester
     {

@@ -1,6 +1,6 @@
 using System;
 
-namespace Netouch.Input
+namespace Netouch.Core
 {
     public interface ITouchInput
     {

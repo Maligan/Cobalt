@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Netouch.Input;
+using Netouch.Core;
 
 namespace Netouch
 {
@@ -26,7 +26,11 @@ namespace Netouch
             
             if (gesture.Target != null)
             {
-                var hasHitTester = hitTesters != null && hitTesters.Type.IsInstanceOfType(gesture.Target);
+                var hasHitTester = false;
+                
+                for (var i = 0; i < hitTesters.Count && !hasHitTester; i++)
+                    hasHitTester = hitTesters[i].Type.IsInstanceOfType(gesture.Target);
+
                 if (hasHitTester == false)
                     throw new ArgumentException($"HitTester for type '{gesture.Target.GetType().Name}' doesn't added");
             }

@@ -1,4 +1,4 @@
-namespace Netouch.Input
+namespace Netouch.Core
 {
     public enum TouchPhase
     {

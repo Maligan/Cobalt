@@ -1,8 +1,8 @@
 using System;
-using Netouch.Input;
+using Netouch.Core;
 using UnityEngine;
-using Touch = Netouch.Input.Touch;
-using TouchPhase = Netouch.Input.TouchPhase;
+using Touch = Netouch.Core.Touch;
+using TouchPhase = Netouch.Core.TouchPhase;
 
 namespace Netouch.Unity
 {

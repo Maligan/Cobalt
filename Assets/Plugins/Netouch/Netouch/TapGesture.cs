@@ -1,4 +1,4 @@
-using Netouch.Input;
+using Netouch.Core;
 
 namespace Netouch
 {

@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Netouch.Input;
+using Netouch.Core;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
