@@ -1,6 +1,6 @@
 using System;
 
-namespace GestureKit.Input
+namespace Netouch.Input
 {
     public interface ITouchInput
     {

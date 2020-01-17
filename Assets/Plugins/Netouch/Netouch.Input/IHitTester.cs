@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
 
-namespace GestureKit.Input
+namespace Netouch.Input
 {
     public interface IHitTester
     {

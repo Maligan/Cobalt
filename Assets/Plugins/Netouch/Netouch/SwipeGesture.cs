@@ -1,7 +1,7 @@
 using System;
-using GestureKit.Input;
+using Netouch.Input;
 
-namespace GestureKit
+namespace Netouch
 {
     public class SwipeGesture : Gesture
     {

@@ -1,6 +1,6 @@
-using GestureKit.Input;
+using Netouch.Input;
 
-namespace GestureKit
+namespace Netouch
 {
     public class LongPressGesture : Gesture
     {

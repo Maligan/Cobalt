@@ -1,4 +1,4 @@
-namespace GestureKit.Input
+namespace Netouch.Input
 {
     public enum TouchPhase
     {

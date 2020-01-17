@@ -1,6 +1,6 @@
 using System;
 
-namespace GestureKit
+namespace Netouch
 {
     [Flags]
     public enum SwipeGestureDirection : byte

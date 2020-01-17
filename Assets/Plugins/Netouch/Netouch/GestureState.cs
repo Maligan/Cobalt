@@ -1,4 +1,4 @@
-namespace GestureKit
+namespace Netouch
 {
     public enum GestureState
     {

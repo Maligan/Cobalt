@@ -1,10 +1,10 @@
 using System;
-using GestureKit.Input;
+using Netouch.Input;
 using UnityEngine;
-using Touch = GestureKit.Input.Touch;
-using TouchPhase = GestureKit.Input.TouchPhase;
+using Touch = Netouch.Input.Touch;
+using TouchPhase = Netouch.Input.TouchPhase;
 
-namespace GestureKit.Unity
+namespace Netouch.Unity
 {
     public class UnityMouseInput : ITouchInput
     {

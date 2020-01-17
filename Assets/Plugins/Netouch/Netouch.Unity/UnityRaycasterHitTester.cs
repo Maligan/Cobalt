@@ -1,11 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using GestureKit.Input;
+using Netouch.Input;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace GestureKit.Unity
+namespace Netouch.Unity
 {
     public class UnityRaycasterHitTester : IHitTester
     {

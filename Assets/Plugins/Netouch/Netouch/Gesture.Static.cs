@@ -1,12 +1,17 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using GestureKit.Input;
+using Netouch.Input;
 
-namespace GestureKit
+namespace Netouch
 {
     public partial class Gesture
     {
+        /// Screen DPI
+        public static int Dpi { get; set; } = 120;
+        /// Threshold for touch movement (based on 20 pixels on a 252ppi device.)
+        public static int Slop => (int)(20 * Dpi/252f + 0.5f);
+
         #region Gesture Register
 
         private static List<Gesture> gestures = new List<Gesture>();
@@ -21,7 +26,7 @@ namespace GestureKit
             
             if (gesture.Target != null)
             {
-                var hasHitTester = hitTester != null && hitTester.Type.IsInstanceOfType(gesture.Target);
+                var hasHitTester = hitTesters != null && hitTesters.Type.IsInstanceOfType(gesture.Target);
                 if (hasHitTester == false)
                     throw new ArgumentException($"HitTester for type '{gesture.Target.GetType().Name}' doesn't added");
             }
@@ -36,16 +41,6 @@ namespace GestureKit
             if (gestures.Contains(gesture) == false) return;
 
             gesturesForRemove.Add(gesture);
-        }
-
-        private static IEnumerable<Gesture> GetGesturesFor(IEnumerable targets)
-        {
-            // TODO: Решение с gesture.State != IDLE в этой проверке спорное
-            foreach (var target in targets)
-                foreach (var gesture in gestures)
-                    if (gesture.IsActive)
-                        if (gesture.Target == target || gesture.State != GestureState.Idle)
-                            yield return gesture;
         }
 
         private static void Commit()
@@ -80,19 +75,45 @@ namespace GestureKit
             }
         }
 
+        private static IEnumerable<Gesture> GetGesturesFor(IEnumerable targets)
+        {
+            // TODO: Решение с gesture.State != IDLE в этой проверке спорное
+            foreach (var target in targets)
+                foreach (var gesture in gestures)
+                    if (gesture.IsActive)
+                        if (gesture.Target == target || gesture.State != GestureState.Idle)
+                            yield return gesture;
+        }
+
         #endregion
 
         #region Adapters
 
-        private static IHitTester hitTester;
+        private static List<IHitTester> hitTesters = new List<IHitTester>();
+        private static List<ITouchInput> touchInputs = new List<ITouchInput>();
 
-        public static void Add(IHitTester hitTester) { Gesture.hitTester = hitTester; }
-        public static void Add(ITouchInput input) { input.Touch += OnInputTouch; }
+        public static void Add(IHitTester hitTester)
+        {
+            if (hitTester == null)
+                throw new ArgumentNullException(nameof(hitTester));
+            
+            if (hitTesters.Contains(hitTester))
+                return;
 
-        /// Screen DPI
-        public static int Dpi { get; set; } = 120;
-        /// Threshold for touch movement (based on 20 pixels on a 252ppi device.)
-        public static int Slop => (int)(20 * Dpi/252f + 0.5f);
+            hitTesters.Add(hitTester);
+        }
+        
+        public static void Add(ITouchInput input) 
+        {
+            if (input == null)
+                throw new ArgumentNullException(nameof(input));
+
+            if (touchInputs.Contains(input))
+                return;
+
+            touchInputs.Add(input);
+            input.Touch += OnInputTouch;
+        }
 
         #endregion
 
@@ -109,7 +130,7 @@ namespace GestureKit
 
         private static IEnumerable HitTest(Touch touch)
         {
-            if (hitTester != null)
+            foreach (var hitTester in hitTesters)
             {
                 var hitTest = hitTester.HitTest(touch.X, touch.Y);
                 if (hitTest != null)
