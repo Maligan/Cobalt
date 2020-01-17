@@ -47,14 +47,16 @@ public class LobbyManager : MonoBehaviour
 
     private IEnumerator Connect_Coroutine(LanSpotInfo spotInfo, LobbyConnectToken token)
     {
+
         var authUrl = $"http://{spotInfo.EndPoint}/auth";
         var authRequest = UnityWebRequest.Get(authUrl);
 
+        Log.Info(this, "Connect to 'authUrl'");
         yield return authRequest.SendWebRequest();
+        Log.Info(this, "Connect response - " + authRequest.responseCode);
         
         if (authRequest.responseCode == 200)
         {
-            Log.Info(this, "Connecting by token");
             App.Match.Connect(authRequest.downloadHandler.data);
             token.Code = LobbyConnectCode.Success;
         }
@@ -74,7 +76,7 @@ public class LobbyManager : MonoBehaviour
     private void Update()
     {
         if (local != null)
-            local.Tick(Time.time);
+            local.Tick(Time.unscaledTime);
     }
 
     private void OnDestroy()
@@ -96,7 +98,6 @@ public enum LobbyConnectCode : int
     Unknown = -1,
     Success =  0,
     Fail_Auth = 1000,
-    Fail_Connect = 2000
 }
 
 
