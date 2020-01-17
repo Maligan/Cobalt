@@ -84,9 +84,6 @@ namespace Cobalt.Net
 
         private void OnClientMessageReceived(RemoteClient sender, byte[] payload, int payloadSize)
         {
-            if (clients.ContainsKey(sender) == false)
-                Log.Info(this, "How?");
-
             clients[sender].ReceivePacket(payload, payloadSize);
         }
 
