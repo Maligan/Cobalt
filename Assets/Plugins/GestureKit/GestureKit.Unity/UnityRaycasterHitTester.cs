@@ -28,34 +28,26 @@ namespace GestureKit.Unity
             raycastResult = new List<RaycastResult>();
         }
 
-        public IEnumerable HitTest(float x, float y)
+        public object HitTest(float x, float y)
         {
             raycastData.position = new Vector2(x, y);
             raycastResult.Clear();
             raycaster.Raycast(raycastData, raycastResult);
 
-            // TODO: Sort raycastResult by depth/layers etc.
-            //       Maybe GetDepth() doesn't good for 2d/3d world
-
-            var depth = -1;
-            foreach (var raycast in raycastResult)
-            {
-                var raycastDepth = GetDepth(raycast.gameObject);
-
-                if (depth == -1) depth = raycastDepth;
-                else if (depth >= raycastDepth) depth = raycastDepth;
-                else yield break;
-
-                yield return raycast.gameObject;
-            }
+            if (raycastResult.Count == 0)
+                return null;
+            
+            return raycastResult[0].gameObject;
         }
 
-        private int GetDepth(GameObject gameObject)
+        public IEnumerable GetHierarhy(object target)
         {
-            if (gameObject.transform.parent == null)
-                return 0;
+            var cursor = (GameObject)target;
 
-            return 1 + GetDepth(gameObject.transform.parent.gameObject);
+            yield return cursor;
+
+            while (cursor.transform.parent != null)
+                yield return cursor = cursor.transform.parent.gameObject;
         }
     }
 }

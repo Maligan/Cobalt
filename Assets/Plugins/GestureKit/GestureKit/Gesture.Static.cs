@@ -10,11 +10,14 @@ namespace GestureKit
         #region Gesture Register
 
         private static List<Gesture> gestures = new List<Gesture>();
+        private static List<Gesture> gesturesForAdd = new List<Gesture>();
+        private static List<Gesture> gesturesForRemove = new List<Gesture>();
 
         private static void Register(Gesture gesture)
         {
-            if (gestures.Contains(gesture))
-                return;
+            if (gesturesForRemove.Contains(gesture)) gesturesForRemove.Remove(gesture);
+            if (gesturesForAdd.Contains(gesture)) return;
+            if (gestures.Contains(gesture)) return;
             
             if (gesture.Target != null)
             {
@@ -23,29 +26,59 @@ namespace GestureKit
                     throw new ArgumentException($"HitTester for type '{gesture.Target.GetType().Name}' doesn't added");
             }
 
-            gestures.Add(gesture);
-            gesture.Change += OnGestureStateChange;
+            gesturesForAdd.Add(gesture);
         }
 
         private static void Unregister(Gesture gesture)
         {
-            if (gestures.Contains(gesture) == false)
-                return;
+            if (gesturesForAdd.Contains(gesture)) gesturesForAdd.Remove(gesture);
+            if (gesturesForRemove.Contains(gesture)) return;
+            if (gestures.Contains(gesture) == false) return;
 
-            gestures.Remove(gesture);
-            gesture.Change -= OnGestureStateChange;
+            gesturesForRemove.Add(gesture);
         }
 
         private static IEnumerable<Gesture> GetGesturesFor(IEnumerable targets)
         {
-            // TODO: Может быть вынести в явном виде null в список целей
-            //       Решение с gesture.State != IDLE в этой проверке тоже спорное
+            // TODO: Решение с gesture.State != IDLE в этой проверке спорное
             foreach (var target in targets)
                 foreach (var gesture in gestures)
                     if (gesture.IsActive)
-                        if (gesture.Target == target || gesture.Target == null || gesture.State != GestureState.Idle)
+                        if (gesture.Target == target || gesture.State != GestureState.Idle)
                             yield return gesture;
+        }
+
+        private static void Commit()
+        {
+            // Remove
+            while (gesturesForRemove.Count > 0)
+            {
+                var gesture = gesturesForRemove[0];
+                gesturesForRemove.RemoveAt(0);
+                gestures.Remove(gesture);
+                gesture.Change -= OnAnyGestureChange;
             }
+
+            // Add
+            while (gesturesForAdd.Count > 0)
+            {
+                var gesture = gesturesForAdd[0];
+                gesturesForAdd.RemoveAt(0);
+                gestures.Add(gesture);
+                gesture.Change += OnAnyGestureChange;
+            }
+
+            // Reset (TODO: What about reseting farame?)
+            foreach (var gesture in gestures)
+            {
+                var isCompleted = gesture.State == GestureState.Recognized
+                               || gesture.State == GestureState.Failed
+                               || gesture.State == GestureState.Ended;
+
+                if (isCompleted)
+                    gesture.Reset();
+            }
+        }
 
         #endregion
 
@@ -65,35 +98,43 @@ namespace GestureKit
 
         private static void OnInputTouch(Touch touch)
         {
-            // TODO: Can be catch gestures on root
-            if (hitTester == null)
-                return;
+            Commit();
 
-            // TODO: Reset only on touch time change (next frame?)
-            foreach (var gesture in gestures)
-                if (gesture.State == GestureState.Recognized || gesture.State == GestureState.Failed)
-                    gesture.Reset();
+            var hitObjects = HitTest(touch);
+            var hitObjectsGestures = GetGesturesFor(hitObjects);
 
-            var hitTargets = hitTester.HitTest(touch.X, touch.Y);
-            var hitGestures = GetGesturesFor(hitTargets);
-            foreach (var gesture in hitGestures)
+            foreach (var gesture in hitObjectsGestures)
                 gesture.OnTouch(touch);
         }
 
-        private static void OnGestureStateChange(Gesture gesture)
+        private static IEnumerable HitTest(Touch touch)
         {
-            if (gesture.State == GestureState.Recognized)
-                OnGestureRecognized(gesture);
+            if (hitTester != null)
+            {
+                var hitTest = hitTester.HitTest(touch.X, touch.Y);
+                if (hitTest != null)
+                {
+                    var targets = hitTester.GetHierarhy(hitTest);
+                    foreach (var target in targets)
+                        yield return target;
+                }
+            }
+
+            // We allways hit to Root as "null" target at last
+            yield return null;
         }
 
-        // TODO: Может быть вызывать это нужно ДО Recognized
-        // TODO: Непонятно из BEGAN и CHANGED можно ли в Fail Пересылать, или нужно в END
-        private static void OnGestureRecognized(Gesture gesture)
+        private static void OnAnyGestureChange(Gesture gesture)
         {
-            foreach (var g in gestures)
-                if (g != gesture && g.Target == gesture.Target)
-                    if (g.State == GestureState.Possible || g.State == GestureState.Began || g.state == GestureState.Changed)
-                        g.State = GestureState.Failed;
+            // TODO: Добавить прерывание всех родительских гестур
+
+            if (gesture.State == GestureState.Recognized)
+            {
+                foreach (var g in gestures)
+                    if (g != gesture && g.Target == gesture.Target)
+                        if (g.State == GestureState.Possible || g.State == GestureState.Began || g.state == GestureState.Changed)
+                            g.State = GestureState.Failed;
+            }
         }
     }
 }

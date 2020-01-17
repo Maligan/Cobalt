@@ -88,6 +88,16 @@ namespace GestureKit.Unity
 
                 Touch(touch);
             }
+            else if (touch.Phase != TouchPhase.Canceled)
+            {
+                touch.Phase = TouchPhase.Canceled;
+                touch.PrevTime = touch.Time;
+                touch.PrevX = touch.X;
+                touch.PrevY = touch.Y;
+                touch.Time = Time.unscaledTime;
+
+                Touch(touch);
+            }
         }
     }
 }
