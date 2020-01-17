@@ -16,7 +16,7 @@ namespace Cobalt.Ecs
         /// Запас времени от текущего момента (time) до самого последнего полученного кадра 
         public float Latency => states.Count > 0 ? (states.Keys[states.Count-1] - time) : 0;
         /// Максимальный запас времени (при превышении данного порога необходимо ускорить проигрывание)
-        public float LatencyValue => 0.1f;
+        public float LatencyNormal => 0.1f;
 
         public void AdvanceTime(float delta)
         {
@@ -30,7 +30,7 @@ namespace Cobalt.Ecs
                 // Интерполяцию и проигрывание начинается только когда накопим хотя бы 2 кадра
                 if (states.Count < 2) return;
                 // Набор буффера перед началом проигрывания
-                if (Latency < LatencyValue) return;
+                if (Latency < LatencyNormal) return;
             }
 
             // Движение времени
@@ -38,7 +38,7 @@ namespace Cobalt.Ecs
             else            time = states.Keys[0];
 
             // Если данных пришло больше чем нужно - догоняем
-            if (Latency > 0.1f) time += (Latency - 0.1f);
+            if (Latency > LatencyNormal) time += (Latency - LatencyNormal);
 
             Purge();
         }

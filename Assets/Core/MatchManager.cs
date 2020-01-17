@@ -2,7 +2,7 @@ using System;
 using Cobalt.Ecs;
 using Cobalt.Net;
 using Cobalt.Unity;
-using GestureKit;
+using Netouch;
 using UnityEngine;
 
 public class MatchManager : MonoBehaviour
@@ -57,6 +57,8 @@ public class MatchManager : MonoBehaviour
 
     private void Init()
     {
+        Update();
+
         // Юнит
         for (int i = 0; i < timeline.NumUnits; i++)
         {
@@ -73,16 +75,21 @@ public class MatchManager : MonoBehaviour
         for (var x = 0; x < w; x++)
             for (var y = 0; y < h; y++)
                 if (data[x, y])
-                    Instantiate(prefabs.Wall, new Vector2(x - w/2, y - h/2) * 0.5f, Quaternion.identity, root.transform);
+                {
+                    var wall = Instantiate(prefabs.Wall, Vector3.zero, Quaternion.identity, root.transform);
+                    wall.transform.localPosition = new Vector2(x - w/2, y - h/2);
+                }
     }
 
     private void Update()
     {
+        root.transform.localScale = 0.5f * Vector3.one * Math.Min(Screen.width, Screen.height) / Screen.height;
+        root.transform.localRotation = Screen.width > Screen.height ? Quaternion.identity : Quaternion.Euler(0, 0, -90);
+
         if (timeline != null)
         {
             var started = timeline.IsStarted;
             timeline.AdvanceTime(Time.unscaledDeltaTime);
-            // timeline.AdvanceTime(Time.deltaTime);
             if (started != timeline.IsStarted) Init();
 
             var h = Input.GetAxisRaw("Horizontal");
@@ -97,8 +104,22 @@ public class MatchManager : MonoBehaviour
 
         if (client != null)
         {
+            var tmp = new UnitInput();
+            tmp.move = input.move;
+
+            if (root.transform.localRotation != Quaternion.identity)
+            {
+                switch (input.move)
+                {
+                    case Direction.Top: tmp.move = Direction.Left; break;
+                    case Direction.Right: tmp.move = Direction.Top; break;
+                    case Direction.Bottom: tmp.move = Direction.Right; break;
+                    case Direction.Left: tmp.move = Direction.Bottom; break;
+                }
+            }
+
             if (client.IsConnected)
-                client.Send(new NetcodeMessageInput() { input = input });
+                client.Send(new NetcodeMessageInput() { input = tmp });
             
             client.Update(Time.time);
         }

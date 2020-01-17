@@ -58,7 +58,7 @@ namespace Cobalt.Net
         
         private void OnClientConnected(RemoteClient client)
         {
-            Log.Info(this, $"Connect #{client.ClientID} (now {clients.Count+1} clients)");
+            Log.Info(this, $"Connect #{client.ClientID} ({clients.Count+1} total)");
 
             var clientId = client.ClientID;
             var clientEndpoint = new ReliableEndpoint((uint)clientId);
@@ -74,7 +74,7 @@ namespace Cobalt.Net
         
         private void OnClientDisconnected(RemoteClient client)
         {
-            Log.Info(this, $"Disconnect #{client.ClientID} (now {clients.Count-1} clients)");
+            Log.Info(this, $"Disconnect #{client.ClientID} ({clients.Count-1} total)");
 
             clients.Remove(client);
 

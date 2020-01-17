@@ -128,7 +128,7 @@ namespace Cobalt.Net
     public class ShardOptions
     {
         public static int DEFAULT_PORT = 4123;
-        public static int DEFAULT_TPS  = 10;
+        public static int DEFAULT_TPS  = 60;
 
         public int          NumPlayers   = 1;
         public IPAddress[]  IPs          = null;
