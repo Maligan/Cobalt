@@ -1041,7 +1041,7 @@ namespace NetcodeIO.NET
 			if (logLevel > this.LogLevel)
 				return;
 
-			#if UNITY_EDITOR
+			#if UNITY_5_3_OR_NEWER
 				UnityEngine.Debug.Log(log);
 			#else
 				Console.WriteLine(log);
@@ -1053,7 +1053,7 @@ namespace NetcodeIO.NET
 			if (logLevel > this.LogLevel)
 				return;
 
-			#if UNITY_EDITOR
+			#if UNITY_5_3_OR_NEWER
 				UnityEngine.Debug.LogFormat(log, args);
 			#else
 				Console.WriteLine(string.Format(log, args));

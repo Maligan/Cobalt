@@ -5,6 +5,7 @@ using UnityEngine.Networking;
 using Cobalt.UI;
 using Cobalt;
 using System.Collections.Generic;
+using System.Net.Http;
 
 public class LobbyManager : MonoBehaviour
 {
@@ -47,17 +48,32 @@ public class LobbyManager : MonoBehaviour
 
     private IEnumerator Connect_Coroutine(LanSpotInfo spotInfo, LobbyConnectToken token)
     {
-
         var authUrl = $"http://{spotInfo.EndPoint}/auth";
         var authRequest = UnityWebRequest.Get(authUrl);
 
-        Log.Info(this, "Connect to 'authUrl'");
+        Log.Info(this, $"Connect to '{authUrl}'");
+
+        /*
         yield return authRequest.SendWebRequest();
-        Log.Info(this, "Connect response - " + authRequest.responseCode);
-        
-        if (authRequest.responseCode == 200)
+        var httpCode = authRequest.responseCode;
+        var httpBody = authRequest.downloadHandler.data;
+        /*/
+        var http = new HttpClient();
+        var httpResponseTask = http.GetAsync(authUrl);
+        while (!httpResponseTask.IsCompleted) yield return null;
+        var httpResponse = httpResponseTask.Result;
+        var httpCode = (int)httpResponse.StatusCode;
+        var httpBodyTask = httpResponse.Content.ReadAsByteArrayAsync();
+        while (!httpBodyTask.IsCompleted) yield return null;
+        var httpBody = httpBodyTask.Result;
+        //*/
+
+        Log.Info(this, $"Connect response - {httpCode}");
+
+
+        if (httpCode == 200)
         {
-            App.Match.Connect(authRequest.downloadHandler.data);
+            App.Match.Connect(httpBody);
             token.Code = LobbyConnectCode.Success;
         }
         else

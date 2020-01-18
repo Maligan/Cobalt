@@ -33,6 +33,8 @@ namespace Cobalt.Net
             server.OnClientConnected += OnClientConnected;
             server.OnClientDisconnected += OnClientDisconnected;
             server.OnClientMessageReceived += OnClientMessageReceived;
+
+            server.LogLevel = NetcodeLogLevel.Info;
         }
 
         public void Start() { IsRunning = true; server.Start(false); }
