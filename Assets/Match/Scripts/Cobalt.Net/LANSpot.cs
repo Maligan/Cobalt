@@ -76,6 +76,7 @@ namespace Cobalt.Net
 
         public List<LanSpotInfo> Spots { get; private set; }
         public event Action Change;
+        public bool IsRunnig => socket != null;
 
         private int port;
         private UdpClient socket;

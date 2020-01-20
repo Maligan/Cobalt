@@ -18,15 +18,15 @@ public class MatchManager : MonoBehaviour
     private TapGesture tap;
     private SwipeGesture swipe;
 
-    public void Connect(byte[] token)
+    public void Connect(NetcodeClient client)
     {
         root.SetActive(true);
 
         timeline = new MatchTimeline();
 
-        client = new NetcodeClient(token);
-        client.OnMessage += OnMessage;
-        client.Connect();
+        this.client = client;
+        this.client.OnMessage += OnMessage;
+        this.client.Connect();
 
         input = new UnitInput() { move = Direction.None };
 
@@ -117,9 +117,7 @@ public class MatchManager : MonoBehaviour
             }
 
             if (client.IsConnected)
-                client.Send(new NetcodeMessageInput() { input = tmp });
-            
-            client.Update(Time.unscaledTime);
+                client.Send(new NetcodeMessageInput() { input = tmp });            
         }
     }
 

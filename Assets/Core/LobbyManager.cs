@@ -2,20 +2,23 @@
 using Cobalt.Net;
 using System.Collections;
 using UnityEngine.Networking;
-using Cobalt.UI;
 using Cobalt;
 using System.Collections.Generic;
-using System.Net.Http;
 
 public class LobbyManager : MonoBehaviour
 {
-    private LobbyManagerState state = LobbyManagerState.None;
-    private LanServer local;
+    private NetcodeClient client;
+    private LanServer server;
     private LanSpotFinder finder = new LanSpotFinder(LanServer.DEFAULT_SPOT_PORT);
 
+    /// All discovered LAN spots
     public List<LanSpotInfo> Spots => finder.Spots;
 
-    public LobbyManagerState State
+    /// Now search for spots
+    public bool IsScanning => finder.IsRunnig;
+
+    private LobbyState state = LobbyState.None;
+    public LobbyState State
     {
         get => state;
         set
@@ -33,95 +36,96 @@ public class LobbyManager : MonoBehaviour
         finder = new LanSpotFinder(LanServer.DEFAULT_SPOT_PORT);
     }
 
-    public void Scan()
+    public void Scan(int timemout = 8000)
     {
-        // 10 minutes
-        finder.Start(60 * 10 * 1000);
+        if (timemout >= 0)
+            finder.Start(timemout);
+        else
+            finder.Stop();
     }
 
-    public LobbyConnectToken Connect(LanSpotInfo spotInfo)
+    public LobbyJoinToken Join(LanSpotInfo spotInfo)
     {
-        var token = new LobbyConnectToken();
-        StartCoroutine(Connect_Coroutine(spotInfo, token));
+        var token = new LobbyJoinToken();
+        StartCoroutine(Join_Coroutine(spotInfo, token));
         return token;
     }
 
-    private IEnumerator Connect_Coroutine(LanSpotInfo spotInfo, LobbyConnectToken token)
+    private IEnumerator Join_Coroutine(LanSpotInfo spotInfo, LobbyJoinToken token)
     {
+        // Auth
+
         var authUrl = $"http://{spotInfo.EndPoint}/auth";
         var authRequest = UnityWebRequest.Get(authUrl);
+        authRequest.timeout = 4;
 
         Log.Info(this, $"Connect to '{authUrl}'");
-
-        /*
         yield return authRequest.SendWebRequest();
         var httpCode = authRequest.responseCode;
         var httpBody = authRequest.downloadHandler.data;
-        /*/
-        var http = new HttpClient();
-        var httpResponseTask = http.GetAsync(authUrl);
-        while (!httpResponseTask.IsCompleted) yield return null;
-        var httpResponse = httpResponseTask.Result;
-        var httpCode = (int)httpResponse.StatusCode;
-        var httpBodyTask = httpResponse.Content.ReadAsByteArrayAsync();
-        while (!httpBodyTask.IsCompleted) yield return null;
-        var httpBody = httpBodyTask.Result;
-        //*/
-
-        Log.Info(this, $"Connect response - {httpCode}");
-
 
         if (httpCode == 200)
         {
-            App.Match.Connect(httpBody);
-            token.Code = LobbyConnectCode.Success;
+            token.Code = LobbyJoinCode.Success;
+            token.Token = httpBody;
         }
         else
         {
-            token.Code = LobbyConnectCode.Fail_Auth + (int)authRequest.responseCode;
+            token.Code = LobbyJoinCode.Fail_Auth + (int)authRequest.responseCode;
+        }
+
+        // Connect (TODO: Error while Connect)
+
+        if (token.Code == LobbyJoinCode.Success)
+        {
+            App.Match.Connect(client = new NetcodeClient(token.Token));
         }
     }
 
     public void Host(bool autoConnect)
     {
-        local = new LanServer();
-        local.Start(new ShardOptions());
-        if (autoConnect) App.Match.Connect(local.Options.GetToken(0));
+        server = new LanServer();
+        server.Start(new ShardOptions());
+
+        if (autoConnect)
+            App.Match.Connect(client = new NetcodeClient(server.Options.GetToken(0)));
     }
 
     private void Update()
     {
-        if (local != null)
-            local.Tick(Time.unscaledTime);
+        if (server != null)
+            server.Update(Time.unscaledTime);
+
+        if (client != null)
+            client.Update(Time.unscaledTime);
     }
 
     private void OnDestroy()
     {
-        if (local != null)
-            local.Stop();
+        if (server != null)
+            server.Stop();
     }
 }
 
-public class LobbyConnectToken : CustomYieldInstruction
+public class LobbyJoinToken : CustomYieldInstruction
 {
-    public LobbyConnectCode Code;
+    public LobbyJoinCode Code;
+    public byte[] Token;
 
-    public override bool keepWaiting => Code == LobbyConnectCode.Unknown;
+    public override bool keepWaiting => Code == LobbyJoinCode.Unknown;
 }
 
-public enum LobbyConnectCode : int
+public enum LobbyJoinCode : int
 {
     Unknown = -1,
     Success =  0,
     Fail_Auth = 1000,
 }
 
-
-public enum LobbyManagerState
+public enum LobbyState
 {
     None = 0,
-    Scan,
-    AwaitAsClient,
-    AwaitAsServer,
-    // Countdown,
+    Await,
+    Countdown,
+    Play
 }

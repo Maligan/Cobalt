@@ -151,7 +151,9 @@ namespace Cobalt.UI
         public bool IsShow { get; internal set; }
         public bool IsTransit { get; internal set; }
 
+        #if UNITY_EDITOR
         public void OnValidate() { gameObject.name = GetType().Name; }
+		#endif
 
         // Tools
         protected IEnumerator PlayAndAwait(string state)
@@ -167,5 +169,8 @@ namespace Cobalt.UI
                 yield return new WaitForSeconds(layerTime);
             }
         }
+
+		public IEnumerator WaitForOpen() { while (!IsShow || IsTransit) yield return null; }
+		public IEnumerator WaitForClose() { while (IsShow || IsTransit) yield return null; }
     }
 }

@@ -44,7 +44,7 @@ namespace Cobalt.UI
                 // GetComponent<Animator>().Play("Await");
                 // longPress.IsActive = false;
 
-                if (App.Lobby.Spots.Count > 0) App.Lobby.Connect(App.Lobby.Spots[0]);
+                if (App.Lobby.Spots.Count > 0) App.Lobby.Join(App.Lobby.Spots[0]);
                 else                           App.Lobby.Host(true);
                 Close();
             });

@@ -73,7 +73,7 @@ namespace Cobalt.Net
             match = null;
         }
 
-        public void Tick(float time)
+        public void Update(float time)
         {
             if (state == State.Stop) return;
 
