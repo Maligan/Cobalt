@@ -6,9 +6,9 @@ using UnityEngine;
 public class CircleLayout : MonoBehaviour
 {
     public int Radius = 100;
-    [Range(0, 360)]
+    // [Range(0, 360)]
     public int Angle = 90;
-    [Range(0, 360)]
+    // [Range(0, 360)]
     public int AngleDelta = 15;
 
     private void Update()

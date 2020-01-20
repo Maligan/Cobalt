@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using Cobalt.UI;
+using Netouch;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,11 +12,24 @@ public class UISettings : UIPanel
 
     public List<Image> Images;
 
+    private void Start()
+    {
+        var swipe = new SwipeGesture(gameObject);
+        swipe.Recognized += OnSwipe;
+    }
+
+    private void OnSwipe(Gesture gesture)
+    {
+        var swipe = (SwipeGesture)gesture;
+        if (swipe.Direction == SwipeGestureDirection.Up)
+            Close();
+    }
+
     private void Update()
     {
         if (Input.GetMouseButtonDown(0) == true)
         {
-            var rectTransform = (RectTransform)transform;
+            var rectTransform = (RectTransform)transform.GetChild(0);
     
             var rectUnderCursor = RectTransformUtility.RectangleContainsScreenPoint(rectTransform, Input.mousePosition); 
             if (rectUnderCursor == false)
