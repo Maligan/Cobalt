@@ -37,7 +37,7 @@ namespace Netouch.Unity
     {
         public event Action<Touch> Touch;
 
-        private Touch touch = new Touch();
+        private Touch touch = new Touch() { Phase = TouchPhase.Canceled };
 
         private void Update()
         {

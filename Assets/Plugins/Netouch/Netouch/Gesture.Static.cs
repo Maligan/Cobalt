@@ -28,11 +28,11 @@ namespace Netouch
             {
                 var hasHitTester = false;
                 
-                for (var i = 0; i < hitTesters.Count && !hasHitTester; i++)
-                    hasHitTester = hitTesters[i].CanTest(gesture.Target);
+                for (var i = 0; i < hitTesters.Values.Count && !hasHitTester; i++)
+                    hasHitTester = hitTesters.Values[i].CanTest(gesture.Target);
 
                 if (hasHitTester == false)
-                    throw new ArgumentException($"Can't find any '{gesture.Target.GetType().Name}' hit tester. Did you forget call Gesture.Add() with suitable IHitTester?");
+                    throw new ArgumentException($"Can't find any '{gesture.Target.GetType().Name}' hit tester. Did you call Gesture.Add() with suitable IHitTester?");
             }
 
             gesturesForAdd.Add(gesture);
@@ -67,7 +67,7 @@ namespace Netouch
                 gesture.Change += OnAnyGestureChange;
             }
 
-            // Reset (TODO: What about reseting farame?)
+            // Reset (TODO: What about reseting frame?)
             foreach (var gesture in gestures)
             {
                 var isCompleted = gesture.State == GestureState.Recognized
@@ -79,32 +79,28 @@ namespace Netouch
             }
         }
 
-        private static IEnumerable<Gesture> GetGesturesFor(IEnumerable targets)
-        {
-            // TODO: Решение с gesture.State != IDLE в этой проверке спорное
-            foreach (var target in targets)
-                foreach (var gesture in gestures)
-                    if (gesture.IsActive)
-                        if (gesture.Target == target || gesture.State != GestureState.Idle)
-                            yield return gesture;
-        }
-
         #endregion
 
         #region Adapters
 
-        private static List<IHitTester> hitTesters = new List<IHitTester>();
+        private static SortedList<int, IHitTester> hitTesters = new SortedList<int, IHitTester>();
         private static List<ITouchInput> touchInputs = new List<ITouchInput>();
 
-        public static void Add(IHitTester hitTester)
+        public static void Add(IHitTester hitTester, byte priority = 0)
         {
             if (hitTester == null)
                 throw new ArgumentNullException(nameof(hitTester));
             
-            if (hitTesters.Contains(hitTester))
+            if (hitTesters.Values.Contains(hitTester))
                 return;
 
-            hitTesters.Add(hitTester);
+            if (hitTesters.Count == 0xFF)
+                throw new InvalidOperationException("Hit testers limit exhausted (max 255)");
+
+            // Recently added has lower priority than older
+            var key = (priority << 8) | (0xFF - hitTesters.Count);
+
+            hitTesters.Add(key, hitTester);
         }
         
         public static void Add(ITouchInput input) 
@@ -125,16 +121,27 @@ namespace Netouch
         {
             Commit();
 
-            var hitObjects = HitTest(touch);
-            var hitObjectsGestures = GetGesturesFor(hitObjects);
-
-            foreach (var gesture in hitObjectsGestures)
+            var affectedGestures = GetGestures(touch);
+            foreach (var gesture in affectedGestures)
                 gesture.OnTouch(touch);
         }
 
+        private static IEnumerable<Gesture> GetGestures(Touch touch)
+        {
+            var targets = HitTest(touch);
+
+            // TODO: Решение с gesture.State != IDLE в этой проверке спорное
+            // TODO: Дубли вызовов
+            foreach (var target in targets)
+                foreach (var gesture in gestures)
+                    if (gesture.IsActive && gesture.IsAccept(touch))
+                        if (gesture.Target == target || gesture.State != GestureState.Idle)
+                            yield return gesture;
+        }
+        
         private static IEnumerable HitTest(Touch touch)
         {
-            foreach (var hitTester in hitTesters)
+            foreach (var hitTester in hitTesters.Values)
             {
                 var hitTest = hitTester.HitTest(touch.X, touch.Y);
                 if (hitTest != null)

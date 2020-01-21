@@ -27,6 +27,11 @@ namespace Netouch
         public bool IsActive { get; set; } = true;
         public object Target { get; private set; }
 
+        public bool IsAccept(Touch touch)
+        {
+            return true;
+        }
+
         public Gesture(object target = null)
         {
             Target = target;
