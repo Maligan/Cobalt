@@ -29,7 +29,7 @@ namespace Netouch
                 var hasHitTester = false;
                 
                 for (var i = 0; i < hitTesters.Count && !hasHitTester; i++)
-                    hasHitTester = hitTesters[i].Type.IsInstanceOfType(gesture.Target);
+                    hasHitTester = hitTesters[i].CanTest(gesture.Target);
 
                 if (hasHitTester == false)
                     throw new ArgumentException($"HitTester for type '{gesture.Target.GetType().Name}' doesn't added");

@@ -5,13 +5,13 @@ namespace Netouch.Core
 {
     public interface IHitTester
     {
-        // Base class for all possible hit targets
-        Type Type { get; }
+        // Object can be handled by this hit tester
+		bool CanTest(object target);
 
         /// Perform hit test
         object HitTest(float x, float y);
 
-        /// Get all target's ancestors (including target) which are valid possible hit targets
+        /// Get all target's ancestors (including target) which are valid possible hit targets (CanTest() is true for each)
         IEnumerable GetHierarhy(object target);
     }
 }

@@ -13,7 +13,7 @@ namespace Netouch.Unity
         private PointerEventData raycastData;
         private List<RaycastResult> raycastResult;
 
-        public Type Type => typeof(GameObject);
+		public bool CanTest(object target) => target is GameObject;
 
         public UnityRaycasterHitTester(BaseRaycaster raycaster = null, EventSystem eventSystem = null)
         {
