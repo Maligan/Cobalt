@@ -32,6 +32,7 @@ namespace Netouch.Unity
         }
     }
 
+	/// Helper class for access to Unity Update() event
     internal class UnityMouseInputBehaviour : MonoBehaviour
     {
         public event Action<Touch> Touch;

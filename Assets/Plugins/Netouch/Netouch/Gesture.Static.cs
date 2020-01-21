@@ -32,7 +32,7 @@ namespace Netouch
                     hasHitTester = hitTesters[i].CanTest(gesture.Target);
 
                 if (hasHitTester == false)
-                    throw new ArgumentException($"HitTester for type '{gesture.Target.GetType().Name}' doesn't added");
+                    throw new ArgumentException($"Can't find any '{gesture.Target.GetType().Name}' hit tester. Did you forget call Gesture.Add() with suitable IHitTester?");
             }
 
             gesturesForAdd.Add(gesture);

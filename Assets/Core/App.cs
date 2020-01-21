@@ -25,11 +25,13 @@ public class App : MonoBehaviour
     {
         // Initialize
         Gesture.Dpi = (int)Screen.dpi;
-        Gesture.Add(new UnityRaycasterHitTester());
+        //Gesture.Add(new UnityRaycasterHitTester());
         Gesture.Add(new UnityMouseInput());
 
+		var t = new TapGesture(gameObject);
+
         // Start
-        App.UI<UILobby>().Open();
+        //App.UI<UILobby>().Open();
         yield break;
     }
 }
