@@ -11,6 +11,8 @@ namespace Netouch
         public static int Dpi { get; set; } = 120;
         /// Threshold for touch movement (based on 20 pixels on a 252ppi device.)
         public static int Slop => (int)(20 * Dpi/252f + 0.5f);
+		/// Time
+		public static float Time { get; private set; }
 
         #region Gesture Register
 
@@ -55,7 +57,7 @@ namespace Netouch
                 var gesture = gesturesForRemove[0];
                 gesturesForRemove.RemoveAt(0);
                 gestures.Remove(gesture);
-                gesture.Change -= OnAnyGestureChange;
+                gesture.Change -= OnGestureChange;
             }
 
             // Add
@@ -64,7 +66,7 @@ namespace Netouch
                 var gesture = gesturesForAdd[0];
                 gesturesForAdd.RemoveAt(0);
                 gestures.Add(gesture);
-                gesture.Change += OnAnyGestureChange;
+                gesture.Change += OnGestureChange;
             }
 
             // Reset (TODO: What about reseting frame?)
@@ -78,6 +80,14 @@ namespace Netouch
                     gesture.Reset();
             }
         }
+
+		public static void Update(float time)
+		{
+			if (time < Time)
+				throw new ArgumentException($"Time argument must be greater than current time ({Time})");
+			
+			Time = time;
+		}
 
         #endregion
 
@@ -117,26 +127,70 @@ namespace Netouch
 
         #endregion
 
+        private static HashSet<Gesture> yielded = new HashSet<Gesture>();
+        private static List<object> yieldList = new List<object>();
+
         private static void OnInputTouch(Touch touch)
         {
             Commit();
 
-            var affectedGestures = GetGestures(touch);
-            foreach (var gesture in affectedGestures)
+            foreach (var gesture in GetGesturesFor(touch))
                 gesture.OnTouch(touch);
         }
 
-        private static IEnumerable<Gesture> GetGestures(Touch touch)
+        private static IEnumerable<Gesture> GetGesturesFor(Touch touch)
         {
-            var targets = HitTest(touch);
+			// For began phase - create list of touched objects
+			// For other phases - use list
+			
+            yielded.Clear();
+            yieldList.Clear();
 
-            // TODO: Решение с gesture.State != IDLE в этой проверке спорное
-            // TODO: Дубли вызовов
-            foreach (var target in targets)
-                foreach (var gesture in gestures)
-                    if (gesture.IsActive && gesture.IsAccept(touch))
-                        if (gesture.Target == target || gesture.State != GestureState.Idle)
-                            yield return gesture;
+            foreach (var target in HitTest(touch))
+                yieldList.Add(target);
+                
+            foreach (var target in yieldList)
+            {
+                foreach (var gesture in GetGesturesFor(target))
+                {
+                    // In case previous gesture processing remove current
+                    if (gesturesForRemove.Contains(gesture))
+                        continue;
+
+                    // Custom gesture defined behaviour
+                    if (gesture.IsAccept(touch, yieldList.Contains(gesture.Target)))
+                    {
+                        yielded.Add(gesture);
+                        yield return gesture;
+                    }
+                }
+            }
+
+            foreach (var gesture in gestures)
+            {
+                // Already yielded
+                if (yielded.Contains(gesture))
+                    continue;
+
+                // In case previous gesture processing remove current
+                if (gesturesForRemove.Contains(gesture))
+                    continue;
+
+                // Custom gesture defined behaviour
+                if (gesture.IsAccept(touch, yieldList.Contains(gesture.Target)))
+                {
+                    yielded.Add(gesture);
+                    yield return gesture;
+                }
+            }
+        }
+
+        // TODO: Hash for speed up
+        private static IEnumerable<Gesture> GetGesturesFor(object target)
+        {
+            foreach (var gesture in gestures)
+                if (gesture.Target == target)
+                    yield return gesture;
         }
         
         private static IEnumerable HitTest(Touch touch)
@@ -156,9 +210,10 @@ namespace Netouch
             yield return null;
         }
 
-        private static void OnAnyGestureChange(Gesture gesture)
+        private static void OnGestureChange(Gesture gesture)
         {
             // TODO: Добавить прерывание всех родительских гестур
+
 
             if (gesture.State == GestureState.Recognized)
             {

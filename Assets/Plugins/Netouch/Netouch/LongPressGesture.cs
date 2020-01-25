@@ -10,7 +10,7 @@ namespace Netouch
 
         protected override void OnTouch(Touch touch)
         {
-            if (State == GestureState.Idle && touch.Phase == TouchPhase.Began)
+            if (State == GestureState.None && touch.Phase == TouchPhase.Began)
                 State = GestureState.Possible;
 
             if (State == GestureState.Possible && touch.Phase == TouchPhase.Moved)

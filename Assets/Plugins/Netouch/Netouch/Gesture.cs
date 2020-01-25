@@ -27,15 +27,26 @@ namespace Netouch
         public bool IsActive { get; set; } = true;
         public object Target { get; private set; }
 
-        public bool IsAccept(Touch touch)
+        private bool IsAccept(Touch touch, bool touchOnTarget)
         {
-            return true;
+            // TODO: Решение с gesture.State = NONE в этой проверке спорное
+
+            if (IsActive)
+            {
+                return touchOnTarget
+                    || State == GestureState.None;
+            }
+
+            return false;
         }
 
         public Gesture(object target = null)
         {
             Target = target;
             Register(this);
+
+			DelayCall(Reset, 10);
+			DelayCallClear(Reset);
         }
 
         ~Gesture()
@@ -47,11 +58,26 @@ namespace Netouch
                 // Change -= (Action<Gesture>)handler;
         }
 
+		private Dictionary<Action, float> delayCalls = new Dictionary<Action, float>();
+		protected DelayCall(Action callback, float time) { }
+		protected DelayClear(Action callback) { }
+
+		protected virtual void OnUpdate(float time)
+		{
+			DelayCall(callback, 1f);
+			DelayClear(callback);
+
+			// TODO: Remove
+			foreach (var pair in delayCalls)
+				if (pair.value <= time)
+					pair.key();
+		{
+
         protected abstract void OnTouch(Touch touch);
 
         protected virtual void Reset()
         {
-            State = GestureState.Idle;
+            State = GestureState.None;
         }
     }
 }

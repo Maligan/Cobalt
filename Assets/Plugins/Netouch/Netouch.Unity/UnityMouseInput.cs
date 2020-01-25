@@ -16,14 +16,17 @@ namespace Netouch.Unity
         {
             gameObject = new GameObject(GetType().Name);
             gameObject.hideFlags = UnityEngine.HideFlags.HideAndDontSave;
-            gameObject.AddComponent<UnityMouseInputBehaviour>().Touch += OnTouch;
+
+            var script = gameObject.AddComponent<UnityMouseInputBehaviour>();
+			script.Touch += OnTouch;
+
             GameObject.DontDestroyOnLoad(gameObject);
         }
 
-        private void OnTouch(Touch t)
+        private void OnTouch(Touch touch)
         {
             if (Touch != null)
-                Touch(t);
+                Touch(touch);
         }
 
         ~UnityMouseInput()

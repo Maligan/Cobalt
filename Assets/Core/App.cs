@@ -25,13 +25,30 @@ public class App : MonoBehaviour
     {
         // Initialize
         Gesture.Dpi = (int)Screen.dpi;
-        //Gesture.Add(new UnityRaycasterHitTester());
+        Gesture.Add(new UnityRaycasterHitTester());
         Gesture.Add(new UnityMouseInput());
 
-		var t = new TapGesture(gameObject);
+		// var t = new TapGesture(gameObject);
+        var t = new TapGesture();
+        t.Recognized += _ => Debug.Log("tap_1");
+
+        var s = new SwipeGesture();
+        s.Recognized += _ => Debug.Log("swipe_1");
+
+        var i = GameObject.Find("Image23");
+        var it = new TapGesture(i);
+        it.Recognized += _ => Debug.Log("tap_2");
+
+        var iw = new SwipeGesture(i);
+        iw.Recognized += _ => Debug.Log("swipe_2");
 
         // Start
         //App.UI<UILobby>().Open();
         yield break;
     }
+
+	public void Update()
+	{
+		Gesture.Update(Time.unscaledTime);
+	}
 }

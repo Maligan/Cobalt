@@ -2,14 +2,14 @@ namespace Netouch
 {
     public enum GestureState
     {
-        Idle,
+        None,
         Possible,
         Failed,
         
-        // Discrete
+        // Discrete-only
         Recognized,
         
-        // Continuous
+        // Continuous-only
         Began,
         Changed,
         Ended
