@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Netouch.Core;
 
 namespace Netouch
@@ -8,70 +9,79 @@ namespace Netouch
         public event Action<Gesture> Change;
         public event Action<Gesture> Recognized;
 
-        private GestureState state; 
+        public bool IsActive { get; set; } = true;
+        public object Target { get; private set; }
+
+        private GestureState state;
+        private GestureState stateOnUnsuppress;
+        private List<Gesture> stateSuppressers = new List<Gesture>();
+        
         public GestureState State
         {
             get => state;
             protected set
             {
-                state = value;
+                if (state != value)
+                {
+                    var valueIsSuppressable = value == GestureState.Began || value == GestureState.Recognized;
+                    if (valueIsSuppressable && IsSuppressed())
+                    {
+                        stateOnUnsuppress = value;
+                    }
+                    else
+                    {
+                        state = value;
+                        stateOnUnsuppress = value;
 
-                if (Change != null)
-                    Change(this);
+                        if (Change != null)
+                            Change(this);
 
-                if (state == GestureState.Recognized && Recognized != null)
-                    Recognized(this);
+                        if (state == GestureState.Recognized && Recognized != null)
+                            Recognized(this);
+                    }
+                }
             }
         }
 
-        public bool IsActive { get; set; } = true;
-        public object Target { get; private set; }
 
-        private bool IsAccept(Touch touch, bool touchOnTarget)
+        public void Require(Gesture toFail)
         {
-            // TODO: Решение с gesture.State = NONE в этой проверке спорное
+            toFail.Change += OnSuppressChange;
+            stateSuppressers.Add(toFail);
+        }
 
-            if (IsActive)
-            {
-                return touchOnTarget
-                    || State == GestureState.None;
-            }
+        private void OnSuppressChange(Gesture toFail)
+        {
+            if (state != stateOnUnsuppress)
+                if (IsSuppressed() == false)
+                    State = stateOnUnsuppress;
+        }
+
+        private bool IsSuppressed()
+        {
+            foreach (var gesture in stateSuppressers)
+                if (gesture.state != GestureState.None && gesture.state != GestureState.Failed)
+                    return true;
 
             return false;
         }
+
+
+
+
+
+        // protected void OnRequired
 
         public Gesture(object target = null)
         {
             Target = target;
             Register(this);
-
-			DelayCall(Reset, 10);
-			DelayCallClear(Reset);
         }
 
         ~Gesture()
         {
             Unregister(this);
-
-            // var handlers = Change.GetInvocationList();
-            // foreach (var handler in handlers)
-                // Change -= (Action<Gesture>)handler;
         }
-
-		private Dictionary<Action, float> delayCalls = new Dictionary<Action, float>();
-		protected DelayCall(Action callback, float time) { }
-		protected DelayClear(Action callback) { }
-
-		protected virtual void OnUpdate(float time)
-		{
-			DelayCall(callback, 1f);
-			DelayClear(callback);
-
-			// TODO: Remove
-			foreach (var pair in delayCalls)
-				if (pair.value <= time)
-					pair.key();
-		{
 
         protected abstract void OnTouch(Touch touch);
 
