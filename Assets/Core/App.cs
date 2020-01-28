@@ -34,16 +34,16 @@ public class App : MonoBehaviour
         it.NumTapsRequired = 2;
         it.Recognized += _ => Debug.Log("tap_2");
 
-        // var iw = new SwipeGesture(i);
-        // iw.Recognized += _ => Debug.Log("swipe_2");
+        var iw = new SwipeGesture(i);
+        iw.Recognized += _ => Debug.Log("swipe_2");
         //--------------------------------------------------
         var t = new TapGesture();
         t.Require(it);
-        t.NumTapsRequired = 3;
+        t.NumTapsRequired = 1;
         t.Recognized += _ => Debug.Log("tap_1");
 
-        // var s = new SwipeGesture();
-        // s.Recognized += _ => Debug.Log("swipe_1");
+        var s = new SwipeGesture();
+        s.Recognized += _ => Debug.Log("swipe_1");
         //--------------------------------------------------
 
         // Start

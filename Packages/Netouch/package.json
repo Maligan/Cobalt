@@ -1,0 +1,7 @@
+{
+  "name": "com.maligan.netouch",
+  "displayName": "Netouch",
+  "version": "0.0.1",
+  "keywords": ["Input", "Touch", "Gesture"],
+  "description": "Unity multi-touch system for gesture recognition (inspired by UIKit & fljot/Gestouch"
+}
