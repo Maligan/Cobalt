@@ -74,9 +74,6 @@ namespace Netouch
 
         protected virtual bool CanPrevent(Gesture other) => true;
 
-        protected virtual void Reset()
-        {
-            State = GestureState.None;
-        }
+        protected virtual void Reset() => State = GestureState.None;
     }
 }

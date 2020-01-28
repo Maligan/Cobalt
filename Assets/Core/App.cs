@@ -28,26 +28,8 @@ public class App : MonoBehaviour
         Gesture.Add(new UnityRaycasterHitTester());
         Gesture.Add(new UnityMouseInput());
 
-        //--------------------------------------------------
-        var i = GameObject.Find("Image23");
-        var it = new TapGesture(i);
-        it.NumTapsRequired = 2;
-        it.Recognized += _ => Debug.Log("tap_2");
-
-        var iw = new SwipeGesture(i);
-        iw.Recognized += _ => Debug.Log("swipe_2");
-        //--------------------------------------------------
-        var t = new TapGesture();
-        t.Require(it);
-        t.NumTapsRequired = 1;
-        t.Recognized += _ => Debug.Log("tap_1");
-
-        var s = new SwipeGesture();
-        s.Recognized += _ => Debug.Log("swipe_1");
-        //--------------------------------------------------
-
         // Start
-        //App.UI<UILobby>().Open();
+        App.UI<UILobby>().Open();
         yield break;
     }
 

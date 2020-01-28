@@ -13,14 +13,8 @@ namespace Netouch
             if (State == GestureState.None && touch.Phase == TouchPhase.Began)
                 State = GestureState.Possible;
 
-            if (State == GestureState.Possible && touch.Phase == TouchPhase.Moved)
-            {
-                var dx = touch.X - touch.BeginX;
-                var dy = touch.Y - touch.BeginY;
-                var sqrDistance = (float)System.Math.Sqrt(dx*dx + dy*dy);
-                if (sqrDistance > Slop*Slop)
-                    State = GestureState.Failed;
-            }
+            if (State == GestureState.Possible && touch.GetLength() > Slop)
+                State = GestureState.Failed;
 
             if (State == GestureState.Possible && touch.Phase == TouchPhase.Ended)
                 State = GestureState.Failed;
