@@ -72,7 +72,7 @@ namespace Netouch.Unity
                     touch.Phase = TouchPhase.Began;
                     touch.BeginTime = newTime;
                     touch.BeginX = newX;
-                    touch.BeginY = newX;
+                    touch.BeginY = newY;
                 }
                 else if (isMouseButton)
                 {

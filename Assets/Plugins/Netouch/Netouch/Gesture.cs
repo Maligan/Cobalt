@@ -24,7 +24,7 @@ namespace Netouch
                 if (state != value)
                 {
                     var valueIsSuppressable = value == GestureState.Began || value == GestureState.Recognized;
-                    if (valueIsSuppressable && IsSuppressed())
+                    if (valueIsSuppressable && HasSuppress())
                     {
                         stateOnUnsuppress = value;
                     }
@@ -43,21 +43,25 @@ namespace Netouch
             }
         }
 
+        public Gesture(object target = null)
+        {
+            Target = target;
+            Register(this);
+        }
 
         public void Require(Gesture toFail)
         {
-            toFail.Change += OnSuppressChange;
             stateSuppressers.Add(toFail);
+            toFail.Change += OnSuppresserChange;
         }
 
-        private void OnSuppressChange(Gesture toFail)
+        private void OnSuppresserChange(Gesture toFail)
         {
-            if (state != stateOnUnsuppress)
-                if (IsSuppressed() == false)
-                    State = stateOnUnsuppress;
+            if (state != stateOnUnsuppress && !HasSuppress())
+                State = stateOnUnsuppress;
         }
 
-        private bool IsSuppressed()
+        private bool HasSuppress()
         {
             foreach (var gesture in stateSuppressers)
                 if (gesture.state != GestureState.None && gesture.state != GestureState.Failed)
@@ -66,24 +70,9 @@ namespace Netouch
             return false;
         }
 
-
-
-
-
-        // protected void OnRequired
-
-        public Gesture(object target = null)
-        {
-            Target = target;
-            Register(this);
-        }
-
-        ~Gesture()
-        {
-            Unregister(this);
-        }
-
         protected abstract void OnTouch(Touch touch);
+
+        protected virtual bool CanPrevent(Gesture other) => true;
 
         protected virtual void Reset()
         {

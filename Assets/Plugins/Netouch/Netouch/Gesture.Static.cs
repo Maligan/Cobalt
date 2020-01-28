@@ -229,7 +229,7 @@ namespace Netouch
             {
                 foreach (var target in GetHierarhy(gesture.Target))
                     foreach (var g in GetGesturesFor(target))
-                        if (g != gesture && g.State != GestureState.None)
+                        if (g != gesture && g.State != GestureState.None && gesture.CanPrevent(g))
                             g.State = GestureState.Failed;
             }
         }

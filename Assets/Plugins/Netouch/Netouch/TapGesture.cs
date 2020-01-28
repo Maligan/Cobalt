@@ -11,8 +11,8 @@ namespace Netouch
         public int NumTapsRequired { get; set; } = 1;
         // public int NumTouchesRequired { get; set; } = 1;
 
-        public float MaxTapDelay { get; set; } = 0.4f;
-        // public int MaxTapDuration { get; set; } = 1500;
+        public float MaxTapDelay { get; set; } = 0.3f;
+        public float MaxTapDuration { get; set; } = 1.5f;
         // public int MaxTapDistance { get; set; } = Gesture.Slop << 2;
 
         private int numTaps;
@@ -24,27 +24,35 @@ namespace Netouch
             if (State == GestureState.None && touch.Phase == TouchPhase.Began)
                 State = GestureState.Possible;
 
+            if (State == GestureState.Possible && (touch.Time-touch.BeginTime) > MaxTapDuration)
+                State = GestureState.Failed;
+
+            if (State == GestureState.Possible && touch.GetLength() > Slop)
+                State = GestureState.Failed;
+
             if (State == GestureState.Possible && touch.Phase == TouchPhase.Ended)
             {
-                if (++numTaps == NumTapsRequired)
-                    State = GestureState.Recognized;
-                else
-                    DelayCall(OnTapTimeout, MaxTapDelay);
-            }
+				numTaps++;
+                DelayClear(OnTapTimeout);
 
-            if (State == GestureState.Possible && touch.Phase == TouchPhase.Moved)
-            {
-                var dx = touch.X - touch.BeginX;
-                var dy = touch.Y - touch.BeginY;
-                var sqrDistance = (float)System.Math.Sqrt(dx*dx + dy*dy);
-                if (sqrDistance > Slop*Slop)
-                    State = GestureState.Failed;
+                if (numTaps < NumTapsRequired)
+                    DelayCall(OnTapTimeout, MaxTapDelay);
+				else if (numTaps == NumTapsRequired)
+                    State = GestureState.Recognized;
             }
         }
 
         private void OnTapTimeout()
         {
             State = GestureState.Failed;
+        }
+
+        protected override bool CanPrevent(Gesture other)
+        {
+            if (other is TapGesture)
+                return ((TapGesture)other).NumTapsRequired <= NumTapsRequired;
+
+            return true;
         }
 
         protected override void Reset()
