@@ -6,7 +6,7 @@ namespace Netouch
     {
         public float Delay { get; set; } = 0.5f;
 
-        public LongPressGesture(object target) : base(target) { }
+        public LongPressGesture(object target = null) : base(target) { }
 
         protected override void OnTouch(Touch touch)
         {

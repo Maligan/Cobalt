@@ -52,6 +52,7 @@ namespace Cobalt.UI
 
             fsm.On(UILobbyState.Await, EVENT_CLICK, () => {
                 fsm.To(UILobbyState.None);
+                Button.GetComponent<Animator>().SetTrigger("Stop");
                 GetComponent<Animator>().Play("AwaitToNone");
                 longPress.IsActive = true;
             });
@@ -64,14 +65,15 @@ namespace Cobalt.UI
 
         private IEnumerator ToAwait()
         {
-            foreach (var slot in Slots) slot.GetComponent<Animator>().Play("Idle", 0, 1);
+            // foreach (var slot in Slots) slot.GetComponent<Animator>().Play("Idle", 0, 1);
 
+            Button.GetComponent<Animator>().SetTrigger("Play");
             yield return PlayAndAwait(GetComponent<Animator>(), "Await");
 
-            Slots[0].GetComponent<Animator>().Play("Charge");
-            Slots[1].GetComponent<Animator>().Play("Charge");
-            yield return new WaitForSeconds(10f);
-            Slots[2].GetComponent<Animator>().Play("Charge");
+            // Slots[0].GetComponent<Animator>().Play("Charge");
+            // Slots[1].GetComponent<Animator>().Play("Charge");
+            // yield return new WaitForSeconds(10f);
+            // Slots[2].GetComponent<Animator>().Play("Charge");
         }
 
         public void Update()

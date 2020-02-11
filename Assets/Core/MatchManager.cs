@@ -81,8 +81,8 @@ public class MatchManager : MonoBehaviour
 
     private void Update()
     {
-        root.transform.localScale = 0.5f * Vector3.one * Math.Min(Screen.width, Screen.height) / Screen.height;
-        root.transform.localRotation = Screen.width > Screen.height ? Quaternion.identity : Quaternion.Euler(0, 0, -90);
+        // root.transform.localScale = 0.5f * Vector3.one * Math.Min(Screen.width, Screen.height) / Screen.height;
+        // root.transform.localRotation = Screen.width > Screen.height ? Quaternion.identity : Quaternion.Euler(0, 0, -90);
 
         if (timeline != null)
         {

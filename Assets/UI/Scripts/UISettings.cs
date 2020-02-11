@@ -12,6 +12,8 @@ public class UISettings : UIPanel
 
     public List<Image> Images;
 
+    private string CloseState;
+
     private void Start()
     {
         var swipe = new SwipeGesture(gameObject);
@@ -22,7 +24,15 @@ public class UISettings : UIPanel
     {
         var swipe = (SwipeGesture)gesture;
         if (swipe.Direction == SwipeGestureDirection.Up)
+        {
+            CloseState = "HideUp";
             Close();
+        }
+        else if (swipe.Direction == SwipeGestureDirection.Down)
+        {
+            CloseState = "HideDown";
+            Close();
+        }
     }
 
     private void Update()
@@ -31,9 +41,12 @@ public class UISettings : UIPanel
         {
             var rectTransform = (RectTransform)transform.GetChild(0);
     
-            var rectUnderCursor = RectTransformUtility.RectangleContainsScreenPoint(rectTransform, Input.mousePosition); 
+            var rectUnderCursor = RectTransformUtility.RectangleContainsScreenPoint(rectTransform, Input.mousePosition, GetComponentInParent<Canvas>().worldCamera); 
             if (rectUnderCursor == false)
+            {
+                CloseState = "HideUp";
                 Close();
+            }
         }
     }
 
@@ -58,5 +71,5 @@ public class UISettings : UIPanel
     }
 
     protected override IEnumerator Show() => PlayAndAwait("Show");
-    protected override IEnumerator Hide() => PlayAndAwait("Hide");
+    protected override IEnumerator Hide() => PlayAndAwait(CloseState);
 }

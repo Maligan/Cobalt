@@ -26,15 +26,22 @@ public class App : MonoBehaviour
         // Initialize
         Gesture.Dpi = (int)Screen.dpi;
         Gesture.Add(new UnityRaycasterHitTester());
-        Gesture.Add(new UnityMouseInput());
+        Gesture.Add(new UnityTouchInput());
+
+        Input.simulateMouseWithTouches = true;
+        Input.multiTouchEnabled = true;
+        // Input.touchSupported = true;
+
+        Debug.Log("Input.multiTouchEnabled = " + Input.multiTouchEnabled);
+        Debug.Log("Input.simulateMouseWithTouches = " + Input.simulateMouseWithTouches);
+        Debug.Log("Input.touchSupported = " + Input.touchSupported);
+
+        new TapGesture().Recognized += x => Debug.Log("Tap");
+        new LongPressGesture().Recognized += x => Debug.Log("LongPress");
+        new SwipeGesture().Recognized += x => Debug.Log("Swipe: " + ((SwipeGesture)x).Direction);
 
         // Start
-        App.UI<UILobby>().Open();
+        // App.UI<UILobby>().Open();
         yield break;
     }
-
-	public void Update()
-	{
-		Gesture.Update(Time.unscaledTime);
-	}
 }

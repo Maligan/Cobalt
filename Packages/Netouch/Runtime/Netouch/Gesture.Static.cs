@@ -115,6 +115,7 @@ namespace Netouch
 
             touchInputs.Add(input);
             input.Touch += OnInputTouch;
+			input.Frame += OnFrame;
         }
 
         #endregion
@@ -124,7 +125,7 @@ namespace Netouch
         private static Dictionary<Action, float> delayCalls = new Dictionary<Action, float>();
         private static List<Action> delayList = new List<Action>();
 
-		public static void Update(float time)
+		private static void OnFrame(float time)
 		{
 			if (time < Time)
 				throw new ArgumentException($"Time argument must be greater than current time ({Time})");
