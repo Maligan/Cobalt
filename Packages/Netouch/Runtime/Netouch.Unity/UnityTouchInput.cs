@@ -13,12 +13,17 @@ namespace Netouch.Unity
 
         private GameObject gameObject;
 
-        public UnityTouchInput()
+        /// <param name="forceUseTouch">
+        /// Ignore Input.touchSupported value and force use Input.touches instead Input.GetMouseButton for processing.
+        /// It is applicable for testing with UnityRemote wherein Input.touchSupported = false.
+        /// </param>
+        public UnityTouchInput(bool forceUseTouch = false)
         {
             gameObject = new GameObject(GetType().Name);
             gameObject.hideFlags = UnityEngine.HideFlags.HideAndDontSave;
 
             var script = gameObject.AddComponent<UnityMouseInputBehaviour>();
+            script.UseTouches = Input.touchSupported || forceUseTouch;
 			script.Touch += OnTouch;
 			script.Frame += OnFrame;
 
@@ -49,32 +54,33 @@ namespace Netouch.Unity
         public event Action<Touch> Touch;
         public event Action<float> Frame;
 
+        public bool UseTouches { get; set; }
+
         private Touch touch = new Touch() { Phase = TouchPhase.Canceled };
-        private Touch[] touches = new Touch[32];
+        private Touch[] touches = new Touch[16];
 
         private void Update()
         {
 			Frame(Time.unscaledTime);
 
-            var useTouches = true;
-            if (useTouches)
-            {
-                UpdateTouches();
-            }
-            else
-            {
-                UpdateMouseButton();
-            }
+            if (UseTouches) UpdateTouches();
+            else UpdateMouseButton();
         }
 
         private void UpdateTouches()
         {
-            Debug.Log(Input.touchCount);
-
             for (var i = 0; i < Input.touchCount; i++)
             {
-                var source = Input.touches[i];
+                var source = Input.GetTouch(i);
+                if (source.fingerId >= touches.Length)
+                {
+                    Debug.LogWarning($"Touch fingerId value ({source.fingerId}) overflow buffer size ({touches.Length}), touch process omitted");
+                    continue;
+                }
+
                 var target = touches[source.fingerId];
+                if (target == null)
+                    target = touches[source.fingerId] = new Touch() { Id = source.fingerId };
 
                 var oldTime = target.Time;
                 var oldX = target.X;

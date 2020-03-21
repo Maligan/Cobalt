@@ -8,6 +8,9 @@ namespace Netouch
 
         public new float Slop { get; set; } = Gesture.Slop << 2; // iOS has 45px for 132 dpi screen
 
+        public float CenterX;
+        public float CenterY;
+
         public int NumTapsRequired { get; set; } = 1;
         // public int NumTouchesRequired { get; set; } = 1;
 
@@ -32,6 +35,9 @@ namespace Netouch
 
             if (State == GestureState.Possible && touch.Phase == TouchPhase.Ended)
             {
+                CenterX = touch.X;
+                CenterY = touch.Y;
+
 				numTaps++;
                 DelayClear(OnTapTimeout);
 

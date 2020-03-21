@@ -18,6 +18,9 @@ public class UISettings : UIPanel
     {
         var swipe = new SwipeGesture(gameObject);
         swipe.Recognized += OnSwipe;
+
+        var screenTap = new TapGesture();
+        screenTap.Recognized += OnScreenTap;
     }
 
     private void OnSwipe(Gesture gesture)
@@ -35,18 +38,17 @@ public class UISettings : UIPanel
         }
     }
 
-    private void Update()
+    private void OnScreenTap(Gesture gesture)
     {
-        if (Input.GetMouseButtonDown(0) == true)
+        var tap = (TapGesture)gesture;
+        var tapPosition = new Vector2(tap.CenterX, tap.CenterY);
+
+        var rectTransform = (RectTransform)transform.GetChild(0);
+        var rectUnderCursor = RectTransformUtility.RectangleContainsScreenPoint(rectTransform, tapPosition, GetComponentInParent<Canvas>().worldCamera); 
+        if (rectUnderCursor == false)
         {
-            var rectTransform = (RectTransform)transform.GetChild(0);
-    
-            var rectUnderCursor = RectTransformUtility.RectangleContainsScreenPoint(rectTransform, Input.mousePosition, GetComponentInParent<Canvas>().worldCamera); 
-            if (rectUnderCursor == false)
-            {
-                CloseState = "HideUp";
-                Close();
-            }
+            CloseState = "HideUp";
+            Close();
         }
     }
 

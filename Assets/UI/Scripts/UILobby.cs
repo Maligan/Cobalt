@@ -36,18 +36,18 @@ namespace Cobalt.UI
 
             fsm.On(UILobbyState.None, EVENT_CLICK, () => {
 
-                var numPlayers = App.UI<UISettings>().NumPlayers;
-                for (var i = 0; i < Slots.Count; i++)
-                    Slots[i].SetActive(i < numPlayers);
+                // var numPlayers = App.UI<UISettings>().NumPlayers;
+                // for (var i = 0; i < Slots.Count; i++)
+                    // Slots[i].SetActive(i < numPlayers);
 
                 fsm.To(UILobbyState.Await);
                 // GetComponent<Animator>().Play("Await");
-                StartCoroutine(ToAwait());
+                // StartCoroutine(ToAwait());
                 longPress.IsActive = false;
 
-                // if (App.Lobby.Spots.Count > 0) App.Lobby.Join(App.Lobby.Spots[0]);
-                // else                           App.Lobby.Host(true);
-                // Close();
+                if (App.Lobby.Spots.Count > 0) App.Lobby.Join(App.Lobby.Spots[0]);
+                else                           App.Lobby.Host(true);
+                Close();
             });
 
             fsm.On(UILobbyState.Await, EVENT_CLICK, () => {
