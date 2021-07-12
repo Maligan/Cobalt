@@ -27,7 +27,6 @@ namespace Cobalt
             var step = 1000f/_server.Options.TPS;
             var frame = start;
 
-
             while (_server.IsRunning)
             {
                 var now = DateTime.Now;
