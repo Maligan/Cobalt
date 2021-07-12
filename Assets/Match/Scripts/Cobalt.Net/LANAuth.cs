@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -27,16 +28,14 @@ namespace Cobalt.Net
 
         public async void Start()
         {
-            Log.Info(this, "Start");
+            var ips = NetUtils.GetSupportedIPs();
+            var prefixes = ips.Select(x => $"http://{x.Address}:{port}/").ToList();
+
+            Log.Info(this, $"Start on ({string.Join(", ", prefixes)})");
 
             listener.Prefixes.Clear();
-            
-            foreach (var ip in NetUtils.GetSupportedIPs())
-            {
-                var prefix = string.Format("http://{0}:{1}/", ip.Address, port);
-                Log.Info(this, "Prefix " + prefix);
+            foreach (var prefix in prefixes)
                 listener.Prefixes.Add(prefix);
-            }
 
             listener.Start();
 

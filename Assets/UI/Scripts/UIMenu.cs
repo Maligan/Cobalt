@@ -1,4 +1,5 @@
-﻿using TMPro;
+﻿using System.Collections;
+using TMPro;
 using UnityEngine;
 
 namespace Cobalt.UI
@@ -23,8 +24,32 @@ namespace Cobalt.UI
         {
             // UIManager.Get<UIDiscovery>().Show();
             
+            // Hide();
+            // App.Lobby.Host(true);
+
+            StartCoroutine(ScanAndJoin());
+        }
+
+        private IEnumerator ScanAndJoin()
+        {
+            Log.Info(this, "Start ScanAndJoin()...");
+            
+            App.Lobby.Scan(2500);
+
+            while (App.Lobby.IsScanning && App.Lobby.Spots.Count == 0)
+                yield return null;
+
+            if (App.Lobby.Spots.Count == 0)
+            {
+                Log.Warning(this, "There is no spots");
+                yield break;
+            }
+
+            // Join
+            var spot = App.Lobby.Spots[0];
+            Log.Info(this, $"Connect to {spot.EndPoint}");
             Hide();
-            App.Lobby.Host(true);
+            App.Lobby.Join(App.Lobby.Spots[0]);
         }
     }    
 }

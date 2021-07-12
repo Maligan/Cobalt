@@ -28,11 +28,13 @@ namespace Cobalt.Net
 
         public void Start()
         {
-            Log.Info(this, "Start");
-
             var ips = NetUtils.GetSupportedIPs();
             if (ips.Count == 0)
                 throw new Exception("There are no available network interfaces\n" + NetUtils.GetInterfaceSummary());
+
+            var endpoints = ips.Select(x => new IPEndPoint(x.GetBroadcast(), broadcastPort));
+            var endpointsString = string.Join(", ", endpoints);
+            Log.Info(this, $"Start broadcast on ({endpointsString})");
 
             foreach (var ip in ips)
                 StartService(ip);
@@ -43,7 +45,6 @@ namespace Cobalt.Net
             var broadcastBytes = LanSpotInfo.Compose(version, authPort);
             var broadcastEndpoint = new IPEndPoint(ip.GetBroadcast(), broadcastPort);
 
-            Log.Info(this, "Start broadcast on " + broadcastEndpoint);
             var socketEndpoint = new IPEndPoint(ip.Address, 0);
             var socket = new UdpClient();
             socket.EnableBroadcast = true;

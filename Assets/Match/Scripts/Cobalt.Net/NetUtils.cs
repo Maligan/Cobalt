@@ -24,11 +24,15 @@ namespace Cobalt.Net
 
                 var unicasts = adapter.GetIPProperties().UnicastAddresses;
                 foreach (var unicast in unicasts)
+                {
                     if (unicast.Address.AddressFamily == AddressFamily.InterNetwork)
+                    {
                         result.Add(new IP {
                             Address = unicast.Address,
                             Mask = unicast.IPv4Mask
                         });
+                    }
+                }
             }
 
             if (result.Count > 1 || !allowLoopback)

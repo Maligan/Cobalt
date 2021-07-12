@@ -6,7 +6,7 @@ namespace Cobalt
 {
     public class Daemon
     {
-        private LanServer shard;
+        private LanServer _server;
 
         public static void Main(string[] args)
         {
@@ -16,27 +16,31 @@ namespace Cobalt
         private void Start()
         {
             Log.Info(this, "Start...");
-            shard = new LanServer();
-            shard.Start(new ShardOptions());
+            _server = new LanServer();
+            _server.Start(new ShardOptions());
             Tick();
         }
 
         private async void Tick()
         {
             var start = DateTime.Now;
+            var step = 1000f/_server.Options.TPS;
+            var frame = start;
 
-            while (shard.IsRunning)
+
+            while (_server.IsRunning)
             {
-                var time = (float)(DateTime.Now - start).TotalSeconds;
-                shard.Tick(time);
-                await Task.Delay(1000/shard.Options.TPS);
+                var now = DateTime.Now;
+                
+                var sinceFrame = (now - frame).TotalMilliseconds;
+                if (sinceFrame > step)
+                {
+                    frame = now;
+                    _server.Update((float)(now - start).TotalSeconds);
+                }
             }
 
-            shard.Stop();
-
-            // Restart...
-            // await Task.Delay(500);
-            // Main(null);
+            _server.Stop();
         }
     }
 }
