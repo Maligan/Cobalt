@@ -2,12 +2,11 @@ namespace Netouch
 {
     public enum GestureState
     {
-        None,
         Possible,
         Failed,
         
         // Discrete-only
-        Recognized,
+        Accepted,
         
         // Continuous-only
         Began,

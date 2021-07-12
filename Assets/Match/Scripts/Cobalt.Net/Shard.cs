@@ -128,7 +128,7 @@ namespace Cobalt.Net
     public class ShardOptions
     {
         public static int DEFAULT_PORT = 4123;
-        public static int DEFAULT_TPS  = 60;
+        public static int DEFAULT_TPS  = 10;
 
         public int          NumPlayers   = 1;
         public IPAddress[]  IPs          = null;
@@ -173,41 +173,6 @@ namespace Cobalt.Net
             );
 
             return tokenBytes;
-        }
-    }
-
-    public struct ShardUserData
-    {
-        public int index;
-        public int x;
-        public int y;
-        public int seed;
-
-        public static byte[] ToBytes(ref ShardUserData data)
-        {
-            int size = Marshal.SizeOf(data);
-            byte[] arr = new byte[size];
-
-            IntPtr ptr = Marshal.AllocHGlobal(size);
-            Marshal.StructureToPtr(data, ptr, true);
-            Marshal.Copy(ptr, arr, 0, size);
-            Marshal.FreeHGlobal(ptr);
-
-            return arr;
-        }
-
-        public static ShardUserData FromBytes(byte[] arr)
-        {
-            ShardUserData data = new ShardUserData();
-
-            int size = Marshal.SizeOf(data);
-            IntPtr ptr = Marshal.AllocHGlobal(size);
-
-            Marshal.Copy(arr, 0, ptr, size);
-            data = (ShardUserData)Marshal.PtrToStructure(ptr, data.GetType());
-            Marshal.FreeHGlobal(ptr);
-
-            return data;
         }
     }
 }

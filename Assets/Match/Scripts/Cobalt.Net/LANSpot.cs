@@ -18,9 +18,9 @@ namespace Cobalt.Net
         private int authPort;
         private List<UdpClient> sockets;
 
-        public LanSpot(int version, int broadcastPort, int authPort)
+        public LanSpot(int broadcastPort, int authVersion, int authPort)
         {
-            this.version = version;
+            this.version = authVersion;
             this.broadcastPort = broadcastPort;
             this.authPort = authPort;
             sockets = new List<UdpClient>();
@@ -38,13 +38,12 @@ namespace Cobalt.Net
                 StartService(ip);
         }
 
-        private async void StartService(NetUtils.IPInfo ip)
+        private async void StartService(NetUtils.IP ip)
         {
-            var broadcastStr = string.Format(LanSpotInfo.MESSAGE_FORMAT, version, authPort);
-            var broadcastBytes = Encoding.ASCII.GetBytes(broadcastStr);
+            var broadcastBytes = LanSpotInfo.Compose(version, authPort);
             var broadcastEndpoint = new IPEndPoint(ip.GetBroadcast(), broadcastPort);
 
-            Log.Info(this, "Broadcast on " + broadcastEndpoint);
+            Log.Info(this, "Start broadcast on " + broadcastEndpoint);
             var socketEndpoint = new IPEndPoint(ip.Address, 0);
             var socket = new UdpClient();
             socket.EnableBroadcast = true;
@@ -96,7 +95,7 @@ namespace Cobalt.Net
 
             var locked = NetUtils.SetWifiMulticast(true);
             if (locked != true)
-                Log.Warning(this, "WiFi multicast doesn't locked success");
+                Log.Warning(this, "WiFi multicast wasn't locked");
 
             StartListener();
             StartPurge();
@@ -129,10 +128,9 @@ namespace Cobalt.Net
             while (socket != null)
             {
                 var response = await socket.ReceiveAsyncOrNull();
-                if (response == NetUtils.NULL) break;
+                if (response == null) break;
 
-                var responseString = Encoding.ASCII.GetString(response.Buffer);
-                var spot = LanSpotInfo.Parse(responseString, response.RemoteEndPoint);
+                var spot = LanSpotInfo.Parse(response.Value.Buffer, response.Value.RemoteEndPoint);
                 if (spot != null) Insert(spot);
             }
         }
@@ -151,7 +149,7 @@ namespace Cobalt.Net
             Purge(indexOf == -1);
         }
 
-        private void Purge(bool forceChanged)
+        private void Purge(bool forceChangeEvent)
         {
             lock (Spots)
             {
@@ -165,11 +163,11 @@ namespace Cobalt.Net
                     if (span > timeout)
                     {
                         Spots.RemoveAt(i);
-                        forceChanged = true;
+                        forceChangeEvent = true;
                     }
                 }
 
-                if (forceChanged && Change != null)
+                if (forceChangeEvent && Change != null)
                     Change();
             }
         }
@@ -194,13 +192,20 @@ namespace Cobalt.Net
 
     public class LanSpotInfo
     {
-        private static readonly string MESSAGE = "SPOT";
-        private static readonly Regex MESSAGE_REGEX = new Regex("^" + MESSAGE + @"/(\d+) (\d+)");
-        internal static readonly string MESSAGE_FORMAT = MESSAGE + "/{0} {1}";
+        private static readonly string sMessage = "SPOT";
+        private static readonly Regex sMessageRegex = new Regex("^" + sMessage + @"/(\d+) (\d+)");
 
-        public static LanSpotInfo Parse(string response, IPEndPoint source)
+        public static byte[] Compose(int version, int port)
         {
-            var match = MESSAGE_REGEX.Match(response);
+            var str = string.Format(sMessage + "/{0} {1}", version, port);
+            var bytes = Encoding.ASCII.GetBytes(str);
+            return bytes;
+        }
+
+        public static LanSpotInfo Parse(byte[] message, IPEndPoint source)
+        {
+            var str = Encoding.ASCII.GetString(message);
+            var match = sMessageRegex.Match(str);
             if (match.Success)
             {
                 var valid = int.TryParse(match.Groups[2].Value, out int port);

@@ -5,12 +5,13 @@ namespace Cobalt.Ecs
 {
     public class Match
     {
-        public MatchState State;
-        public List<IMatchSystem> Systems;
+        private List<IMatchSystem> _systems;
+
+        public MatchState State { get; }
 
         public Match()
         {            
-            Systems = new List<IMatchSystem> {
+            _systems = new List<IMatchSystem> {
                 new InitSystem(),
                 new UnitAISystem(),
                 new UnitMoveSystem(),
@@ -30,7 +31,7 @@ namespace Cobalt.Ecs
 
         public T Get<T>()
         {
-            foreach (var system in Systems)
+            foreach (var system in _systems)
                 if (system is T)
                     return (T)system;
                 
@@ -39,14 +40,14 @@ namespace Cobalt.Ecs
 
         public void Add(IMatchSystem system)
         {
-            Systems.Add(system);
+            _systems.Add(system);
         }
 
         public void Tick(float sec)
         {
             State.timestamp += sec;
 
-            foreach (var system in Systems)
+            foreach (var system in _systems)
                 system.Tick(this, sec);
         }
     }

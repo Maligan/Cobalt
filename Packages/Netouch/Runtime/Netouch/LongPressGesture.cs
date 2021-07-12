@@ -10,9 +10,6 @@ namespace Netouch
 
         protected override void OnTouch(Touch touch)
         {
-            if (State == GestureState.None && touch.Phase == TouchPhase.Began)
-                State = GestureState.Possible;
-
             if (State == GestureState.Possible && touch.GetLength() > Slop)
                 State = GestureState.Failed;
 
@@ -24,7 +21,7 @@ namespace Netouch
 
             if (State == GestureState.Possible)
                 if (touch.Time - touch.BeginTime > Delay)
-                    State = GestureState.Recognized;
+                    State = GestureState.Accepted;
         }        
     }
 }

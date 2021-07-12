@@ -11,9 +11,6 @@ namespace Netouch
 
         protected override void OnTouch(Touch touch)
         {
-            if (State == GestureState.None && touch.Phase == TouchPhase.Began)
-                State = GestureState.Possible;
-
             if (State == GestureState.Possible && touch.Phase == TouchPhase.Moved)
             {
                 var dx = touch.X-touch.PrevX;
@@ -28,7 +25,7 @@ namespace Netouch
                     /**/ if (byX) Direction = dx > 0 ? SwipeGestureDirection.Right : SwipeGestureDirection.Left;
                     else if (byY) Direction = dy > 0 ? SwipeGestureDirection.Up : SwipeGestureDirection.Down;
 
-                    State = GestureState.Recognized;
+                    State = GestureState.Accepted;
                 }
             }
 

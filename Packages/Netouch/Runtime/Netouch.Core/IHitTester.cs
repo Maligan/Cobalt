@@ -11,7 +11,7 @@ namespace Netouch.Core
         /// Perform hit test
         object HitTest(float x, float y);
 
-        /// Get all target's ancestors (including target) which are valid possible hit targets (CanTest() is true for each)
+        /// Get all target's ancestors (including target) which are valid possible hit targets (CanTest() call returns true for each one)
         IEnumerable GetHierarhy(object target);
     }
 }

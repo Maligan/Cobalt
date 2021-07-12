@@ -128,7 +128,7 @@ public class Btree<T>
     }
 
     public Btree<T> If(Func<T, bool> condition = null) { return new Btree<T>(this, Type.If) { condition = condition }; }
-    public Btree<T> Else(Func<T, bool> condition = null) { return new Btree<T>(this, Type.Else) { condition = condition }; }
+    public Btree<T> Else(Func<T, bool> condition = null) { return new Btree<T>(parent, Type.Else) { condition = condition }; }
     public Btree<T> While(Func<T, bool> condition = null) { return new Btree<T>(this, Type.While) { condition = condition }; }
     public Btree<T> End() { return parent; }
 }

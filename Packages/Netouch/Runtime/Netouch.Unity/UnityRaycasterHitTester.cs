@@ -30,14 +30,17 @@ namespace Netouch.Unity
             }
 
             if (raycaster == null)
-                throw new ArgumentException("Neither raycaster argument passed nor raycaster founded with FindObjectOfType<BaseRaycaster>()");
+                throw new ArgumentException("Neither raycaster argument passed nor raycaster was found with FindObjectOfType<BaseRaycaster>()");
 
             this.raycaster = raycaster;
             raycastData = new PointerEventData(eventSystem);
             raycastResult = new List<RaycastResult>();
         }
 
-		public bool CanTest(object target) => target is GameObject;
+		public bool CanTest(object target)
+        {
+            return target is GameObject;
+        }
 
         public object HitTest(float x, float y)
         {

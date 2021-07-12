@@ -10,11 +10,9 @@ namespace Cobalt.Net
 {
     public static class NetUtils
     {
-        public static UdpReceiveResult NULL = new UdpReceiveResult();
-
-        public static List<IPInfo> GetSupportedIPs(bool allowLoopback = true)
+        public static List<IP> GetSupportedIPs(bool allowLoopback = true)
         {
-            var result = new List<IPInfo>();
+            var result = new List<IP>();
 
             foreach (var adapter in NetworkInterface.GetAllNetworkInterfaces())
             {
@@ -27,7 +25,7 @@ namespace Cobalt.Net
                 var unicasts = adapter.GetIPProperties().UnicastAddresses;
                 foreach (var unicast in unicasts)
                     if (unicast.Address.AddressFamily == AddressFamily.InterNetwork)
-                        result.Add(new IPInfo {
+                        result.Add(new IP {
                             Address = unicast.Address,
                             Mask = unicast.IPv4Mask
                         });
@@ -75,13 +73,13 @@ namespace Cobalt.Net
             return result.ToString();
         }
 
-        public static async Task<UdpReceiveResult> ReceiveAsyncOrNull(this UdpClient socket)
+        public static async Task<UdpReceiveResult?> ReceiveAsyncOrNull(this UdpClient socket)
         {
             try { return await socket.ReceiveAsync(); }
-            catch { return NULL; }
+            catch { return null; }
         }
     
-        public class IPInfo
+        public class IP
         {
             public IPAddress Address;
             public IPAddress Mask;

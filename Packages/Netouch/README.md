@@ -47,13 +47,13 @@ var doubleTap = new TapGesture() { NumTapsRequired = 2 };
 single.Require(doubleTap);
 
 // Subscribe
-signle.Recognized += x => Debug.Log("Single tap on Image");
-double.Recognized += x => Debug.Log("Double tap on screen")
+signle.On(GestureState.Recognized, x => Debug.Log("Single tap on Image"));
+double.On(GestureState.Recognized, x => Debug.Log("Double tap on screen"));
 ```
 
 ## Under the hood
 
-Any gesture can be discrete (like Tap, Swipe, etc) or continious (like Pinch, Zoom, Drag, etc). Each type can be in different state at moment:
+Any gesture can be discrete (like Tap, Swipe, etc) or continious (like Pinch, Zoom, Drag, etc). Each type can be in different state at the moment:
 
 ```
 [None] -> [Possible] -> [Recognized]

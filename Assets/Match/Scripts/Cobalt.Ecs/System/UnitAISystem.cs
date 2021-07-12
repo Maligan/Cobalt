@@ -42,10 +42,10 @@ namespace Cobalt.Ecs
                 .While()
                     .If(x => x.pos.x < -3 || GetInput(x).move == Direction.None)
                         .Do(x => GetInput(x).move = Direction.Right)
-                        .End()
                     .Else(x => x.pos.x > +3)
                         .Do(x => GetInput(x).move = Direction.Left)
-                        .End();
+                    .End()
+                .End();
         }
 
         private UnitInput GetInput(Unit unit)

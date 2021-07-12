@@ -20,7 +20,7 @@ namespace Cobalt.Net
 
             shard = new Shard(Options);
             auth = new LanAuth(DEFAULT_AUTH_PORT, this);
-            spot = new LanSpot(1, DEFAULT_SPOT_PORT, DEFAULT_AUTH_PORT);
+            spot = new LanSpot(DEFAULT_SPOT_PORT, 1, DEFAULT_AUTH_PORT);
 
             shard.Start();
             auth.Start();
