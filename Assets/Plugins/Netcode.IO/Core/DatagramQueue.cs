@@ -2,10 +2,6 @@
 using System.Net;
 using System.Net.Sockets;
 
-using System.Threading;
-
-using NetcodeIO.NET.Utils.IO;
-
 namespace NetcodeIO.NET.Utils
 {
 	internal struct Datagram
@@ -44,6 +40,9 @@ namespace NetcodeIO.NET.Utils
 
 		public void ReadFrom( Socket socket )
 		{
+			if (socket.Available == 0)
+				return;
+
 			EndPoint sender;
 
 			lock (endpoint_mutex)

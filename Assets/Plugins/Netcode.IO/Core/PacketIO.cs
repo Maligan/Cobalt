@@ -23,10 +23,10 @@ namespace NetcodeIO.NET.Internal
 			{
 				decryptedBytes = DecryptPacketData(header, protocolID, encryptedBuffer, length, key, outputBuffer);
 			}
-			catch(Exception e)
+			catch
 			{
 				BufferPool.ReturnBuffer(encryptedBuffer);
-				throw e;
+				throw;
 			}
 
             BufferPool.ReturnBuffer(encryptedBuffer);
@@ -58,11 +58,11 @@ namespace NetcodeIO.NET.Internal
 			{
 				ret = CryptoUtils.Encrypt(packetData, 0, packetDataLen, additionalData, key, nonce, outBuffer);
 			}
-			catch (Exception e)
+			catch
 			{
 				BufferPool.ReturnBuffer(additionalData);
 				BufferPool.ReturnBuffer(nonce);
-				throw e;
+				throw;
 			}
 
 			BufferPool.ReturnBuffer(additionalData);
@@ -96,11 +96,11 @@ namespace NetcodeIO.NET.Internal
 			{
 				ret = CryptoUtils.Decrypt(packetData, 0, packetDataLen, additionalData, key, nonce, outBuffer);
 			}
-			catch(Exception e)
+			catch
 			{
 				BufferPool.ReturnBuffer(additionalData);
 				BufferPool.ReturnBuffer(nonce);
-				throw e;
+				throw;
 			}
 
 			BufferPool.ReturnBuffer(additionalData);
@@ -128,11 +128,11 @@ namespace NetcodeIO.NET.Internal
 			{
 				ret = CryptoUtils.Encrypt(packetData, 0, 300 - Defines.MAC_SIZE, additionalData, key, nonce, outBuffer);
 			}
-			catch (Exception e)
+			catch
 			{
 				BufferPool.ReturnBuffer(additionalData);
 				BufferPool.ReturnBuffer(nonce);
-				throw e;
+				throw;
 			}
 
 			BufferPool.ReturnBuffer(additionalData);
@@ -160,11 +160,11 @@ namespace NetcodeIO.NET.Internal
 			{
 				ret = CryptoUtils.Decrypt(packetData, 0, 300, additionalData, key, nonce, outBuffer);
 			}
-			catch (Exception e)
+			catch
 			{
 				BufferPool.ReturnBuffer(additionalData);
 				BufferPool.ReturnBuffer(nonce);
-				throw e;
+				throw;
 			}
 
 			BufferPool.ReturnBuffer(additionalData);

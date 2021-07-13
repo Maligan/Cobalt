@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Net;
 using System.Net.Sockets;
 
@@ -39,11 +37,14 @@ namespace NetcodeIO.NET.Utils.IO
 		{
 			datagramQueue = new DatagramQueue();
 			internalSocket = new Socket(addressFamily, SocketType.Dgram, ProtocolType.Udp);
+			internalSocket.Blocking = false;
 		}
 
 		public void Bind(EndPoint endpoint)
 		{
 			internalSocket.Bind(endpoint);
+
+			Console.WriteLine("BIND ON " + endpoint);
 
 			socketThread = new Thread(runSocket);
 			socketThread.Start();
