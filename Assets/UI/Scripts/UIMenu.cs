@@ -24,10 +24,10 @@ namespace Cobalt.UI
         {
             // UIManager.Get<UIDiscovery>().Show();
             
-            Hide();
-            App.Lobby.Host(true);
+            // Hide();
+            // App.Lobby.Host(true);
 
-            // StartCoroutine(ScanAndJoin());
+            StartCoroutine(ScanAndJoin());
         }
 
         private IEnumerator ScanAndJoin()
