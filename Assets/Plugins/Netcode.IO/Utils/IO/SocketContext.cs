@@ -44,8 +44,6 @@ namespace NetcodeIO.NET.Utils.IO
 		{
 			internalSocket.Bind(endpoint);
 
-			Console.WriteLine("BIND ON " + endpoint);
-
 			socketThread = new Thread(runSocket);
 			socketThread.Start();
 		}
