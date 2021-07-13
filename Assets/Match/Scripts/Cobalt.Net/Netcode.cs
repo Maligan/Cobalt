@@ -24,6 +24,7 @@ namespace Cobalt.Net
 
         private Server server;
         private Dictionary<RemoteClient, ReliableEndpoint> clients;
+        private bool isUpdating;
 
         public NetcodeServer(int numPlayer, int port, int version, byte[] key)
         {
@@ -34,18 +35,26 @@ namespace Cobalt.Net
             server.OnClientDisconnected += OnClientDisconnected;
             server.OnClientMessageReceived += OnClientMessageReceived;
 
-            server.LogLevel = NetcodeLogLevel.Info;
+            server.LogLevel = NetcodeLogLevel.None;
         }
 
         public void Start() { IsRunning = true; server.Start(false); }
-        public void Stop() { IsRunning = false; server.Stop(); }
+        public void Stop() { IsRunning = false; if (!isUpdating) server.Stop(); }
         
         public void Update(double totalTime)
         {
+            isUpdating = true;
+
             foreach (var endpoint in clients.Values)
                 endpoint.Update(totalTime);
 
             server.Tick(totalTime);
+
+            isUpdating = false;
+
+            if (!IsRunning)
+                server.Stop();
+
         }
 
         public void Send(object message, QoS qos = QoS.Reliable)
@@ -60,7 +69,7 @@ namespace Cobalt.Net
         
         private void OnClientConnected(RemoteClient client)
         {
-            Log.Info(this, $"Connect #{client.ClientID} ({clients.Count+1} total)");
+            Log.Info(this, $"#{client.ClientID} connected ({client.RemoteEndpoint}) ({clients.Count+1} total)");
 
             var clientId = client.ClientID;
             var clientEndpoint = new ReliableEndpoint((uint)clientId);
@@ -76,7 +85,7 @@ namespace Cobalt.Net
         
         private void OnClientDisconnected(RemoteClient client)
         {
-            Log.Info(this, $"Disconnect #{client.ClientID} ({clients.Count-1} total)");
+            Log.Info(this, $"#{client.ClientID} disconnected ({clients.Count-1} total)");
 
             clients.Remove(client);
 
