@@ -20,18 +20,24 @@ public class MatchManager : MonoBehaviour
 
     public void Connect(NetcodeClient client)
     {
+        Debug.Assert(client.IsConnected, "Client must be connected");
+
         root.SetActive(true);
 
         timeline = new MatchTimeline();
 
         this.client = client;
         this.client.OnMessage += OnMessage;
-        this.client.Connect();
 
         input = new UnitInput() { move = Direction.None };
 
         tap = new TapGesture().On(GestureState.Accepted, OnTap);
         swipe = new SwipeGesture().On(GestureState.Accepted, OnSwipe);
+    }
+
+    public void Disconnect()
+    {
+        root.SetActive(false);
     }
 
     private void OnTap(Gesture tap)

@@ -124,8 +124,12 @@ namespace Cobalt.Net
     public class NetcodeClient
     {
         public event Action<object> OnMessage;
+        public event Action OnStateChanged;
 
+        public int State => (int)client.State;
         public bool IsConnected => client.State == ClientState.Connected;
+        public bool IsConnecting => client.State == ClientState.SendingConnectionRequest
+                                 || client.State == ClientState.SendingChallengeResponse;
 
         private Client client;
         private byte[] clientToken;
@@ -136,7 +140,7 @@ namespace Cobalt.Net
             clientToken = token;
             
             client = new Client();
-            client.OnStateChanged += OnStateChanged;
+            client.OnStateChanged += OnClientStateChanged;
             client.OnMessageReceived += OnMessageReceived;
 
             clientEndpoint = new ReliableEndpoint();
@@ -168,9 +172,10 @@ namespace Cobalt.Net
 
         #region Netcode.IO / Reliable.IO
         
-        private void OnStateChanged(ClientState state)
+        private void OnClientStateChanged(ClientState state)
         {
             Log.Info(this, $"State: '{state}'");
+            OnStateChanged?.Invoke();
         }
 
         private void OnMessageReceived(byte[] payload, int payloadSize)

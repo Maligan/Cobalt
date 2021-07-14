@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using Cobalt.UI;
 using Netouch;
 using Netouch.Unity;
 using UnityEngine;
@@ -10,7 +9,7 @@ public class App : MonoBehaviour
 
     public static UIManager UI => Instance.GetComponent<UIManager>();
     public static HookManager Hook = new HookManager();
-    public static DataManager Data = new DataManager();
+    public static LibraryManager Library = new LibraryManager();
     public static MatchManager Match => Instance.GetComponent<MatchManager>();
     public static LobbyManager Lobby => Instance.GetComponent<LobbyManager>();
 
@@ -25,8 +24,6 @@ public class App : MonoBehaviour
         Gesture.Dpi = (int)Screen.dpi;
         Gesture.Add(new UnityInput(false));
         Gesture.Add(new UnityRaycasterHitTester());
-
-
 
         // Input.multiTouchEnabled = true;
         // Input.simulateMouseWithTouches = true;

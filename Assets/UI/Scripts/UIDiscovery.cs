@@ -1,6 +1,4 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
-using Cobalt.UI;
 using Netouch;
 using UnityEngine;
 using UnityEngine.UI;

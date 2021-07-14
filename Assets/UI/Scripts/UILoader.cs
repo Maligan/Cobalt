@@ -1,5 +1,4 @@
-﻿using Cobalt.UI;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 public class UILoader : UIPanel

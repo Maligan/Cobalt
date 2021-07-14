@@ -23,6 +23,8 @@ namespace Cobalt.Net
 
         public void Stop()
         {
+            Log.Info(this, "Stop");
+
             listener.Stop();
         }
 
@@ -57,7 +59,7 @@ namespace Cobalt.Net
             var response = context.Response;
 
             var path = request.Url.LocalPath;
-            Log.Info(this, "Request " + path);
+            Log.Info(this, $"Request '{path}' (from {request.RemoteEndPoint})");
             
             if (path == "/auth")
             {                

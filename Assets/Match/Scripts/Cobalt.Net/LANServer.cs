@@ -16,6 +16,8 @@ namespace Cobalt.Net
 
         public void Start(ShardOptions options)
         {
+            Stop();
+            
             Options = options;
 
             shard = new Shard(Options);
