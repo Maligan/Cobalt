@@ -26,7 +26,7 @@ public class UIMenu : UIPanel
         // Hide();
         // App.Lobby.Host(true);
         
-        StartCoroutine(ScanAndJoin());
+        App.Instance.StartCoroutine(ScanAndJoin());
     }
 
     private IEnumerator ScanAndJoin()
@@ -53,5 +53,11 @@ public class UIMenu : UIPanel
         yield return App.Lobby.Join(spot);
         if (App.Lobby.State == LobbyState.Connected)
             Hide();
+
+        while (App.Lobby.State == LobbyState.Connected)
+            yield return null;
+
+        App.Match.Disconnect();
+        Show();
     }
 }    

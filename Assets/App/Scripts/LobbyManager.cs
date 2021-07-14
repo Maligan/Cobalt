@@ -115,9 +115,6 @@ public class LobbyManager : MonoBehaviour
             yield return null;
         
         _token = null;
-
-        App.Match.Disconnect();
-        App.UI.Get<UIMenu>().Show();
     }
 
 
