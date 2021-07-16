@@ -11,7 +11,7 @@ namespace Cobalt.Ecs
             this.server = server;
         }
 
-        public void Tick(Match match, float sec)
+        public void Update(Match match, int dt)
         {
             server.Send(new NetcodeMessageState() { state = match.State });
         }

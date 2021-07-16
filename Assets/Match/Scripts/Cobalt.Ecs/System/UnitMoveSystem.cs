@@ -5,7 +5,7 @@ namespace Cobalt.Ecs
     {
         public Match match;
 
-        public void Tick(Match match, float sec)
+        public void Update(Match match, int dt)
         {
             this.match = match;
 
@@ -26,7 +26,7 @@ namespace Cobalt.Ecs
                 // Tick [Move]
                 if (unit.state == Unit.State.Move)
                 {
-                    unit.moveProgress += unit.moveSpeed * sec;
+                    unit.moveProgress += unit.moveSpeed * dt / 1000;
 
                     // Дошли до следующей ячейки
                     if (unit.moveProgress >= 1f)
@@ -45,7 +45,7 @@ namespace Cobalt.Ecs
                 // Tick [Dig]
                 if (unit.state == Unit.State.Dig)
                 {
-                    unit.digProgress += sec * unit.digSpeed;
+                    unit.digProgress += unit.digSpeed * dt / 1000;
 
                     // Прокопали
                     if (unit.digProgress >= 1)

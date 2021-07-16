@@ -31,6 +31,7 @@ public class UIMenu : UIPanel
 
     private IEnumerator ScanAndJoin()
     {
+        //*
         Log.Info(this, "Start ScanAndJoin()...");
         
         App.Lobby.Scan(2500);
@@ -46,11 +47,16 @@ public class UIMenu : UIPanel
             yield break;
         }
 
-        // Join
-
         var spot = App.Lobby.Spots[0];
         Log.Info(this, $"Connect to {spot.EndPoint}");
         yield return App.Lobby.Join(spot);
+
+        /*/
+
+        yield return App.Lobby.Join("178.128.234.24:8889");
+
+        //*/
+
         if (App.Lobby.State == LobbyState.Connected)
             Hide();
 

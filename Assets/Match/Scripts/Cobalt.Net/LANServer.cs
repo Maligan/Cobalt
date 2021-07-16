@@ -29,10 +29,10 @@ namespace Cobalt.Net
             spot.Start();
         }
 
-        public void Update(float time)
+        public void Tick()
         {
             if (shard != null)
-                shard.Update(time);
+                shard.Tick();
         }
 
         public void Stop()

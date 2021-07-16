@@ -16,7 +16,7 @@ namespace NetcodeIO.NET.Utils
             var macKey = BufferPool.GetBuffer(32);
             var buf64 = BufferPool.GetBuffer(64);
 
-            // Fill buf32 with mac key
+            // Calculate macKey
             cipher.Reset(key, nonce);
             cipher.Process(buf64, 0, buf64.Length, buf64, 0);
             Array.Copy(buf64, macKey, 32);

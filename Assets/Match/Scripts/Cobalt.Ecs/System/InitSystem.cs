@@ -6,7 +6,7 @@ namespace Cobalt.Ecs
     {
         private bool inited;
 
-        public void Tick(Match match, float sec)
+        public void Update(Match match, int dt)
         {
             if (inited) return;
 

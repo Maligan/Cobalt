@@ -28,7 +28,7 @@ namespace Cobalt.Net
 
         public void Start()
         {
-            var ips = NetUtils.GetSupportedIPs();
+            var ips = NetUtils.GetUnicasts();
             if (ips.Count == 0)
                 throw new Exception("There are no available network interfaces\n" + NetUtils.GetInterfaceSummary());
 
@@ -40,7 +40,7 @@ namespace Cobalt.Net
                 StartService(ip);
         }
 
-        private async void StartService(NetUtils.IP ip)
+        private async void StartService(NetUtils.IPUnicast ip)
         {
             var broadcastBytes = LanSpotInfo.Compose(version, authPort);
             var broadcastEndpoint = new IPEndPoint(ip.GetBroadcast(), broadcastPort);
@@ -159,7 +159,7 @@ namespace Cobalt.Net
                 while (i-- > 0)
                 {
                     var spot = Spots[i];
-                    var span = (DateTime.UtcNow - spot.Time).TotalMilliseconds;
+                    var span = (DateTime.Now - spot.Time).TotalMilliseconds;
 
                     if (span > timeout)
                     {
@@ -214,7 +214,7 @@ namespace Cobalt.Net
                 {
                     EndPoint = new IPEndPoint(source.Address, port),
                     Version = int.Parse(match.Groups[1].Value),
-                    Time = DateTime.UtcNow
+                    Time = DateTime.Now
                 };
             }
 

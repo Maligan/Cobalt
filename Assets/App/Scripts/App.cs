@@ -13,9 +13,18 @@ public class App : MonoBehaviour
     public static MatchManager Match => Instance.GetComponent<MatchManager>();
     public static LobbyManager Lobby => Instance.GetComponent<LobbyManager>();
 
+    public Stats Stats;
+
     public App()
     {
         Instance = this;
+    }
+
+    private void Update()
+    {
+        Stats.Set("latency", Match.Latency);
+        Stats.Set("latency.fw", Match.LatencyForward);
+        Stats.Set("latency.bw", Match.LatencyBackward);
     }
 
     public IEnumerator Start()
@@ -24,6 +33,8 @@ public class App : MonoBehaviour
         Gesture.Dpi = (int)Screen.dpi;
         Gesture.Add(new UnityInput(false));
         Gesture.Add(new UnityRaycasterHitTester());
+
+        
 
         // Input.multiTouchEnabled = true;
         // Input.simulateMouseWithTouches = true;

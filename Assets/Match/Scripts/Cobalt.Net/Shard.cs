@@ -8,26 +8,31 @@ using NetcodeIO.NET;
 
 namespace Cobalt.Net
 {
+    //
+    // Stadalone dedicated server
+    //
     public class Shard
     {
         public ShardOptions Options { get; private set; }
 
-        private enum State { Stop, Lobby, Play }
+        public bool IsRunning => state != State.Stop;
+
+        private enum State { Stop, Pause, Play }
         private State state;
 
         private TokenFactory tokens;
+        private int tokensCount;
         private NetcodeServer server;
         private Match match;
 
-        private float timeForNetcode;
-        private float timeForMatch;
+        private DateTime start;
 
         public Shard(ShardOptions options)
         {
             Options = options;
             
             state = State.Stop;
-            tokens = new TokenFactory(options.Version, options.KeyHash);
+            tokens = new TokenFactory((ulong)options.Version, options.KeyHash);
         }
 
         public void Start()
@@ -37,13 +42,12 @@ namespace Cobalt.Net
 
             Log.Info(this, "Bind to " + Options.Port);
 
-            timeForNetcode = 0;
-            state = State.Lobby;
+            state = State.Pause;
 
             server = new NetcodeServer(
                 Options.NumPlayers,
                 Options.Port,
-                (int)Options.Version,
+                Options.Version,
                 Options.KeyHash
             );
 
@@ -73,39 +77,50 @@ namespace Cobalt.Net
             match = null;
         }
 
-        public void Update(float time)
+        public void Tick()
         {
-            if (state == State.Stop) return;
+            if (state == State.Stop)
+                return;
 
-            this.timeForNetcode = time;
-            server.Update(time);
+            server.Tick();
 
             if (state == State.Play)
             {
-                if (timeForMatch == 0)
-                    timeForMatch = time;
-
-                while (timeForMatch + Options.SPT < time)
-                {
-                    timeForMatch += Options.SPT;
-                    match.Tick(Options.SPT);
-                }
+                var total = (DateTime.Now - start).TotalMilliseconds;
+                if (total >= match.State.time + Options.MSPT)
+                    match.Update(Options.MSPT);
             }
         }
 
         public byte[] GetToken()
         {
-            return Options.GetToken((ulong)server.NumClients, null);
+            var addresses = Options.IPs ?? NetUtils.GetUnicasts().Select(x => x.Address);
+            var addressList = addresses.Select(addr => new IPEndPoint(addr, Options.Port)).ToArray();
+
+            var tokenBytes = tokens.GenerateConnectToken(
+                addressList,
+                Options.TokenExpiry,
+                Options.Timeout,
+                (ulong)tokensCount++,
+                (ulong)server.NumClients,
+                new byte[0]
+            );
+
+            return tokenBytes;
         }
 
         #region Netcode Events
 
         private void OnClientConnected(int clientId)
         {
-            if (state != State.Lobby) throw new InvalidOperationException();
+            if (state != State.Pause)
+                throw new InvalidOperationException();
 
             if (server.NumClients == Options.NumPlayers)
+            {
+                start = DateTime.Now;
                 state = State.Play;
+            }
         }
 
         private void OnClientDisconnected(int clientId)
@@ -121,8 +136,6 @@ namespace Cobalt.Net
         }
 
         #endregion
-
-        public bool IsRunning => state != State.Stop;
     }
 
     public class ShardOptions
@@ -134,17 +147,17 @@ namespace Cobalt.Net
         public IPAddress[]  IPs          = null;
         public int          Port         = DEFAULT_PORT;
         public string       Key          = null;
-        public byte[]       KeyHash      => GetKey(Key);
-        public ulong        Version      = 0;
+        public byte[]       KeyHash      => GetKeyHash(Key);
+        public int          Version      = 0;
 
         // Таймаут соединения  между клиентом и сервером;
-        public int          TokenTimeout = 10; 
-        public int          TokenExpiry  = int.MaxValue;
+        public int          Timeout = 10; 
+        public int          TokenExpiry  = 30;
 
-        public int          TPS          = DEFAULT_TPS;
-        public float        SPT          => 1f / TPS;
+        public int          TPS          = DEFAULT_TPS; // Ticks per Seconds
+        public int          MSPT         => 1000 / TPS; // Milliseconds per Tick
 
-        private static byte[] GetKey(string keyString)
+        private static byte[] GetKeyHash(string keyString)
         {
             if (keyString == null)
                 keyString = string.Empty;
@@ -155,24 +168,6 @@ namespace Cobalt.Net
             hash.Dispose();
 
             return keyHash;
-        }
-
-        public byte[] GetToken(ulong userId, byte[] userData = null)
-        {
-            var addresses = IPs == null ? NetUtils.GetSupportedIPs().Select(x => x.Address) : IPs;
-            var addressList = addresses.Select(addr => new IPEndPoint(addr, Port)).ToArray();
-
-            var tokenFactory = new TokenFactory(Version, KeyHash);
-            var tokenBytes = tokenFactory.GenerateConnectToken(
-                addressList,
-                TokenExpiry,
-                TokenTimeout,
-                0,
-                userId,
-                userData ?? new byte[0]
-            );
-
-            return tokenBytes;
         }
     }
 }

@@ -18,6 +18,10 @@ public class MatchManager : MonoBehaviour
     private TapGesture tap;
     private SwipeGesture swipe;
 
+    public int Latency => timeline != null ? timeline.Latency : -1;
+    public int LatencyForward => timeline != null ? (int)timeline.LatencyForward : -1;
+    public int LatencyBackward => timeline != null ? (int)timeline.LatencyBackward : -1;
+
     public void Connect(NetcodeClient client)
     {
         Debug.Assert(client.IsConnected, "Client must be connected");
@@ -86,12 +90,17 @@ public class MatchManager : MonoBehaviour
         }
     }
 
+    private DateTime prev;
     private void Update()
     {
+        var now = DateTime.Now;
+        var delta = (int)((now - prev).TotalMilliseconds * 0.9f);
+        prev = now;
+
         if (timeline != null)
         {
             var started = timeline.IsStarted;
-            timeline.AdvanceTime(Time.unscaledDeltaTime);
+            timeline.Update(Time.deltaTime * 1000);
             if (started != timeline.IsStarted) Init();
 
             var h = Input.GetAxisRaw("Horizontal");

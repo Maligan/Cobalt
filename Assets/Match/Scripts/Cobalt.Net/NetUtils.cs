@@ -10,9 +10,9 @@ namespace Cobalt.Net
 {
     public static class NetUtils
     {
-        public static List<IP> GetSupportedIPs(bool allowLoopback = true)
+        public static List<IPUnicast> GetUnicasts(bool allowLoopback = true)
         {
-            var result = new List<IP>();
+            var result = new List<IPUnicast>();
 
             foreach (var adapter in NetworkInterface.GetAllNetworkInterfaces())
             {
@@ -27,7 +27,7 @@ namespace Cobalt.Net
                 {
                     if (unicast.Address.AddressFamily == AddressFamily.InterNetwork)
                     {
-                        result.Add(new IP {
+                        result.Add(new IPUnicast {
                             Address = unicast.Address,
                             Mask = unicast.IPv4Mask
                         });
@@ -83,7 +83,7 @@ namespace Cobalt.Net
             catch { return null; }
         }
     
-        public class IP
+        public class IPUnicast
         {
             public IPAddress Address;
             public IPAddress Mask;

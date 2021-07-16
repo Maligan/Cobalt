@@ -43,12 +43,12 @@ namespace Cobalt.Ecs
             _systems.Add(system);
         }
 
-        public void Tick(float sec)
+        public void Update(int dt)
         {
-            State.timestamp += sec;
+            State.time += dt;
 
             foreach (var system in _systems)
-                system.Tick(this, sec);
+                system.Update(this, dt);
         }
     }
 }

@@ -30,7 +30,7 @@ namespace Cobalt.Net
 
         public async void Start()
         {
-            var ips = NetUtils.GetSupportedIPs();
+            var ips = NetUtils.GetUnicasts();
             var prefixes = ips.Select(x => $"http://{x.Address}:{port}/").ToList();
 
             Log.Info(this, $"Start on ({string.Join(", ", prefixes)})");

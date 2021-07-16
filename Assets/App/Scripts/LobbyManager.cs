@@ -4,6 +4,9 @@ using System.Collections;
 using UnityEngine.Networking;
 using Cobalt;
 using System.Collections.Generic;
+using System.Net;
+using System;
+using System.Globalization;
 
 public class LobbyManager : MonoBehaviour
 {
@@ -43,9 +46,49 @@ public class LobbyManager : MonoBehaviour
     
     public LobbyJoinToken Join(LanSpotInfo spotInfo)
     {
+        if (_token != null)
+            return null;
+
         _token = new LobbyJoinToken();
         StartCoroutine(Join_Coroutine(spotInfo));
         return _token;
+    }
+
+    public LobbyJoinToken Join(string auth)
+    {
+        var spot = new LanSpotInfo();
+        spot.EndPoint = CreateIPEndPoint(auth);
+        spot.Time = DateTime.Now;
+        spot.Version = 1;
+        return Join(spot);
+    }
+
+    // Handles IPv4 and IPv6 notation.
+    public static IPEndPoint CreateIPEndPoint(string endPoint)
+    {
+        string[] ep = endPoint.Split(':');
+        if (ep.Length < 2) throw new FormatException("Invalid endpoint format");
+        IPAddress ip;
+        if (ep.Length > 2)
+        {
+            if (!IPAddress.TryParse(string.Join(":", ep, 0, ep.Length - 1), out ip))
+            {
+                throw new FormatException("Invalid ip-adress");
+            }
+        }
+        else
+        {
+            if (!IPAddress.TryParse(ep[0], out ip))
+            {
+                throw new FormatException("Invalid ip-adress");
+            }
+        }
+        int port;
+        if (!int.TryParse(ep[ep.Length - 1], NumberStyles.None, NumberFormatInfo.CurrentInfo, out port))
+        {
+            throw new FormatException("Invalid port");
+        }
+        return new IPEndPoint(ip, port);
     }
 
     private IEnumerator Join_Coroutine(LanSpotInfo spotInfo)
@@ -77,9 +120,12 @@ public class LobbyManager : MonoBehaviour
 
     private LobbyJoinToken Join(LanServer server)
     {
+        if (_token != null)
+            return null;
+            
         _token = new LobbyJoinToken()
         {
-            Token = server.Options.GetToken(0),
+            Token = server.GetToken(),
             Status = LobbyJoinStatus.AuthSuccess
         };
 
@@ -136,10 +182,10 @@ public class LobbyManager : MonoBehaviour
     private void Update()
     {
         if (_server != null)
-            _server.Update(Time.unscaledTime);
+            _server.Tick();
 
         if (_token != null && _token.Client != null)
-            _token.Client.Update(Time.unscaledTime);
+            _token.Client.Tick();
     }
 
     private void OnDestroy()

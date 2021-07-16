@@ -33,7 +33,7 @@ namespace NetcodeIO.NET
 		/// <returns>2048 byte connect token to send to client</returns>
 		public byte[] GenerateConnectToken(IPEndPoint[] addressList, int expirySeconds, int serverTimeout, ulong sequence, ulong clientID, byte[] userData)
 		{
-			return GenerateConnectToken(addressList, DateTime.Now.GetTotalSeconds(), expirySeconds, serverTimeout, sequence, clientID, userData);
+			return GenerateConnectToken(addressList, DateTime.UtcNow.GetTotalSeconds(), expirySeconds, serverTimeout, sequence, clientID, userData);
 		}
 
 		internal byte[] GenerateConnectToken(IPEndPoint[] addressList, double time, int expirySeconds, int serverTimeout, ulong sequence, ulong clientID, byte[] userData)

@@ -1856,6 +1856,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: acb4644571ce0f74fb43a49aa8086337, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Stats: {fileID: 1755711801}
 --- !u!20 &1320859401
 Camera:
   m_ObjectHideFlags: 0
@@ -2540,12 +2541,12 @@ GameObject:
   - component: {fileID: 1755711800}
   - component: {fileID: 1755711799}
   m_Layer: 0
-  m_Name: FPS
+  m_Name: UIStats
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1755711798
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2613,7 +2614,14 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 'FPS: <color=green>50</color>'
+  m_Text: 'FPS: <color=green>4</color>
+
+    LAT: {latency}ms
+
+    LFW: {latency.fw}ms
+
+    LB:
+    {latency.bw}ms'
 --- !u!114 &1755711801
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2626,7 +2634,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 965595dc28bdd4fbca58326f7290fc67, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _pattern: 'FPS: <color=green>{fps.current}</color>'
+  _pattern: 'FPS: <color=green>{fps.current}</color>
+
+    LAT: {latency}ms
+
+    LFW:
+    {latency.fw}ms
+
+    LBW: {latency.bw}ms'
 --- !u!222 &1755711802
 CanvasRenderer:
   m_ObjectHideFlags: 0

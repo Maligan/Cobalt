@@ -5,10 +5,9 @@ namespace Cobalt.Ecs
     [ProtoContract]
     public class MatchState
     {
-        [ProtoMember(1)] public float timestamp;
+        [ProtoMember(1)] public int time;
         [ProtoMember(2)] public Unit[] units;
         public UnitInput[] inputs;
-        // public BitArray walls;
         public bool[,] walls;
     }
 

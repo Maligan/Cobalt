@@ -171,8 +171,6 @@ namespace NetcodeIO.NET
 		private ISocketContext listenSocket;
 		private IPEndPoint listenEndpoint;
 
-		private bool isRunning = false;
-
 		private ulong protocolID;
 
 		private RemoteClient[] clientSlots;
@@ -256,24 +254,13 @@ namespace NetcodeIO.NET
 		/// </summary>
 		public void Start()
 		{
-			Start(true);
-		}
-
-		public void Start(bool autoTick)
-		{
 			if (disposed) throw new InvalidOperationException("Can't restart disposed server, please create a new server");
 
 			resetConnectTokenHistory();
 
 			this.listenSocket.Bind(this.listenEndpoint);
 		
-			isRunning = true;
-
-			if (autoTick)
-			{
-				this.time = DateTime.Now.GetTotalSeconds();
-				ThreadPool.QueueUserWorkItem(serverTick);
-			}
+			time = DateTime.UtcNow.GetTotalSeconds();
 		}
 
 		/// <summary>
@@ -284,7 +271,6 @@ namespace NetcodeIO.NET
 			disposed = true;
 
 			disconnectAll();
-			isRunning = false;
 			this.listenSocket.Close();
 
 			if (OnClientConnected != null)
@@ -327,7 +313,13 @@ namespace NetcodeIO.NET
 		#region Core
 
 		double keepAlive = 0.0;
-		public void Tick(double time)
+
+		public void Tick()
+		{
+			Tick(DateTime.UtcNow.GetTotalSeconds());
+		}
+
+		private void Tick(double time)
 		{
 			this.listenSocket.Pump();
 
@@ -373,18 +365,6 @@ namespace NetcodeIO.NET
 			{
 				processDatagram(packet.payload, packet.payloadSize, packet.sender);
 				packet.Release();
-			}
-		}
-
-		private void serverTick(Object stateInfo)
-		{
-			while (isRunning)
-			{
-				Tick(DateTime.Now.GetTotalSeconds());
-
-				// sleep until next tick
-				double tickLength = 1.0 / tickrate;
-				Thread.Sleep((int)(tickLength * 1000));
 			}
 		}
 

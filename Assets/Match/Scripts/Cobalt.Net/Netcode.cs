@@ -38,17 +38,17 @@ namespace Cobalt.Net
             server.LogLevel = NetcodeLogLevel.None;
         }
 
-        public void Start() { IsRunning = true; server.Start(false); }
+        public void Start() { IsRunning = true; server.Start(); }
         public void Stop() { IsRunning = false; if (!isUpdating) server.Stop(); }
         
-        public void Update(double totalTime)
+        public void Tick()
         {
             isUpdating = true;
 
             foreach (var endpoint in clients.Values)
-                endpoint.Update(totalTime);
+                endpoint.Update();
 
-            server.Tick(totalTime);
+            server.Tick();
 
             isUpdating = false;
 
@@ -162,19 +162,18 @@ namespace Cobalt.Net
             clientEndpoint.SendMessage(data, dataLength, (QosType)qos);
         }
 
-        public void Update(double totalTime)
+        public void Tick()
         {
             if (IsConnected)
-                clientEndpoint.Update(totalTime);
+                clientEndpoint.Update();
             
-            client.Tick(totalTime);
+            client.Tick();
         }
 
         #region Netcode.IO / Reliable.IO
         
         private void OnClientStateChanged(ClientState state)
         {
-            Log.Info(this, $"State: '{state}'");
             OnStateChanged?.Invoke();
         }
 

@@ -20,41 +20,33 @@ namespace NetcodeIO.NET.Utils.IO
 
 	internal class UDPSocketContext : ISocketContext
 	{
-		public int BoundPort
-		{
-			get
-			{
-				return ((IPEndPoint)internalSocket.LocalEndPoint).Port;
-			}
-		}
+		public int BoundPort => ((IPEndPoint)socket.LocalEndPoint).Port;
 
-		private Socket internalSocket;
-		private Thread socketThread;
-
-		private DatagramQueue datagramQueue;
+		private Socket socket;
+		private DatagramQueue queue;
 
 		public UDPSocketContext(AddressFamily addressFamily)
 		{
-			datagramQueue = new DatagramQueue();
-			internalSocket = new Socket(addressFamily, SocketType.Dgram, ProtocolType.Udp);
-			internalSocket.Blocking = false;
+			queue = new DatagramQueue();
+			socket = new Socket(addressFamily, SocketType.Dgram, ProtocolType.Udp);
+			socket.Blocking = false;
 		}
 
 		public void Bind(EndPoint endpoint)
 		{
-			internalSocket.Bind(endpoint);
+			socket.Bind(endpoint);
 
-			ThreadPool.QueueUserWorkItem(runSocket);
+			ThreadPool.QueueUserWorkItem(SocketThread);
 		}
 
 		public void SendTo(byte[] data, EndPoint remoteEP)
 		{
-			internalSocket.SendTo(data, remoteEP);
+			socket.SendTo(data, remoteEP);
 		}
 
 		public void SendTo(byte[] data, int length, EndPoint remoteEP)
 		{
-			internalSocket.SendTo(data, length, SocketFlags.None, remoteEP);
+			socket.SendTo(data, length, SocketFlags.None, remoteEP);
 		}
 
 		public void Pump()
@@ -63,9 +55,9 @@ namespace NetcodeIO.NET.Utils.IO
 
 		public bool Read(out Datagram packet)
 		{
-			if (datagramQueue.Count > 0)
+			if (queue.Count > 0)
 			{
-				packet = datagramQueue.Dequeue();
+				packet = queue.Dequeue();
 				return true;
 			}
 
@@ -75,7 +67,7 @@ namespace NetcodeIO.NET.Utils.IO
 
 		public void Close()
 		{
-			internalSocket.Close();
+			socket.Close();
 		}
 
 		public void Dispose()
@@ -83,13 +75,13 @@ namespace NetcodeIO.NET.Utils.IO
 			Close();
 		}
 
-		private void runSocket(object state)
+		private void SocketThread(object state)
 		{
 			while (true)
 			{
 				try
 				{
-					datagramQueue.ReadFrom(internalSocket);
+					queue.ReadFrom(socket);
 					Thread.Sleep(1);
 				}
 				catch (Exception e)
@@ -97,8 +89,10 @@ namespace NetcodeIO.NET.Utils.IO
 					if (e is SocketException)
 					{
 						var socketException = e as SocketException;
-						if (socketException.SocketErrorCode == SocketError.ConnectionReset) continue;
+						if (socketException.SocketErrorCode == SocketError.ConnectionReset)
+							continue;
 					}
+
 					return;
 				}
 			}

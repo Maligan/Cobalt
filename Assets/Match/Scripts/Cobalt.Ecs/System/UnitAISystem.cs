@@ -8,15 +8,15 @@ namespace Cobalt.Ecs
         private Match match;
         private List<Btree<Unit>> brains;
 
-        public void Tick(Match match, float sec)
+        public void Update(Match match, int dt)
         {
             this.match = match;
 
             if (brains == null)
                 CreateBrains();
 
-            foreach (var brain in brains)
-                brain.Tick();
+            for (var i = 0; i < brains.Count; i++)
+                brains[i].Tick();
         }
 
         private void CreateBrains()

@@ -164,8 +164,6 @@ namespace NetcodeIO.NET
 
 		private ISocketContext socket;
 
-		private bool isRunning = false;
-
 		private ClientState state;
 		private ClientState pendingDisconnectState;
 
@@ -280,16 +278,10 @@ namespace NetcodeIO.NET
 			this.state = ClientState.SendingConnectionRequest;
 
 			// bind socket, spin up threads, and start trying to connect
-			isRunning = true;
-
 			currentServerEndpoint = connectServers.Dequeue();
 			createSocket(currentServerEndpoint);
 
-			if (autoTick)
-			{
-				this.time = DateTime.Now.GetTotalSeconds();
-				ThreadPool.QueueUserWorkItem(clientTick);
-			}
+			this.time = DateTime.UtcNow.GetTotalSeconds();
 		}
 
 		/// <summary>
@@ -329,7 +321,6 @@ namespace NetcodeIO.NET
 			if (state == ClientState.Connected)
 				sendDisconnect();
 
-			isRunning = false;
 			pendingDisconnectState = ClientState.Disconnected;
             
             changeState(disconnectState);
@@ -341,6 +332,11 @@ namespace NetcodeIO.NET
 			currentServerEndpoint = null;
 			nextPacketSequence = 0;
 			serverToClientKey = null;
+		}
+
+		public void Tick()
+		{
+			Tick(DateTime.UtcNow.GetTotalSeconds());
 		}
 
 		public void Tick(double time)
@@ -376,17 +372,6 @@ namespace NetcodeIO.NET
 		}
 
 		private double timer = 0.0;
-		private void clientTick(Object stateInfo)
-		{
-			while (isRunning)
-			{
-				Tick(DateTime.Now.GetTotalSeconds());
-
-				// sleep until next tick
-				double tickLength = 1.0 / tickrate;
-				Thread.Sleep((int)(tickLength * 1000));
-			}
-		}
 
 		private bool checkTimer(int customTickrate)
 		{

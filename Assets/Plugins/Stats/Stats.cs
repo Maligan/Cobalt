@@ -21,6 +21,11 @@ public class Stats : MonoBehaviour
         _text = GetComponent<Text>();
     }
 
+    public void Set(string key, int value)
+    {
+        _values["{" + key + "}"] = value.ToString();
+    }
+
     private IEnumerator Start()
     {
         while (true)

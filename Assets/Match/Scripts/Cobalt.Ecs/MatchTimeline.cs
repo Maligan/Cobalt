@@ -7,23 +7,30 @@ namespace Cobalt.Ecs
 
     public class MatchTimeline
     {
-        private SortedList<float, MatchState> states = new SortedList<float, MatchState>();
-        private float time;
-        private float tfactor;
-
         /// Проигрывание было начато (т.е. AdvanceTime() перемещает внутренний курсор времени)
         public bool IsStarted => time != 0;
         /// Запас времени от текущего момента (time) до самого последнего полученного кадра 
-        public float Latency => states.Count > 0 ? (states.Keys[states.Count-1] - time) : 0;
+        public int Latency => states.Count > 0 ? (int)(states.Keys[states.Count-1] - time) : 0;
         /// Максимальный запас времени (при превышении данного порога необходимо ускорить проигрывание)
-        public float LatencyNormal => 0.1f;
+        public int LatencyNormal => 150;
 
-        public void AdvanceTime(float delta)
+        public float LatencyForward { get; private set; }
+        public float LatencyBackward { get; private set; }
+
+        private SortedList<int, MatchState> states = new SortedList<int, MatchState>();
+        private float time;
+        private float tfactor;
+
+        public void Update(float dt)
         {
             if (IsStarted)
             {
                 // Вышли за пределы временного буффера (нужно ждать, либо экстраполировать)
-                if (Latency < delta) return;
+                if (Latency < dt)
+                {
+                    LatencyBackward += dt;
+                    return;
+                }
             }
             else
             {
@@ -34,18 +41,23 @@ namespace Cobalt.Ecs
             }
 
             // Движение времени
-            if (IsStarted)  time = time + delta;
+            if (IsStarted)  time = time + dt;
             else            time = states.Keys[0];
 
             // Если данных пришло больше чем нужно - догоняем
-            if (Latency > LatencyNormal) time += (Latency - LatencyNormal);
+            if (Latency > LatencyNormal)
+            {
+                var fastforward = (Latency - LatencyNormal);
+                LatencyForward += fastforward;
+                time += fastforward;
+            };
 
             Purge();
         }
 
         public void Add(MatchState state)
         {
-            states.Add(state.timestamp, state);
+            states.Add(state.time, state);
             Purge();
         }
 
@@ -60,7 +72,7 @@ namespace Cobalt.Ecs
             {
                 var total = states.Keys[1] - states.Keys[0];
                 var delta = time           - states.Keys[0];
-                tfactor = delta / total;
+                tfactor = (float)delta / total;
 
                 if (tfactor < 0 || tfactor > 1)
                     Log.Warning(this, $"Interpolation t-factor is out of range (0; 1): {tfactor}");
