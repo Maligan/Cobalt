@@ -266,6 +266,7 @@ namespace NetcodeIO.NET
 			resetConnectTokenHistory();
 
 			this.listenSocket.Bind(this.listenEndpoint);
+		
 			isRunning = true;
 
 			if (autoTick)
