@@ -44,8 +44,7 @@ namespace NetcodeIO.NET.Utils.IO
 		{
 			internalSocket.Bind(endpoint);
 
-			socketThread = new Thread(runSocket);
-			socketThread.Start();
+			ThreadPool.QueueUserWorkItem(runSocket);
 		}
 
 		public void SendTo(byte[] data, EndPoint remoteEP)
@@ -84,13 +83,14 @@ namespace NetcodeIO.NET.Utils.IO
 			Close();
 		}
 
-		private void runSocket()
+		private void runSocket(object state)
 		{
 			while (true)
 			{
 				try
 				{
 					datagramQueue.ReadFrom(internalSocket);
+					Thread.Sleep(1);
 				}
 				catch (Exception e)
 				{

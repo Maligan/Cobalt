@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Cobalt.Net;
 
@@ -28,6 +29,8 @@ namespace Cobalt
                         frame = now;
                         server.Update((float)(now - start).TotalSeconds);
                     }
+
+                    Thread.Sleep(1);
                 }
             }
         }
