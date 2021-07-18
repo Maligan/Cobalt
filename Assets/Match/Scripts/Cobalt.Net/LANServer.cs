@@ -43,7 +43,7 @@ namespace Cobalt.Net
             return (_shards.Count-1).ToString();
         }
 
-        public int Count => _shards.Count;
+        public IReadOnlyList<Shard> Shards => _shards;
 
         public byte[] Auth(string id)
         {

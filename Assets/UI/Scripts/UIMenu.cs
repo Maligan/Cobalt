@@ -30,17 +30,13 @@ public class UIMenu : UIPanel
             ("localhost", ScanAndJoin),
             ("malhost.ru", delegate
             {
-                var malhostSpot = new LanSpotInfo()
+                Join(new LanSpotInfo()
                 {
-                    Time = DateTime.Now,
-                    Version = 1,
                     EndPoint = new IPEndPoint(
                         IPAddress.Parse("178.128.234.24"),
-                        8889
+                        LanServer.DEFAULT_AUTH_PORT
                     )
-                };
-
-                Join(malhostSpot);
+                });
             })
         );
     }

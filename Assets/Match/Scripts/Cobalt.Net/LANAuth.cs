@@ -80,13 +80,20 @@ namespace Cobalt.Net
             switch (request.Url.LocalPath)
             {
                 case "/list":
-                    var rows = new string[_server.Count+1];
+                    var rows = new List<string>();
 
-                    for (var i = 0; i < _server.Count; i++)
-                        rows[i] = i.ToString();
+                    for (var i = 0; i < _server.Shards.Count; i++)
+                    {
+                        // XXX: Multithreading!
+                        var shard = _server.Shards[i]; 
+                        var values = new List<string>();
+                        values.Add(request.LocalEndPoint.Address.ToString());
+                        values.Add(shard.Port.ToString());
+                        values.Add(shard.NumClients.ToString());
+                        rows[i] = string.Join(", ", values);
+                    }
 
                     var responseString = string.Join("\n", rows);
-
                     return Encoding.ASCII.GetBytes(responseString);
 
                 case "/auth":

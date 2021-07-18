@@ -16,6 +16,8 @@ namespace Cobalt.Net
         public ShardOptions Options { get; private set; }
 
         public bool IsRunning => state != State.Stop;
+        public int Port => server.Port;
+        public int NumClients => server.NumClients;
 
         private string logTag => nameof(Shard) + "#" + server.Port;
 
