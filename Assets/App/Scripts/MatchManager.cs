@@ -35,8 +35,8 @@ public class MatchManager : MonoBehaviour
 
         input = new UnitInput() { move = Direction.None };
 
-        tap = new TapGesture().On(GestureState.Accepted, OnTap);
-        swipe = new SwipeGesture().On(GestureState.Accepted, OnSwipe);
+        // tap = new TapGesture().On(GestureState.Accepted, OnTap);
+        // swipe = new SwipeGesture().On(GestureState.Accepted, OnSwipe);
     }
 
     private void OnGUI()
@@ -53,6 +53,9 @@ public class MatchManager : MonoBehaviour
     {
         client.Disconnect();
         root.SetActive(false);
+
+        for (var i = 0; i < root.transform.childCount; i++)
+            Destroy(root.transform.GetChild(i).gameObject);
     }
 
     private void OnTap(Gesture tap)

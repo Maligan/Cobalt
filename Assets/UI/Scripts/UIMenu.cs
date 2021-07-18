@@ -37,8 +37,22 @@ public class UIMenu : UIPanel
                         LanServer.DEFAULT_AUTH_PORT
                     )
                 });
-            })
+            }),
+            ("list", List)
         );
+    }
+
+    private void List() => StartCoroutine(List_Coroutine());
+    private IEnumerator List_Coroutine()
+    {
+        var token = App.Lobby.List( new IPEndPoint(
+            IPAddress.Parse("192.168.8.106"),
+            LanServer.DEFAULT_AUTH_PORT
+        ));
+
+        yield return token;
+
+        Log.Info(this, "FOUND: " + token.Lobbies.Count);
     }
 
     public void OnPlayClick()

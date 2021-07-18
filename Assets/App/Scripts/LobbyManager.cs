@@ -39,6 +39,60 @@ public class LobbyManager : MonoBehaviour
 
     // ---------------------------
 
+    public LobbyListToken List(IPEndPoint endPoint)
+    {
+        var token = new LobbyListToken();
+        StartCoroutine(List_Coroutine(token, endPoint));
+        return token;
+    }
+
+    private IEnumerator List_Coroutine(LobbyListToken token, IPEndPoint endPoint)
+    {
+        // token.Status = LobbyListStatus.Http
+
+        var authRequest = UnityWebRequest.Get($"http://{endPoint}/list");
+        authRequest.timeout = 4;
+        yield return authRequest.SendWebRequest();
+
+        var httpCode = authRequest.responseCode;
+        if (httpCode == 200)
+        {
+            token.Status = LobbyListStatus.Success;
+            token.Lobbies = new List<LobbyInfo>();
+
+            var httpBody = authRequest.downloadHandler.text;
+            if (httpBody != string.Empty)
+            {
+                var httpRows = httpBody.Split('\n');
+
+                foreach (var row in httpRows)
+                {
+                    var values = row.Split(',');
+                    var lobby = new LobbyInfo()
+                    {
+                        Spot = new LanSpotInfo()
+                        {
+                            EndPoint = new IPEndPoint(
+                                IPAddress.Parse(values[0]),
+                                int.Parse(values[1])
+                            )
+                        },
+                        NumPlayers = int.Parse(values[2]),
+                        TotalPlayers = int.Parse(values[3])
+                    };
+
+                    token.Lobbies.Add(lobby);
+                }
+            }
+        }
+        else
+        {
+            token.Status = (LobbyListStatus)httpCode;
+        }
+    }
+
+    // ---------------------------
+
     private LobbyJoinToken _token;
     
     public LobbyJoinToken Join(LanSpotInfo spotInfo)
@@ -76,21 +130,6 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    // private LobbyJoinToken Join(LanServer server)
-    // {
-    //     if (_token != null)
-    //         return null;
-            
-    //     _token = new LobbyJoinToken()
-    //     {
-    //         Token = server.Auth(server.Add(new ShardOptions())),
-    //         Status = LobbyJoinStatus.AuthSuccess
-    //     };
-
-    //     StartCoroutine(JoinConnect());
-    //     return _token;
-    // }
-    
     private IEnumerator JoinConnect()
     {
         _token.Status = LobbyJoinStatus.Connect;
@@ -153,27 +192,15 @@ public class LobbyManager : MonoBehaviour
     }
 }
 
-public class LobbyJoinToken : CustomYieldInstruction
-{
-    public LobbyJoinStatus Status = LobbyJoinStatus.Unknown;
-    public byte[] Token;
-    public NetcodeClient Client;
 
-    public override bool keepWaiting => Status < LobbyJoinStatus.ConnectSuccess;
-}
 
-public enum LobbyJoinStatus : int
-{
-    Unknown = -1,
-    
-    Auth = 0,
-    AuthSuccess = 999,
-    Connect = 1000,
-    ConnectSuccess =  1999,
 
-    Fail_Auth = 2000,
-    Fail_Connect = 3000
-}
+
+
+
+
+
+
 
 public enum LobbyState
 {

@@ -90,7 +90,8 @@ namespace Cobalt.Net
                         values.Add(request.LocalEndPoint.Address.ToString());
                         values.Add(shard.Port.ToString());
                         values.Add(shard.NumClients.ToString());
-                        rows[i] = string.Join(", ", values);
+                        values.Add(shard.Options.NumPlayers.ToString());
+                        rows.Add(string.Join(",", values));
                     }
 
                     var responseString = string.Join("\n", rows);
