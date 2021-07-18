@@ -10,22 +10,19 @@ namespace Cobalt
         public static void Main(string[] args)
         {
             var server = new LanServer();
+            server.Start();
 
             while (true)
             {
-                server.Start(new ShardOptions());
-
-                while (server.IsRunning)
-                {
-                    server.Tick();
-                    Thread.Sleep(1);
-                }
+                server.Tick();
+                Thread.Sleep(1);
             }
         }
     }
 }
 
 /*
-    GET /shards/
-    GET /shards/{0}/auth
+    GET /list
+    GET /auth&id=
+    GET /auth&options=
 */

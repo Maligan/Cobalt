@@ -39,8 +39,19 @@ public class MatchManager : MonoBehaviour
         swipe = new SwipeGesture().On(GestureState.Accepted, OnSwipe);
     }
 
+    private void OnGUI()
+    {
+        if (root.activeInHierarchy)
+        {
+            GUIExtensions.Actions(
+                ("Disconnect", Disconnect)
+            );
+        }
+    }
+
     public void Disconnect()
     {
+        client.Disconnect();
         root.SetActive(false);
     }
 

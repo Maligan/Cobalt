@@ -17,6 +17,8 @@ namespace Cobalt.Net
 
         public bool IsRunning => state != State.Stop;
 
+        private string logTag => nameof(Shard) + "#" + server.Port;
+
         private enum State { Stop, Pause, Play }
         private State state;
 
@@ -40,8 +42,6 @@ namespace Cobalt.Net
             if (state != State.Stop)
                 throw new InvalidOperationException();
 
-            Log.Info(this, "Bind to " + Options.Port);
-
             state = State.Pause;
 
             server = new NetcodeServer(
@@ -58,13 +58,15 @@ namespace Cobalt.Net
 
             match = new Match();
             match.Add(new NetcodeSystem(server));
+
+            Log.Info(logTag, "Started");
         }
 
         public void Stop()
         {
             if (state == State.Stop) return;
 
-            Log.Info(this, "Stop");
+            Log.Info(logTag, "Stop");
 
             state = State.Stop;
 
@@ -95,7 +97,7 @@ namespace Cobalt.Net
         public byte[] GetToken()
         {
             var addresses = Options.IPs ?? NetUtils.GetUnicasts().Select(x => x.Address);
-            var addressList = addresses.Select(addr => new IPEndPoint(addr, Options.Port)).ToArray();
+            var addressList = addresses.Select(addr => new IPEndPoint(addr, server.Port)).ToArray();
 
             var tokenBytes = tokens.GenerateConnectToken(
                 addressList,
@@ -140,18 +142,18 @@ namespace Cobalt.Net
 
     public class ShardOptions
     {
-        public static int DEFAULT_PORT = 4123;
         public static int DEFAULT_TPS  = 10;
 
-        public int          NumPlayers   = 1;
         public IPAddress[]  IPs          = null;
-        public int          Port         = DEFAULT_PORT;
+        public int          Port         = 0;
         public string       Key          = null;
         public byte[]       KeyHash      => GetKeyHash(Key);
         public int          Version      = 0;
 
+        public int          NumPlayers   = 1;
+
         // Таймаут соединения  между клиентом и сервером;
-        public int          Timeout = 10; 
+        public int          Timeout = 10;
         public int          TokenExpiry  = 30;
 
         public int          TPS          = DEFAULT_TPS; // Ticks per Seconds

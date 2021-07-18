@@ -1,8 +1,12 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.Net;
 using Cobalt;
+using Cobalt.Net;
 using TMPro;
 using UnityEngine;
 
+[ExecuteAlways]
 public class UIMenu : UIPanel
 {
     private const string HINT_0 = "Collect all <#ffff00>coins</color> before <#ff0000>enemies</color>";
@@ -19,22 +23,45 @@ public class UIMenu : UIPanel
         Version.text = $"v{Application.version}";
     }
 
-    public void OnPlayClick()
+    private void OnGUI()
     {
-        // Get<UIDiscovery>().Show();
+        GUIExtensions.Actions(
+            ("standalone", HostAndJoin),
+            ("localhost", ScanAndJoin),
+            ("malhost.ru", delegate
+            {
+                var malhostSpot = new LanSpotInfo()
+                {
+                    Time = DateTime.Now,
+                    Version = 1,
+                    EndPoint = new IPEndPoint(
+                        IPAddress.Parse("178.128.234.24"),
+                        8889
+                    )
+                };
 
-        // Hide();
-        // App.Lobby.Host(true);
-        
-        App.Instance.StartCoroutine(ScanAndJoin());
+                Join(malhostSpot);
+            })
+        );
     }
 
-    private IEnumerator ScanAndJoin()
+    public void OnPlayClick()
     {
-        //*
+        Get<UIDiscovery>().Show();
+    }
+
+    private void HostAndJoin()
+    {
+        App.Lobby.Host();
+        ScanAndJoin();
+    }
+
+    private void ScanAndJoin() => App.Instance.StartCoroutine(ScanAndJoin_Coroutine());
+    private IEnumerator ScanAndJoin_Coroutine()
+    {
         Log.Info(this, "Start ScanAndJoin()...");
         
-        App.Lobby.Scan(2500);
+        App.Lobby.Scan(1000);
 
         while (App.Lobby.IsScanning && App.Lobby.Spots.Count == 0)
             yield return null;
@@ -47,15 +74,14 @@ public class UIMenu : UIPanel
             yield break;
         }
 
-        var spot = App.Lobby.Spots[0];
-        Log.Info(this, $"Connect to {spot.EndPoint}");
+        Join(App.Lobby.Spots[0]);
+    }
+
+    private void Join(LanSpotInfo spot) => App.Instance.StartCoroutine(Join_Coroutine(spot));
+    private IEnumerator Join_Coroutine(LanSpotInfo spot)
+    {
+        Log.Info(this, "Join to " + spot);
         yield return App.Lobby.Join(spot);
-
-        /*/
-
-        yield return App.Lobby.Join("178.128.234.24:8889");
-
-        //*/
 
         if (App.Lobby.State == LobbyState.Connected)
             Hide();
@@ -66,4 +92,4 @@ public class UIMenu : UIPanel
         App.Match.Disconnect();
         Show();
     }
-}    
+}

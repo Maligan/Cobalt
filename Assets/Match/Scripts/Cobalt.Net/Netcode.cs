@@ -19,6 +19,7 @@ namespace Cobalt.Net
         public event Action<int> OnClientRemoved;
         public event Action<int, object> OnClientMessage;
 
+        public int Port => server.Port;
         public bool IsRunning { get; private set; }
         public int NumClients => clients.Count;
 
@@ -151,6 +152,11 @@ namespace Cobalt.Net
         public void Connect()
         {
             client.Connect(clientToken, false);
+        }
+
+        public void Disconnect()
+        {
+            client.Disconnect();
         }
 
         public void Send(object message, QoS qos = QoS.Reliable)

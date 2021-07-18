@@ -1,6 +1,10 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
+using System.Runtime.Serialization;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Cobalt.Net
@@ -8,40 +12,40 @@ namespace Cobalt.Net
     /// Simple HTTP server which response any valid /auth request with connection token for specified shard 
     public class LanAuth
     {
-        private HttpListener listener;
-        private LanServer shard;
-        private int port;
+        private HttpListener _listener;
+        private LanServer _server;
+        private int _port;
 
         public string Prefix { get; private set; }
 
-        public LanAuth(int port, LanServer shard)
+        public LanAuth(int port, LanServer server)
         {
-            this.port = port;
-            this.shard = shard;
-            listener = new HttpListener();
+            _port = port;
+            _server = server;
+            _listener = new HttpListener();
         }
 
         public void Stop()
         {
             Log.Info(this, "Stop");
 
-            listener.Stop();
+            _listener.Stop();
         }
 
         public async void Start()
         {
             var ips = NetUtils.GetUnicasts();
-            var prefixes = ips.Select(x => $"http://{x.Address}:{port}/").ToList();
+            var prefixes = ips.Select(x => $"http://{x.Address}:{_port}/").ToList();
 
-            Log.Info(this, $"Start on ({string.Join(", ", prefixes)})");
+            Log.Info(this, $"Start (on {string.Join(", ", prefixes)})");
 
-            listener.Prefixes.Clear();
+            _listener.Prefixes.Clear();
             foreach (var prefix in prefixes)
-                listener.Prefixes.Add(prefix);
+                _listener.Prefixes.Add(prefix);
 
-            listener.Start();
+            _listener.Start();
 
-            while (listener.IsListening)
+            while (_listener.IsListening)
             {
                 try { await ProcessRequest(); }
                 catch (Exception e) { Log.Error(this, e); }
@@ -52,27 +56,48 @@ namespace Cobalt.Net
         {
             HttpListenerContext context = null;
             
-            try { context = await listener.GetContextAsync(); }
-            catch { return; /* Lister are closed - it's ok */ }
+            try { context = await _listener.GetContextAsync(); }
+            catch { return; /* listener is closed - it's ok */ }
 
-            var request = context.Request;
-            var response = context.Response;
+            Log.Info(this, $"Request '{context.Request.Url.PathAndQuery}' (from {context.Request.RemoteEndPoint})");
 
-            var path = request.Url.LocalPath;
-            Log.Info(this, $"Request '{path}' (from {request.RemoteEndPoint})");
-            
-            if (path == "/auth")
+            var responseData = GetResponse(context.Request);
+            if (responseData != null)
             {                
-                var tokenBytes = shard.GetToken();
-                response.ContentLength64 = tokenBytes.Length;
-                response.OutputStream.Write(tokenBytes, 0, tokenBytes.Length);
+                context.Response.ContentLength64 = responseData.Length;
+                context.Response.OutputStream.Write(responseData, 0, responseData.Length);
             }
             else
             {
-                response.StatusCode = 403;
+                context.Response.StatusCode = 403;
             }
 
-            response.OutputStream.Close();
+            context.Response.OutputStream.Close();
+        }
+
+        private byte[] GetResponse(HttpListenerRequest request)
+        {
+            switch (request.Url.LocalPath)
+            {
+                case "/list":
+                    var rows = new string[_server.Count+1];
+
+                    for (var i = 0; i < _server.Count; i++)
+                        rows[i] = i.ToString();
+
+                    var responseString = string.Join("\n", rows);
+
+                    return Encoding.ASCII.GetBytes(responseString);
+
+                case "/auth":
+                    var id = request.QueryString["id"];
+                    if (id == null)
+                        id = _server.Add(new ShardOptions());
+
+                    return _server.Auth(id);
+            }
+
+            return null;
         }
     }
 }

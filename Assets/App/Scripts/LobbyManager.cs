@@ -21,7 +21,7 @@ public class LobbyManager : MonoBehaviour
     /// Start/Stop lan scanning
     public void Scan(int timemout = 8000)
     {
-        if (timemout >= 0)
+        if (timemout > 0)
             _finder.Start(timemout);
         else
             _finder.Stop();
@@ -31,13 +31,10 @@ public class LobbyManager : MonoBehaviour
 
     private LanServer _server;
 
-    public void Host(bool autoConnect)
+    public void Host()
     {
         _server = new LanServer();
-        _server.Start(new ShardOptions());
-
-        if (autoConnect)
-            Join(_server);
+        _server.Start();
     }
 
     // ---------------------------
@@ -46,53 +43,13 @@ public class LobbyManager : MonoBehaviour
     
     public LobbyJoinToken Join(LanSpotInfo spotInfo)
     {
-        if (_token != null)
-            return null;
-
-        _token = new LobbyJoinToken();
         StartCoroutine(Join_Coroutine(spotInfo));
         return _token;
     }
 
-    public LobbyJoinToken Join(string auth)
-    {
-        var spot = new LanSpotInfo();
-        spot.EndPoint = CreateIPEndPoint(auth);
-        spot.Time = DateTime.Now;
-        spot.Version = 1;
-        return Join(spot);
-    }
-
-    // Handles IPv4 and IPv6 notation.
-    public static IPEndPoint CreateIPEndPoint(string endPoint)
-    {
-        string[] ep = endPoint.Split(':');
-        if (ep.Length < 2) throw new FormatException("Invalid endpoint format");
-        IPAddress ip;
-        if (ep.Length > 2)
-        {
-            if (!IPAddress.TryParse(string.Join(":", ep, 0, ep.Length - 1), out ip))
-            {
-                throw new FormatException("Invalid ip-adress");
-            }
-        }
-        else
-        {
-            if (!IPAddress.TryParse(ep[0], out ip))
-            {
-                throw new FormatException("Invalid ip-adress");
-            }
-        }
-        int port;
-        if (!int.TryParse(ep[ep.Length - 1], NumberStyles.None, NumberFormatInfo.CurrentInfo, out port))
-        {
-            throw new FormatException("Invalid port");
-        }
-        return new IPEndPoint(ip, port);
-    }
-
     private IEnumerator Join_Coroutine(LanSpotInfo spotInfo)
     {
+        _token = new LobbyJoinToken();
         // Auth
 
         _token.Status = LobbyJoinStatus.Auth;
@@ -101,13 +58,13 @@ public class LobbyManager : MonoBehaviour
         var authRequest = UnityWebRequest.Get(authUrl);
         authRequest.timeout = 4;
 
-        Log.Info(this, $"Auth to '{authUrl}'");
         yield return authRequest.SendWebRequest();
 
         var httpBody = authRequest.downloadHandler.data;
         var httpCode = authRequest.responseCode;
         if (httpCode == 200)
         {
+            Log.Info(this, "Auth success");
             _token.Status = LobbyJoinStatus.AuthSuccess;
             _token.Token = httpBody;
             yield return JoinConnect();
@@ -115,23 +72,24 @@ public class LobbyManager : MonoBehaviour
         else
         {
             _token.Status = LobbyJoinStatus.Fail_Auth + (int)authRequest.responseCode;
+            Log.Info(this, "Auth error");
         }
     }
 
-    private LobbyJoinToken Join(LanServer server)
-    {
-        if (_token != null)
-            return null;
+    // private LobbyJoinToken Join(LanServer server)
+    // {
+    //     if (_token != null)
+    //         return null;
             
-        _token = new LobbyJoinToken()
-        {
-            Token = server.GetToken(),
-            Status = LobbyJoinStatus.AuthSuccess
-        };
+    //     _token = new LobbyJoinToken()
+    //     {
+    //         Token = server.Auth(server.Add(new ShardOptions())),
+    //         Status = LobbyJoinStatus.AuthSuccess
+    //     };
 
-        StartCoroutine(JoinConnect());
-        return _token;
-    }
+    //     StartCoroutine(JoinConnect());
+    //     return _token;
+    // }
     
     private IEnumerator JoinConnect()
     {
@@ -191,7 +149,7 @@ public class LobbyManager : MonoBehaviour
     private void OnDestroy()
     {
         if (_server != null)
-            _server.Stop();
+            _server.Dispose();
     }
 }
 

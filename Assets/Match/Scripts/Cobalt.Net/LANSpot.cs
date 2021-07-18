@@ -34,7 +34,7 @@ namespace Cobalt.Net
 
             var endpoints = ips.Select(x => new IPEndPoint(x.GetBroadcast(), broadcastPort));
             var endpointsString = string.Join(", ", endpoints);
-            Log.Info(this, $"Start broadcast on ({endpointsString})");
+            Log.Info(this, $"Start broadcast (on {endpointsString})");
 
             foreach (var ip in ips)
                 StartService(ip);
@@ -223,7 +223,7 @@ namespace Cobalt.Net
 
         public override string ToString()
         {
-            return "<Spot: " + EndPoint + " / " + Version + ">";
+            return "<Spot: " + EndPoint + " (v" + Version + ")>";
         }
 
         public override bool Equals(object obj)

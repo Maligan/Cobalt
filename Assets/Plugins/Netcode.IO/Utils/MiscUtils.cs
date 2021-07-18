@@ -10,16 +10,13 @@ namespace NetcodeIO.NET.Utils
 {
 	internal static class MiscUtils
 	{
-		public static bool CompareAddress(this IPEndPoint lhs, IPEndPoint rhs)
+		public static bool CompareEndpoint(this IPEndPoint lhs, IPEndPoint rhs, int rhsPort)
 		{
-			return lhs.Address.Equals(rhs.Address);
-		}
-
-		public static bool CompareEndpoint(this IPEndPoint lhs, IPEndPoint rhs, int port)
-		{
-			if (lhs.Address.Equals(IPAddress.Any)) return lhs.Port == port;
-			if (rhs.Address.Equals(IPAddress.Any)) return rhs.Port == port;
-			return lhs.Address.Equals(rhs.Address) && lhs.Port == port;
+			if (rhs.Address.Equals(IPAddress.Any))
+				return lhs.Port == rhsPort;
+			
+			return lhs.Address.Equals(rhs.Address)
+				&& lhs.Port == rhsPort;
 		}
 
 		public static bool AddressEqual(EndPoint lhs, EndPoint rhs)

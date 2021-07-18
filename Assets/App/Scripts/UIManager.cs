@@ -194,6 +194,9 @@ public class UIPanel : UIManager.UIBehaviour
     //
     // Tools
     //
+    public IEnumerator WaitForShow() { while (!IsShow || IsTransit) yield return null; }
+    public IEnumerator WaitForHide() { while (IsShow || IsTransit) yield return null; }
+
     protected IEnumerator PlayAndAwait(string state)
     {
         var animator = GetComponent<Animator>();
@@ -228,7 +231,4 @@ public class UIPanel : UIManager.UIBehaviour
             Debug.LogWarning("AnimationClip can't be null");
         }
     }
-
-    public IEnumerator WaitForShow() { while (!IsShow || IsTransit) yield return null; }
-    public IEnumerator WaitForHide() { while (IsShow || IsTransit) yield return null; }
 }
