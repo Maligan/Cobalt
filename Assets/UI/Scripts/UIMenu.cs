@@ -6,7 +6,7 @@ using Cobalt.Net;
 using TMPro;
 using UnityEngine;
 
-[ExecuteAlways]
+// [ExecuteAlways]
 public class UIMenu : UIPanel
 {
     private const string HINT_0 = "Collect all <#ffff00>coins</color> before <#ff0000>enemies</color>";
@@ -60,7 +60,7 @@ public class UIMenu : UIPanel
         Get<UIDiscovery>().Show();
     }
 
-    private void HostAndJoin()
+    public void HostAndJoin()
     {
         App.Lobby.Host();
         ScanAndJoin();

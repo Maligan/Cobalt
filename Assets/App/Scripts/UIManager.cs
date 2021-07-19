@@ -187,9 +187,9 @@ public class UIManager : MonoBehaviour
 [RequireComponent(typeof(RectTransform))]
 public class UIPanel : UIManager.UIBehaviour
 {
-    #if UNITY_EDITOR
-    public void OnValidate() { gameObject.name = GetType().Name; }
-    #endif
+    // #if UNITY_EDITOR
+    // protected virtual void OnValidate() { gameObject.name = GetType().Name; }
+    // #endif
 
     //
     // Tools
